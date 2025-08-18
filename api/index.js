@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 
 // Create Express app
 const app = express();
@@ -11,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Multer (parse multipart/form-data, keep files in memory for demo)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
@@ -101,11 +105,11 @@ app.get('/api/inventory/:id', (req, res) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   const item = demoItems.find(i => i.id === req.params.id);
   if (!item) return res.status(404).json({ error: 'Item not found' });
-  res.json({ item, calibrationRecords: [], maintenanceRecords: [], changelog: [] });
+  res.json({ item, calibrationRecords: [], maintenanceRecords: [], changelog: [{ id: generateId(), action: 'created', timestamp: new Date().toISOString() }] });
 });
 
-// Inventory: create
-app.post('/api/inventory', (req, res) => {
+// Inventory: create (multipart parsing enabled)
+app.post('/api/inventory', upload.any(), (req, res) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   try {
@@ -113,49 +117,48 @@ app.post('/api/inventory', (req, res) => {
     const now = new Date();
     const nextCal = new Date(now.getTime() + 365*24*60*60*1000);
     const nextMaint = new Date(now.getTime() + 180*24*60*60*1000);
-    const {
-      itemType, nickname, labId, make, model, serialNumber, condition,
-      dateReceived, datePlacedInService, location,
-      calibrationDate, nextCalibrationDue, calibrationInterval, calibrationIntervalType, calibrationMethod, calibrationType,
-      maintenanceDate, maintenanceDue, maintenanceInterval, maintenanceIntervalType,
-      notes, listId
-    } = req.body;
 
+    const fields = req.body || {};
     const item = {
       id: itemId,
-      itemType: itemType || 'Equipment',
-      nickname: nickname || '',
-      labId: labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
-      make: make || '',
-      model: model || '',
-      serialNumber: serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
-      condition: condition || 'Good',
-      dateReceived: dateReceived || formatDate(now),
-      datePlacedInService: datePlacedInService || dateReceived || formatDate(now),
-      location: location || 'In-House',
-      // Calibration fields used by table and modal
-      calibrationDate: calibrationDate || formatDate(now),
-      nextCalibrationDue: nextCalibrationDue || formatDate(nextCal),
-      calibrationInterval: calibrationInterval || 12,
-      calibrationIntervalType: calibrationIntervalType || 'months',
-      calibrationMethod: calibrationMethod || 'In-House',
-      calibrationType: calibrationType || 'in_house',
-      isOutsourced: calibrationType === 'outsourced',
+      itemType: fields.itemType || 'Equipment',
+      nickname: fields.nickname || '',
+      labId: fields.labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
+      make: fields.make || '',
+      model: fields.model || '',
+      serialNumber: fields.serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
+      condition: fields.condition || 'Good',
+      dateReceived: fields.dateReceived || formatDate(now),
+      datePlacedInService: fields.datePlacedInService || fields.dateReceived || formatDate(now),
+      location: fields.location || 'In-House',
+      // Calibration fields
+      calibrationDate: fields.calibrationDate || formatDate(now),
+      nextCalibrationDue: fields.nextCalibrationDue || formatDate(nextCal),
+      calibrationInterval: fields.calibrationInterval ? Number(fields.calibrationInterval) : 12,
+      calibrationIntervalType: fields.calibrationIntervalType || 'months',
+      calibrationMethod: fields.calibrationMethod || 'In-House',
+      calibrationType: fields.calibrationType || 'in_house',
+      isOutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
       // Maintenance fields
-      maintenanceDate: maintenanceDate || formatDate(now),
-      maintenanceDue: maintenanceDue || formatDate(nextMaint),
-      maintenanceInterval: maintenanceInterval || null,
-      maintenanceIntervalType: maintenanceIntervalType || null,
+      maintenanceDate: fields.maintenanceDate || formatDate(now),
+      maintenanceDue: fields.maintenanceDue || formatDate(nextMaint),
+      maintenanceInterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
+      maintenanceIntervalType: fields.maintenanceIntervalType || null,
+      // Files (names only for demo)
+      calibrationTemplate: req.files?.find(f => f.fieldname === 'calibrationTemplate')?.originalname || null,
+      calibrationInstructions: req.files?.find(f => f.fieldname === 'calibrationInstructions')?.originalname || null,
+      maintenanceTemplate: req.files?.find(f => f.fieldname === 'maintenanceTemplate')?.originalname || null,
+      maintenanceInstructions: req.files?.find(f => f.fieldname === 'maintenanceInstructions')?.originalname || null,
       // Misc
       qrCodeUrl: generateQRCodeUrl(itemId),
-      listId: listId || 'list-1',
-      notes: notes || '',
+      listId: fields.listId || 'list-1',
+      notes: fields.notes || '',
       createdAt: now.toISOString(),
       updatedAt: now.toISOString()
     };
 
     demoItems.push(item);
-    res.status(201).json({ item, qrCodeUrl: item.qrCodeUrl, message: 'Item created successfully' });
+    res.status(201).json({ item, qrCodeUrl: item.qrCodeUrl, qrCodePath: item.qrCodeUrl, message: 'Item created successfully' });
   } catch (e) { res.status(500).json({ error: 'Failed to add item' }); }
 });
 
