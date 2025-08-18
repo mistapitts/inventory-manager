@@ -227,42 +227,69 @@ app.post('/api/inventory', (req, res) => {
   }
 
   try {
-    console.log('Received item data:', req.body); // Debug log
+    console.log('🔍 Received item data:', req.body); // Debug log
     
     const itemId = generateId();
     const currentDate = new Date();
     const nextCalDate = new Date(currentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
     const nextMaintenanceDate = new Date(currentDate.getTime() + 180 * 24 * 60 * 60 * 1000);
     
-    // Use the actual form data from the frontend
+    // Use the actual field names from the real inventory routes
+    const {
+      itemType,
+      nickname,
+      labId,
+      make,
+      model,
+      serialNumber,
+      condition,
+      dateReceived,
+      datePlacedInService,
+      location,
+      calibrationDate,
+      nextCalibrationDue,
+      calibrationInterval,
+      calibrationIntervalType,
+      calibrationMethod,
+      maintenanceDate,
+      maintenanceDue,
+      maintenanceInterval,
+      maintenanceIntervalType,
+      notes,
+      calibrationType,
+      listId
+    } = req.body;
+
+    // Create item with the correct field names
     const newItem = {
       id: itemId,
-      itemType: req.body.itemType || 'Equipment',
-      nickname: req.body.nickname || '',
-      labId: req.body.labId || req.body.labNumber || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
-      make: req.body.make || '',
-      model: req.body.model || '',
-      serialNumber: req.body.serialNumber || req.body.serial || `SN-${itemId.substring(0, 6).toUpperCase()}`,
-      condition: req.body.condition || req.body.conditionWhenReceived || 'Good',
-      dateReceived: req.body.dateReceived || formatDate(currentDate),
-      inService: req.body.inService !== undefined ? req.body.inService : true,
-      datePlacedInService: req.body.datePlacedInService || req.body.dateReceived || formatDate(currentDate),
-      location: req.body.location || 'In-House',
-      calType: req.body.calType || req.body.calibrationType || 'In-House',
-      lastCal: req.body.lastCal || req.body.lastCalibrationDate || formatDate(currentDate),
-      nextCalDue: req.body.nextCalDue || formatDate(nextCalDate),
-      calInterval: req.body.calInterval || '12 months',
-      calMethod: req.body.calMethod || req.body.calibrationMethod || 'In-House',
-      lastMaintenance: req.body.lastMaintenance || formatDate(currentDate),
-      maintenanceDue: req.body.maintenanceDue || formatDate(nextMaintenanceDate),
+      itemType: itemType || 'Equipment',
+      nickname: nickname || '',
+      labId: labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
+      make: make || '',
+      model: model || '',
+      serialNumber: serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
+      condition: condition || 'Good',
+      dateReceived: dateReceived || formatDate(currentDate),
+      datePlacedInService: datePlacedInService || dateReceived || formatDate(currentDate),
+      inService: datePlacedInService || dateReceived || formatDate(currentDate),
+      location: location || 'In-House',
+      calibrationType: calibrationType || 'in_house',
+      calType: calibrationType === 'outsourced' ? 'Outsourced' : 'In-House',
+      lastCal: calibrationDate || formatDate(currentDate),
+      nextCalDue: nextCalibrationDue || formatDate(nextCalDate),
+      calInterval: calibrationInterval ? `${calibrationInterval} ${calibrationIntervalType || 'months'}` : '12 months',
+      calMethod: calibrationMethod || 'In-House',
+      lastMaintenance: maintenanceDate || formatDate(currentDate),
+      maintenanceDue: maintenanceDue || formatDate(nextMaintenanceDate),
       qrCodeUrl: generateQRCodeUrl(itemId),
-      listId: req.body.listId || 'list-1',
-      notes: req.body.notes || '',
+      listId: listId || 'list-1',
+      notes: notes || '',
       createdAt: currentDate.toISOString(),
       updatedAt: currentDate.toISOString()
     };
 
-    console.log('Created item:', newItem); // Debug log
+    console.log('📝 Created item:', newItem); // Debug log
     
     demoItems.push(newItem);
     
