@@ -120,6 +120,25 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// Company: setup demo company
+app.post('/api/company/setup-demo', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  try {
+    // Return the demo company data
+    res.json({
+      company: demoCompany,
+      message: 'Demo company setup successfully'
+    });
+  } catch (error) {
+    console.error('Error setting up demo company:', error);
+    res.status(500).json({ error: 'Failed to setup demo company' });
+  }
+});
+
 // Lists: get all lists
 app.get('/api/inventory/lists', (req, res) => {
   // Check for authorization header
