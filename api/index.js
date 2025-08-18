@@ -35,347 +35,161 @@ const demoCompany = {
 
 // Demo lists data
 let demoLists = [
-  {
-    id: 'list-1',
-    name: 'Active Equipment',
-    color: '#10b981',
-    textColor: '#ffffff',
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'list-2', 
-    name: 'Calibration Due',
-    color: '#f59e0b',
-    textColor: '#ffffff',
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  },
-  {
-    id: 'list-3',
-    name: 'Maintenance Required',
-    color: '#ef4444',
-    textColor: '#ffffff',
-    createdAt: '2025-01-01T00:00:00.000Z',
-    updatedAt: '2025-01-01T00:00:00.000Z'
-  }
+  { id: 'list-1', name: 'Active Equipment', color: '#10b981', textColor: '#ffffff', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z' },
+  { id: 'list-2', name: 'Calibration Due', color: '#f59e0b', textColor: '#ffffff', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z' },
+  { id: 'list-3', name: 'Maintenance Required', color: '#ef4444', textColor: '#ffffff', createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z' }
 ];
 
 // Demo inventory items
 let demoItems = [];
 
-// Helper function to generate JWT token
-function generateToken(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'demo-secret-key', { expiresIn: '24h' });
-}
-
-// Helper function to generate IDs
-function generateId() {
-  return Math.random().toString(36).substr(2, 9);
-}
-
-// Helper function to generate QR code URL
-function generateQRCodeUrl(itemId) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`;
-}
-
-// Helper function to format date
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-}
+// Helper functions
+function generateToken(userId) { return jwt.sign({ userId }, process.env.JWT_SECRET || 'demo-secret-key', { expiresIn: '24h' }); }
+function generateId() { return Math.random().toString(36).substr(2, 9); }
+function generateQRCodeUrl(itemId) { return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`; }
+function formatDate(date) { return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    message: 'Inventory Manager API is running',
-    environment: process.env.NODE_ENV || 'production'
-  });
-});
+app.get('/api/health', (req, res) => { res.json({ status: 'OK', timestamp: new Date().toISOString(), message: 'Inventory Manager API is running', environment: process.env.NODE_ENV || 'production' }); });
 
 // Demo login endpoint
 app.post('/api/auth/login', (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Demo credentials
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
     if (email === 'mistapitts@gmail.com' && password === 'demo123') {
       const token = generateToken(demoUser.id);
-      
-      res.json({
-        token,
-        user: {
-          id: demoUser.id,
-          email: demoUser.email,
-          firstName: demoUser.firstName,
-          lastName: demoUser.lastName,
-          role: demoUser.role,
-          companyId: demoUser.companyId,
-          regionId: demoUser.regionId
-        },
-        company: demoCompany,
-        location: null
-      });
-    } else {
-      res.status(401).json({ error: 'Invalid credentials. Use: mistapitts@gmail.com / demo123' });
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+      res.json({ token, user: demoUser, company: demoCompany, location: null });
+    } else { res.status(401).json({ error: 'Invalid credentials. Use: mistapitts@gmail.com / demo123' }); }
+  } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // Company: setup demo company
 app.post('/api/company/setup-demo', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  try {
-    // Return the demo company data
-    res.json({
-      company: demoCompany,
-      message: 'Demo company setup successfully'
-    });
-  } catch (error) {
-    console.error('Error setting up demo company:', error);
-    res.status(500).json({ error: 'Failed to setup demo company' });
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  res.json({ company: demoCompany, message: 'Demo company setup successfully' });
 });
 
-// Lists: get all lists
+// Lists
 app.get('/api/inventory/lists', (req, res) => {
-  // Check for authorization header
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   res.json({ lists: demoLists });
 });
 
-// Lists: update a specific list
 app.put('/api/inventory/lists/:id', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  const listId = req.params.id;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  const listId = req.params.id; const idx = demoLists.findIndex(l => l.id === listId);
+  if (idx === -1) return res.status(404).json({ error: 'List not found' });
   const { name, color, textColor } = req.body;
-
-  const listIndex = demoLists.findIndex(list => list.id === listId);
-  if (listIndex === -1) {
-    return res.status(404).json({ error: 'List not found' });
-  }
-
-  // Update the list
-  demoLists[listIndex] = {
-    ...demoLists[listIndex],
-    name: name || demoLists[listIndex].name,
-    color: color || demoLists[listIndex].color,
-    textColor: textColor || demoLists[listIndex].textColor,
-    updatedAt: new Date().toISOString()
-  };
-
-  res.json(demoLists[listIndex]);
+  demoLists[idx] = { ...demoLists[idx], name: name || demoLists[idx].name, color: color || demoLists[idx].color, textColor: textColor || demoLists[idx].textColor, updatedAt: new Date().toISOString() };
+  res.json(demoLists[idx]);
 });
 
-// Inventory: get all items
+// Inventory: list
 app.get('/api/inventory', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   res.json({ items: demoItems });
 });
 
-// Inventory: get specific item
+// Inventory: details (return arrays frontend expects)
 app.get('/api/inventory/:id', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  const itemId = req.params.id;
-  const item = demoItems.find(item => item.id === itemId);
-  
-  if (!item) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
-
-  // Return the item in the structure the frontend expects
-  res.json({ item: item });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  const item = demoItems.find(i => i.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'Item not found' });
+  res.json({ item, calibrationRecords: [], maintenanceRecords: [], changelog: [] });
 });
 
-// Inventory: add new item
+// Inventory: create
 app.post('/api/inventory', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   try {
-    console.log('🔍 Received item data:', req.body); // Debug log
-    
     const itemId = generateId();
-    const currentDate = new Date();
-    const nextCalDate = new Date(currentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-    const nextMaintenanceDate = new Date(currentDate.getTime() + 180 * 24 * 60 * 60 * 1000);
-    
-    // Use the actual field names from the real inventory routes
+    const now = new Date();
+    const nextCal = new Date(now.getTime() + 365*24*60*60*1000);
+    const nextMaint = new Date(now.getTime() + 180*24*60*60*1000);
     const {
-      itemType,
-      nickname,
-      labId,
-      make,
-      model,
-      serialNumber,
-      condition,
-      dateReceived,
-      datePlacedInService,
-      location,
-      calibrationDate,
-      nextCalibrationDue,
-      calibrationInterval,
-      calibrationIntervalType,
-      calibrationMethod,
-      maintenanceDate,
-      maintenanceDue,
-      maintenanceInterval,
-      maintenanceIntervalType,
-      notes,
-      calibrationType,
-      listId
+      itemType, nickname, labId, make, model, serialNumber, condition,
+      dateReceived, datePlacedInService, location,
+      calibrationDate, nextCalibrationDue, calibrationInterval, calibrationIntervalType, calibrationMethod, calibrationType,
+      maintenanceDate, maintenanceDue, maintenanceInterval, maintenanceIntervalType,
+      notes, listId
     } = req.body;
 
-    // Create item with the correct field names
-    const newItem = {
+    const item = {
       id: itemId,
       itemType: itemType || 'Equipment',
       nickname: nickname || '',
-      labId: labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
+      labId: labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
       make: make || '',
       model: model || '',
-      serialNumber: serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
+      serialNumber: serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
       condition: condition || 'Good',
-      dateReceived: dateReceived || formatDate(currentDate),
-      datePlacedInService: datePlacedInService || dateReceived || formatDate(currentDate),
-      inService: datePlacedInService || dateReceived || formatDate(currentDate),
+      dateReceived: dateReceived || formatDate(now),
+      datePlacedInService: datePlacedInService || dateReceived || formatDate(now),
       location: location || 'In-House',
+      // Calibration fields used by table and modal
+      calibrationDate: calibrationDate || formatDate(now),
+      nextCalibrationDue: nextCalibrationDue || formatDate(nextCal),
+      calibrationInterval: calibrationInterval || 12,
+      calibrationIntervalType: calibrationIntervalType || 'months',
+      calibrationMethod: calibrationMethod || 'In-House',
       calibrationType: calibrationType || 'in_house',
-      calType: calibrationType === 'outsourced' ? 'Outsourced' : 'In-House',
-      lastCal: calibrationDate || formatDate(currentDate),
-      nextCalDue: nextCalibrationDue || formatDate(nextCalDate),
-      calInterval: calibrationInterval ? `${calibrationInterval} ${calibrationIntervalType || 'months'}` : '12 months',
-      calMethod: calibrationMethod || 'In-House',
-      lastMaintenance: maintenanceDate || formatDate(currentDate),
-      maintenanceDue: maintenanceDue || formatDate(nextMaintenanceDate),
+      isOutsourced: calibrationType === 'outsourced',
+      // Maintenance fields
+      maintenanceDate: maintenanceDate || formatDate(now),
+      maintenanceDue: maintenanceDue || formatDate(nextMaint),
+      maintenanceInterval: maintenanceInterval || null,
+      maintenanceIntervalType: maintenanceIntervalType || null,
+      // Misc
       qrCodeUrl: generateQRCodeUrl(itemId),
       listId: listId || 'list-1',
       notes: notes || '',
-      createdAt: currentDate.toISOString(),
-      updatedAt: currentDate.toISOString()
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
     };
 
-    console.log('📝 Created item:', newItem); // Debug log
-    
-    demoItems.push(newItem);
-    
-    res.status(201).json({
-      item: newItem,
-      qrCodeUrl: newItem.qrCodeUrl,
-      message: 'Item created successfully'
-    });
-  } catch (error) {
-    console.error('Error adding item:', error);
-    res.status(500).json({ error: 'Failed to add item' });
-  }
+    demoItems.push(item);
+    res.status(201).json({ item, qrCodeUrl: item.qrCodeUrl, message: 'Item created successfully' });
+  } catch (e) { res.status(500).json({ error: 'Failed to add item' }); }
 });
 
-// Inventory: update item
+// Inventory: update/delete
 app.put('/api/inventory/:id', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  const itemId = req.params.id;
-  const itemIndex = demoItems.findIndex(item => item.id === itemId);
-  
-  if (itemIndex === -1) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
-
-  demoItems[itemIndex] = {
-    ...demoItems[itemIndex],
-    ...req.body,
-    updatedAt: new Date().toISOString()
-  };
-
-  res.json(demoItems[itemIndex]);
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  const idx = demoItems.findIndex(i => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Item not found' });
+  demoItems[idx] = { ...demoItems[idx], ...req.body, updatedAt: new Date().toISOString() };
+  res.json(demoItems[idx]);
 });
 
-// Inventory: delete item
 app.delete('/api/inventory/:id', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  const itemId = req.params.id;
-  const itemIndex = demoItems.findIndex(item => item.id === itemId);
-  
-  if (itemIndex === -1) {
-    return res.status(404).json({ error: 'Item not found' });
-  }
-
-  demoItems.splice(itemIndex, 1);
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  const idx = demoItems.findIndex(i => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Item not found' });
+  demoItems.splice(idx, 1);
   res.json({ message: 'Item deleted successfully' });
 });
 
-// Inventory stats endpoint (to fix the 404 error)
+// Inventory stats
 app.get('/api/inventory/stats/overview', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   const totalItems = demoItems.length;
-  const dueThisMonth = demoItems.filter(item => {
-    const nextCal = new Date(item.nextCalDue);
-    const now = new Date();
-    return nextCal.getMonth() === now.getMonth() && nextCal.getFullYear() === now.getFullYear();
-  }).length;
-  
-  const maintenanceDue = demoItems.filter(item => {
-    const maintenanceDate = new Date(item.maintenanceDue);
-    const now = new Date();
-    return maintenanceDate <= now;
-  }).length;
-
-  res.json({
-    totalItems,
-    dueThisMonth,
-    maintenanceDue
-  });
+  const now = new Date();
+  const dueThisMonth = demoItems.filter(i => { const d = new Date(i.nextCalibrationDue); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length;
+  const maintenanceDue = demoItems.filter(i => new Date(i.maintenanceDue) <= now).length;
+  res.json({ totalItems, dueThisMonth, maintenanceDue });
 });
 
-// SPA fallback for non-API routes
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+// SPA fallback
+app.get(/^\/(?!api).*/, (req, res) => { res.sendFile(path.join(__dirname, '../public/index.html')); });
 
-// Export the Express app for Vercel
 module.exports = app;
