@@ -79,6 +79,15 @@ function generateQRCodeUrl(itemId) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`;
 }
 
+// Helper function to format date
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -218,26 +227,34 @@ app.post('/api/inventory', (req, res) => {
 
   try {
     const itemId = generateId();
+    const currentDate = new Date();
+    const nextCalDate = new Date(currentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const nextMaintenanceDate = new Date(currentDate.getTime() + 180 * 24 * 60 * 60 * 1000);
+    
     const newItem = {
       id: itemId,
       itemType: req.body.itemType || 'Equipment',
-      nickname: req.body.nickname || 'Demo Item',
+      nickname: req.body.nickname || '',
       labId: req.body.labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
-      make: req.body.make || 'Demo Manufacturer',
-      model: req.body.model || 'Demo Model',
+      make: req.body.make || '',
+      model: req.body.model || '',
       serialNumber: req.body.serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
       condition: req.body.condition || 'Good',
-      dateReceived: req.body.dateReceived || new Date().toISOString().split('T')[0],
-      inService: req.body.inService || true,
+      dateReceived: req.body.dateReceived || formatDate(currentDate),
+      inService: req.body.inService !== undefined ? req.body.inService : true,
       location: req.body.location || 'In-House',
       calType: req.body.calType || 'In-House',
-      lastCal: req.body.lastCal || new Date().toISOString().split('T')[0],
-      nextCalDue: req.body.nextCalDue || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      lastCal: req.body.lastCal || formatDate(currentDate),
+      nextCalDue: req.body.nextCalDue || formatDate(nextCalDate),
+      calInterval: req.body.calInterval || '12 months',
+      calMethod: req.body.calMethod || 'In-House',
+      lastMaintenance: req.body.lastMaintenance || formatDate(currentDate),
+      maintenanceDue: req.body.maintenanceDue || formatDate(nextMaintenanceDate),
       qrCodeUrl: generateQRCodeUrl(itemId),
       listId: req.body.listId || 'list-1',
       notes: req.body.notes || '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: currentDate.toISOString(),
+      updatedAt: currentDate.toISOString()
     };
 
     demoItems.push(newItem);
