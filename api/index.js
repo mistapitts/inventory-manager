@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const QRCode = require('qrcode');
 
 // Create Express app
 const app = express();
@@ -190,6 +191,22 @@ app.get('/api/inventory/stats/overview', (req, res) => {
   const dueThisMonth = demoItems.filter(i => { const d = new Date(i.nextCalibrationDue); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length;
   const maintenanceDue = demoItems.filter(i => new Date(i.maintenanceDue) <= now).length;
   res.json({ totalItems, dueThisMonth, maintenanceDue });
+});
+
+// Dynamic QR code generation (served at path the UI expects)
+app.get('/uploads/qr-codes/:itemId.png', async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const proto = (req.headers['x-forwarded-proto'] || 'https');
+    const host = req.headers.host;
+    const itemUrl = `${proto}://${host}/item/${itemId}`;
+    const png = await QRCode.toBuffer(itemUrl, { errorCorrectionLevel: 'M', type: 'png', margin: 1, scale: 6 });
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(png);
+  } catch (e) {
+    res.status(404).end();
+  }
 });
 
 // SPA fallback
