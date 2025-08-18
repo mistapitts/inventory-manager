@@ -215,7 +215,8 @@ app.get('/api/inventory/:id', (req, res) => {
     return res.status(404).json({ error: 'Item not found' });
   }
 
-  res.json(item);
+  // Return the item in the structure the frontend expects
+  res.json({ item: item });
 });
 
 // Inventory: add new item
@@ -226,28 +227,32 @@ app.post('/api/inventory', (req, res) => {
   }
 
   try {
+    console.log('Received item data:', req.body); // Debug log
+    
     const itemId = generateId();
     const currentDate = new Date();
     const nextCalDate = new Date(currentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
     const nextMaintenanceDate = new Date(currentDate.getTime() + 180 * 24 * 60 * 60 * 1000);
     
+    // Use the actual form data from the frontend
     const newItem = {
       id: itemId,
       itemType: req.body.itemType || 'Equipment',
       nickname: req.body.nickname || '',
-      labId: req.body.labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
+      labId: req.body.labId || req.body.labNumber || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
       make: req.body.make || '',
       model: req.body.model || '',
-      serialNumber: req.body.serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
-      condition: req.body.condition || 'Good',
+      serialNumber: req.body.serialNumber || req.body.serial || `SN-${itemId.substring(0, 6).toUpperCase()}`,
+      condition: req.body.condition || req.body.conditionWhenReceived || 'Good',
       dateReceived: req.body.dateReceived || formatDate(currentDate),
       inService: req.body.inService !== undefined ? req.body.inService : true,
+      datePlacedInService: req.body.datePlacedInService || req.body.dateReceived || formatDate(currentDate),
       location: req.body.location || 'In-House',
-      calType: req.body.calType || 'In-House',
-      lastCal: req.body.lastCal || formatDate(currentDate),
+      calType: req.body.calType || req.body.calibrationType || 'In-House',
+      lastCal: req.body.lastCal || req.body.lastCalibrationDate || formatDate(currentDate),
       nextCalDue: req.body.nextCalDue || formatDate(nextCalDate),
       calInterval: req.body.calInterval || '12 months',
-      calMethod: req.body.calMethod || 'In-House',
+      calMethod: req.body.calMethod || req.body.calibrationMethod || 'In-House',
       lastMaintenance: req.body.lastMaintenance || formatDate(currentDate),
       maintenanceDue: req.body.maintenanceDue || formatDate(nextMaintenanceDate),
       qrCodeUrl: generateQRCodeUrl(itemId),
@@ -257,6 +262,8 @@ app.post('/api/inventory', (req, res) => {
       updatedAt: currentDate.toISOString()
     };
 
+    console.log('Created item:', newItem); // Debug log
+    
     demoItems.push(newItem);
     
     res.status(201).json({
@@ -309,6 +316,33 @@ app.delete('/api/inventory/:id', (req, res) => {
 
   demoItems.splice(itemIndex, 1);
   res.json({ message: 'Item deleted successfully' });
+});
+
+// Inventory stats endpoint (to fix the 404 error)
+app.get('/api/inventory/stats/overview', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  const totalItems = demoItems.length;
+  const dueThisMonth = demoItems.filter(item => {
+    const nextCal = new Date(item.nextCalDue);
+    const now = new Date();
+    return nextCal.getMonth() === now.getMonth() && nextCal.getFullYear() === now.getFullYear();
+  }).length;
+  
+  const maintenanceDue = demoItems.filter(item => {
+    const maintenanceDate = new Date(item.maintenanceDue);
+    const now = new Date();
+    return maintenanceDate <= now;
+  }).length;
+
+  res.json({
+    totalItems,
+    dueThisMonth,
+    maintenanceDue
+  });
 });
 
 // SPA fallback for non-API routes
