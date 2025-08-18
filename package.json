@@ -8,8 +8,7 @@
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "vercel-build": "npm run build",
-    "postinstall": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "echo skip"
   },
   "engines": {
     "node": ">=18.0.0"
