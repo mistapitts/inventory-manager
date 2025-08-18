@@ -24,20 +24,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Ensure upload directories exist
-const uploadBase = path.join(__dirname, '../uploads');
-const docsDir = path.join(uploadBase, 'docs');
-const qrDir = path.join(uploadBase, 'qr-codes');
-const imagesDir = path.join(uploadBase, 'images');
-[uploadBase, docsDir, qrDir, imagesDir].forEach((dir) => {
-  try {
-    if (!require('fs').existsSync(dir)) {
-      require('fs').mkdirSync(dir, { recursive: true });
+// Ensure upload directories exist (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  const uploadBase = path.join(__dirname, '../uploads');
+  const docsDir = path.join(uploadBase, 'docs');
+  const qrDir = path.join(uploadBase, 'qr-codes');
+  const imagesDir = path.join(uploadBase, 'images');
+  [uploadBase, docsDir, qrDir, imagesDir].forEach((dir) => {
+    try {
+      if (!require('fs').existsSync(dir)) {
+        require('fs').mkdirSync(dir, { recursive: true });
+      }
+    } catch (e) {
+      console.error('Failed creating upload dir', dir, e);
     }
-  } catch (e) {
-    console.error('Failed creating upload dir', dir, e);
-  }
-});
+  });
+}
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -49,7 +51,8 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    message: 'Inventory Manager API is running'
+    message: 'Inventory Manager API is running',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -75,6 +78,7 @@ app.listen(PORT, () => {
   console.log(`📊 Database initialized successfully`);
   console.log(`🔐 Admin account ready`);
   console.log(`🌐 Server: http://localhost:${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Graceful shutdown
