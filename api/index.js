@@ -74,6 +74,11 @@ function generateId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
+// Helper function to generate QR code URL
+function generateQRCodeUrl(itemId) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`;
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -187,6 +192,23 @@ app.get('/api/inventory', (req, res) => {
   res.json({ items: demoItems });
 });
 
+// Inventory: get specific item
+app.get('/api/inventory/:id', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  const itemId = req.params.id;
+  const item = demoItems.find(item => item.id === itemId);
+  
+  if (!item) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+
+  res.json(item);
+});
+
 // Inventory: add new item
 app.post('/api/inventory', (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -195,15 +217,36 @@ app.post('/api/inventory', (req, res) => {
   }
 
   try {
+    const itemId = generateId();
     const newItem = {
-      id: generateId(),
-      ...req.body,
+      id: itemId,
+      itemType: req.body.itemType || 'Equipment',
+      nickname: req.body.nickname || 'Demo Item',
+      labId: req.body.labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
+      make: req.body.make || 'Demo Manufacturer',
+      model: req.body.model || 'Demo Model',
+      serialNumber: req.body.serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
+      condition: req.body.condition || 'Good',
+      dateReceived: req.body.dateReceived || new Date().toISOString().split('T')[0],
+      inService: req.body.inService || true,
+      location: req.body.location || 'In-House',
+      calType: req.body.calType || 'In-House',
+      lastCal: req.body.lastCal || new Date().toISOString().split('T')[0],
+      nextCalDue: req.body.nextCalDue || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      qrCodeUrl: generateQRCodeUrl(itemId),
+      listId: req.body.listId || 'list-1',
+      notes: req.body.notes || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     demoItems.push(newItem);
-    res.status(201).json(newItem);
+    
+    res.status(201).json({
+      item: newItem,
+      qrCodeUrl: newItem.qrCodeUrl,
+      message: 'Item created successfully'
+    });
   } catch (error) {
     console.error('Error adding item:', error);
     res.status(500).json({ error: 'Failed to add item' });
