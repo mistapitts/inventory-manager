@@ -72,24 +72,29 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Inventory Manager API running on port ${PORT}`);
-  console.log(`📊 Database initialized successfully`);
-  console.log(`🔐 Admin account ready`);
-  console.log(`🌐 Server: http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// For Vercel serverless deployment, export the app
+export default app;
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down server...');
-  database.close();
-  process.exit(0);
-});
+// Only start the server if this file is run directly (development)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Inventory Manager API running on port ${PORT}`);
+    console.log(`📊 Database initialized successfully`);
+    console.log(`🔐 Admin account ready`);
+    console.log(`🌐 Server: http://localhost:${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
 
-process.on('SIGTERM', () => {
-  console.log('\n🛑 Shutting down server...');
-  database.close();
-  process.exit(0);
-});
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\n🛑 Shutting down server...');
+    database.close();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('\n🛑 Shutting down server...');
+    database.close();
+    process.exit(0);
+  });
+}
