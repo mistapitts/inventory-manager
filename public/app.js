@@ -1374,6 +1374,11 @@ async function loadListsIntoSelectors(selectAfterName) {
         
         // Store lists globally for color access
         window.loadedLists = lists;
+        // Ensure every list has a valid color and textColor
+        window.loadedLists.forEach(l => {
+            if (!l.color) l.color = '#6b7280';
+            if (!l.textColor) l.textColor = '#ffffff';
+        });
         
         const listSelect = document.getElementById('listId');
         if (listSelect) {
