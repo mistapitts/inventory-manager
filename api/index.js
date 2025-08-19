@@ -348,14 +348,17 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       calibrationinterval: fields.calibrationInterval ? Number(fields.calibrationInterval) : 12,
       calibrationintervaltype: fields.calibrationIntervalType || 'months',
       calibrationmethod: fields.calibrationMethod || 'In-House',
-      isoutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
       maintenancedate: fields.maintenanceDate || formatDate(now),
       maintenancedue: fields.maintenanceDue || formatDate(nextMaint),
       maintenanceinterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
       maintenanceintervaltype: fields.maintenanceIntervalType || null,
+      isoutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
       isoutofservice: false,
-      listid: fields.listId || null, // Allow null if no list is selected
+      outofservicedate: null,
+      outofservicereason: null,
       notes: fields.notes || '',
+      image: null,
+      listid: fields.listId || null, // Allow null if no list is selected
       createdat: now.toISOString(),
       updatedat: now.toISOString()
     };
@@ -439,10 +442,10 @@ app.get('/api/inventory/stats/overview', async (req, res) => {
     const totalItems = items.length;
     const now = new Date();
     const dueThisMonth = items.filter(i => { 
-      const d = new Date(i.nextCalibrationDue); 
+      const d = new Date(i.nextcalibrationdue); 
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); 
     }).length;
-    const maintenanceDue = items.filter(i => new Date(i.maintenanceDue) <= now).length;
+    const maintenanceDue = items.filter(i => i.maintenancedue && new Date(i.maintenancedue) <= now).length;
     
     res.json({ totalItems, dueThisMonth, maintenanceDue });
   } catch (error) {
