@@ -1761,8 +1761,8 @@ function displayItemDetails(data) {
                 <div class="item-detail-row">
                     <span class="item-detail-label">Files:</span>
                     <span class="item-detail-value">
-                        ${(item.calibrationTemplate ? `<a href="/uploads/docs/${item.calibrationTemplate}" target="_blank" download>Template</a>` : '—')} •
-                        ${(item.calibrationInstructions ? `<a href="/uploads/docs/${item.calibrationInstructions}" target="_blank" download>Instructions</a>` : '—')}
+                        ${(item.calibrationTemplate ? `<a href="#" onclick="downloadFile('${item.calibrationTemplate}', 'calibration-template')" class="file-link">Template</a>` : '—')} •
+                        ${(item.calibrationInstructions ? `<a href="#" onclick="downloadFile('${item.calibrationInstructions}', 'calibration-instructions')" class="file-link">Instructions</a>` : '—')}
                     </span>
                 </div>
             </div>`;
@@ -3249,4 +3249,36 @@ function positionColumnCustomizerMenu() {
     menu.style.top = top + 'px';
     menu.style.right = 'auto';
     menu.style.bottom = 'auto';
+}
+
+// Function to download files from Supabase Storage
+async function downloadFile(fileName, fileType) {
+    try {
+        // Get the file from Supabase Storage
+        const response = await fetch(`/api/storage/download/${fileName}`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to download file');
+        }
+        
+        // Create blob and download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showToast('File downloaded successfully', 'success');
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        showToast('Failed to download file', 'error');
+    }
 }

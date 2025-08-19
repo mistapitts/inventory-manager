@@ -148,6 +148,28 @@ app.post('/api/company/setup-demo', async (req, res) => {
       await supabase.from('companies').insert(demoCompany);
     }
 
+    // Ensure storage bucket exists for file uploads
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets.some(bucket => bucket.name === 'inventory-docs');
+      
+      if (!bucketExists) {
+        const { error: bucketError } = await supabase.storage.createBucket('inventory-docs', {
+          public: true,
+          allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          fileSizeLimit: 52428800 // 50MB
+        });
+        
+        if (bucketError) {
+          console.error('Error creating storage bucket:', bucketError);
+        } else {
+          console.log('Storage bucket created successfully');
+        }
+      }
+    } catch (storageError) {
+      console.error('Error checking/creating storage bucket:', storageError);
+    }
+
     res.json({ company: demoCompany, message: 'Demo company setup successfully' });
   } catch (error) {
     console.error('Error setting up demo company:', error);
@@ -392,33 +414,44 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
     const uploadedFiles = req.files || [];
     const filePaths = {};
     
-    // Process uploaded files
+    // Process uploaded files using Supabase Storage (Vercel compatible)
     for (const file of uploadedFiles) {
       if (file.fieldname === 'calibrationTemplate' || 
           file.fieldname === 'calibrationInstructions' || 
           file.fieldname === 'maintenanceTemplate' || 
           file.fieldname === 'maintenanceInstructions') {
         
-        // Generate unique filename
-        const fileExtension = file.originalname.split('.').pop();
-        const fileName = `${file.fieldname}_${itemId}.${fileExtension}`;
-        const filePath = `uploads/docs/${fileName}`;
-        
-        // Save file to filesystem
-        const fs = require('fs');
-        const path = require('path');
-        const uploadDir = path.join(__dirname, '../uploads/docs');
-        
-        // Ensure upload directory exists
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
+        try {
+          // Generate unique filename
+          const fileExtension = file.originalname.split('.').pop();
+          const fileName = `${file.fieldname}_${itemId}.${fileExtension}`;
+          
+          // Upload to Supabase Storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('inventory-docs')
+            .upload(fileName, file.buffer, {
+              contentType: file.mimetype,
+              cacheControl: '3600'
+            });
+          
+          if (uploadError) {
+            console.error(`Error uploading ${file.fieldname}:`, uploadError);
+            continue; // Skip this file but continue with others
+          }
+          
+          // Get public URL for the file
+          const { data: urlData } = supabase.storage
+            .from('inventory-docs')
+            .getPublicUrl(fileName);
+          
+          // Store file path for database
+          filePaths[file.fieldname] = fileName;
+          
+          console.log(`Successfully uploaded ${file.fieldname}:`, fileName);
+        } catch (fileError) {
+          console.error(`Error processing ${file.fieldname}:`, fileError);
+          // Continue with other files
         }
-        
-        // Write file
-        fs.writeFileSync(path.join(uploadDir, fileName), file.buffer);
-        
-        // Store file path for database
-        filePaths[file.fieldname] = fileName;
       }
     }
 
@@ -565,6 +598,33 @@ app.get('/uploads/qr-codes/:itemId.png', async (req, res) => {
     res.send(png);
   } catch (e) {
     res.status(404).end();
+  }
+});
+
+// File download endpoint for Supabase Storage
+app.get('/api/storage/download/:fileName', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  
+  try {
+    const { fileName } = req.params;
+    
+    // Download file from Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('inventory-docs')
+      .download(fileName);
+    
+    if (error) throw error;
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    
+    // Send the file
+    res.send(data);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ error: 'Failed to download file' });
   }
 });
 
