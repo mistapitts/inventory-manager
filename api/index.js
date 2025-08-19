@@ -490,8 +490,13 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
     const uploadedFiles = req.files || [];
     const filePaths = {};
     
+    console.log('Uploaded files count:', uploadedFiles.length);
+    console.log('Uploaded files:', uploadedFiles.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, size: f.size })));
+    
     // Process uploaded files using Supabase Storage (Vercel compatible)
     for (const file of uploadedFiles) {
+      console.log('Processing file:', file.fieldname, file.originalname);
+      
       if (file.fieldname === 'calibrationTemplate' || 
           file.fieldname === 'calibrationInstructions' || 
           file.fieldname === 'maintenanceTemplate' || 
@@ -528,8 +533,12 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
           console.error(`Error processing ${file.fieldname}:`, fileError);
           // Continue with other files
         }
+      } else {
+        console.log('Skipping non-file field:', file.fieldname);
       }
     }
+    
+    console.log('Final filePaths object:', filePaths);
 
     
     const item = {
