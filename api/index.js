@@ -72,34 +72,6 @@ app.get('/api/health', (req, res) => {
   }); 
 });
 
-// Test lists query
-app.get('/api/test-lists', async (req, res) => {
-  try {
-    // First, let's check if we can query the lists table at all
-    const { data: allLists, error: allError } = await supabase
-      .from('lists')
-      .select('*');
-    
-    console.log('All lists query result:', { data: allLists, error: allError });
-    
-    // Then try the problematic query
-    const { data: companyLists, error: companyError } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('companyId', demoCompany.id);
-    
-    console.log('Company lists query result:', { data: companyLists, error: companyError });
-    
-    res.json({
-      allLists: { data: allLists, error: allError },
-      companyLists: { data: companyLists, error: companyError },
-      demoCompanyId: demoCompany.id
-    });
-  } catch (error) {
-    console.error('Test lists error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Demo login endpoint
 app.post('/api/auth/login', (req, res) => {
@@ -150,7 +122,7 @@ app.get('/api/inventory/lists', async (req, res) => {
     const { data: lists, error } = await supabase
       .from('lists')
       .select('*')
-      .eq('companyId', demoCompany.id);
+      .eq('companyid', demoCompany.id);
 
     if (error) throw error;
 
@@ -176,12 +148,12 @@ app.post('/api/inventory/lists', async (req, res) => {
 
     const newList = {
       id: generateId(),
-      companyId: demoCompany.id,
+      companyid: demoCompany.id,
       name,
       color,
-      textColor,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      textcolor: textColor,
+      createdat: new Date().toISOString(),
+      updatedat: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -210,7 +182,7 @@ app.put('/api/inventory/lists/:id', async (req, res) => {
       .from('lists')
       .update({ name, color, textColor, updatedAt: new Date().toISOString() })
       .eq('id', listId)
-      .eq('companyId', demoCompany.id)
+      .eq('companyid', demoCompany.id)
       .select()
       .single();
 
@@ -234,7 +206,7 @@ app.delete('/api/inventory/lists/:id', async (req, res) => {
     const { data: items, error: itemsError } = await supabase
       .from('inventory_items')
       .select('id')
-      .eq('listId', listId)
+      .eq('listid', listId)
       .limit(1);
 
     if (itemsError) throw itemsError;
@@ -249,7 +221,7 @@ app.delete('/api/inventory/lists/:id', async (req, res) => {
       .from('lists')
       .delete()
       .eq('id', listId)
-      .eq('companyId', demoCompany.id);
+      .eq('companyid', demoCompany.id);
 
     if (error) throw error;
     res.json({ message: 'List deleted successfully' });
@@ -268,7 +240,7 @@ app.get('/api/inventory', async (req, res) => {
     const { data: items, error } = await supabase
       .from('inventory_items')
       .select('*')
-      .eq('companyId', demoCompany.id);
+      .eq('companyid', demoCompany.id);
 
     if (error) throw error;
     res.json({ items: items || [] });
@@ -288,7 +260,7 @@ app.get('/api/inventory/:id', async (req, res) => {
       .from('inventory_items')
       .select('*')
       .eq('id', req.params.id)
-      .eq('companyId', demoCompany.id)
+      .eq('companyid', demoCompany.id)
       .single();
 
     if (error) throw error;
@@ -320,32 +292,32 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
     const fields = req.body || {};
     const item = {
       id: itemId,
-      companyId: demoCompany.id,
-      itemType: fields.itemType || 'Equipment',
+      companyid: demoCompany.id,
+      itemtype: fields.itemType || 'Equipment',
       nickname: fields.nickname || '',
-      labId: fields.labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
+      labid: fields.labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
       make: fields.make || '',
       model: fields.model || '',
-      serialNumber: fields.serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
+      serialnumber: fields.serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
       condition: fields.condition || 'Good',
-      dateReceived: fields.dateReceived || formatDate(now),
-      datePlacedInService: fields.datePlacedInService || fields.dateReceived || formatDate(now),
+      datereceived: fields.dateReceived || formatDate(now),
+      dateplaceinservice: fields.datePlacedInService || fields.dateReceived || formatDate(now),
       location: fields.location || 'In-House',
-      calibrationDate: fields.calibrationDate || formatDate(now),
-      nextCalibrationDue: fields.nextCalibrationDue || formatDate(nextCal),
-      calibrationInterval: fields.calibrationInterval ? Number(fields.calibrationInterval) : 12,
-      calibrationIntervalType: fields.calibrationIntervalType || 'months',
-      calibrationMethod: fields.calibrationMethod || 'In-House',
-      isOutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
-      maintenanceDate: fields.maintenanceDate || formatDate(now),
-      maintenanceDue: fields.maintenanceDue || formatDate(nextMaint),
-      maintenanceInterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
-      maintenanceIntervalType: fields.maintenanceIntervalType || null,
-      isOutOfService: false,
-      listId: fields.listId || null, // Allow null if no list is selected
+      calibrationdate: fields.calibrationDate || formatDate(now),
+      nextcalibrationdue: fields.nextCalibrationDue || formatDate(nextCal),
+      calibrationinterval: fields.calibrationInterval ? Number(fields.calibrationInterval) : 12,
+      calibrationintervaltype: fields.calibrationIntervalType || 'months',
+      calibrationmethod: fields.calibrationMethod || 'In-House',
+      isoutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
+      maintenancedate: fields.maintenanceDate || formatDate(now),
+      maintenancedue: fields.maintenanceDue || formatDate(nextMaint),
+      maintenanceinterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
+      maintenanceintervaltype: fields.maintenanceIntervalType || null,
+      isoutofservice: false,
+      listid: fields.listId || null, // Allow null if no list is selected
       notes: fields.notes || '',
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString()
+      createdat: now.toISOString(),
+      updatedat: now.toISOString()
     };
 
     const { data, error } = await supabase
@@ -379,7 +351,7 @@ app.put('/api/inventory/:id', async (req, res) => {
       .from('inventory_items')
       .update({ ...req.body, updatedAt: new Date().toISOString() })
       .eq('id', req.params.id)
-      .eq('companyId', demoCompany.id)
+      .eq('companyid', demoCompany.id)
       .select()
       .single();
 
@@ -401,7 +373,7 @@ app.delete('/api/inventory/:id', async (req, res) => {
       .from('inventory_items')
       .delete()
       .eq('id', req.params.id)
-      .eq('companyId', demoCompany.id);
+      .eq('companyid', demoCompany.id);
 
     if (error) throw error;
     res.json({ message: 'Item deleted successfully' });
@@ -420,7 +392,7 @@ app.get('/api/inventory/stats/overview', async (req, res) => {
     const { data: items, error } = await supabase
       .from('inventory_items')
       .select('*')
-      .eq('companyId', demoCompany.id);
+      .eq('companyid', demoCompany.id);
 
     if (error) throw error;
 
