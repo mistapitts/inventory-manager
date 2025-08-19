@@ -815,12 +815,14 @@ body {
 /* Reduce spacing for inventory section header */
 .inventory-section .section-header {
     margin-bottom: 0px;
-    padding: 8px 0 12px 0;
+    padding: 8px 0 4px 0;
     position: static;
     background: transparent;
     border-bottom: none;
     backdrop-filter: none;
     box-shadow: none;
+    display: flex;
+    align-items: flex-end;
 }
 
 /* Border line positioned between legend and table */
