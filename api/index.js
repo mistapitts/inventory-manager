@@ -425,7 +425,7 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
 
     const qrCodeUrl = generateQRCodeUrl(itemId);
     res.status(201).json({ 
-      item: data, 
+      item: convertDbItemToFrontend(data), 
       qrCodeUrl, 
       qrCodePath: qrCodeUrl, 
       message: 'Item created successfully' 
