@@ -340,6 +340,15 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       fields[key] = value === '' ? null : value;
     });
     
+    // Debug: Log the exact mapping we're about to use
+    console.log('=== FIELD MAPPING DEBUG ===');
+    console.log('itemType from form:', fields.itemType, '-> itemtype in DB');
+    console.log('labId from form:', fields.labId, '-> labid in DB'); 
+    console.log('serialNumber from form:', fields.serialNumber, '-> serialnumber in DB');
+    console.log('nickname from form:', fields.nickname, '-> nickname in DB');
+    console.log('make from form:', fields.make, '-> make in DB');
+    console.log('model from form:', fields.model, '-> model in DB');
+    
     const item = {
       id: itemId,
       companyid: demoCompany.id,
@@ -380,6 +389,10 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       .single();
 
     if (error) throw error;
+    
+    // Debug: Log what actually got saved to database
+    console.log('=== DATABASE RESULT ===');
+    console.log('Saved item:', JSON.stringify(data, null, 2));
 
     const qrCodeUrl = generateQRCodeUrl(itemId);
     res.status(201).json({ 
