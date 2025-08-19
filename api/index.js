@@ -74,22 +74,7 @@ app.get('/api/health', (req, res) => {
 
 
 
-// Debug: Log what the frontend is actually sending
-app.post('/api/debug-form-data', async (req, res) => {
-  try {
-    console.log('=== FORM DATA DEBUG ===');
-    console.log('req.body:', JSON.stringify(req.body, null, 2));
-    console.log('req.body keys:', Object.keys(req.body));
-    
-    res.json({
-      message: 'Form data received and logged',
-      received_data: req.body,
-      field_count: Object.keys(req.body).length
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 // Clean up test/placeholder items
 app.get('/api/cleanup-test-items', async (req, res) => {
@@ -346,19 +331,14 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
     const nextCal = new Date(now.getTime() + 365*24*60*60*1000);
     const nextMaint = new Date(now.getTime() + 180*24*60*60*1000);
 
-    // Handle multipart form data
+    // Handle multipart form data and convert empty strings to null
     const fields = {};
     
-    // Extract all form fields from multer parsed data
     Object.keys(req.body || {}).forEach(key => {
-      fields[key] = req.body[key];
+      const value = req.body[key];
+      // Convert empty strings to null for cleaner database storage
+      fields[key] = value === '' ? null : value;
     });
-    
-    // Debug logging
-    console.log('=== ITEM CREATION DEBUG ===');
-    console.log('Raw req.body:', JSON.stringify(req.body, null, 2));
-    console.log('Processed fields:', JSON.stringify(fields, null, 2));
-    console.log('Field keys:', Object.keys(fields));
     
     const item = {
       id: itemId,
@@ -378,8 +358,8 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       calibrationinterval: fields.calibrationInterval ? Number(fields.calibrationInterval) : 12,
       calibrationintervaltype: fields.calibrationIntervalType || 'months',
       calibrationmethod: fields.calibrationMethod || 'In-House',
-      maintenancedate: fields.maintenanceDate || formatDate(now),
-      maintenancedue: fields.maintenanceDue || formatDate(nextMaint),
+      maintenancedate: fields.maintenanceDate || null,
+      maintenancedue: fields.maintenanceDue || null,
       maintenanceinterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
       maintenanceintervaltype: fields.maintenanceIntervalType || null,
       isoutsourced: (fields.calibrationType || 'in_house') === 'outsourced',
@@ -388,7 +368,7 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       outofservicereason: null,
       notes: fields.notes || '',
       image: null,
-      listid: fields.listId || null, // Allow null if no list is selected
+      listid: fields.listId || null,
       createdat: now.toISOString(),
       updatedat: now.toISOString()
     };
