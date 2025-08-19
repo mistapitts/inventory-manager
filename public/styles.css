@@ -825,10 +825,24 @@ body {
     align-items: flex-end;
 }
 
+/* Inventory title positioned above border line */
+.inventory-title-header {
+    margin: 8px 0 4px 0;
+    padding: 0;
+}
+
+.inventory-title-header h2 {
+    margin: 0;
+    padding: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
 /* Border line positioned between legend and table */
 .inventory-header-border {
     border-top: 1px solid var(--border-color);
-    margin: 8px 0 12px 0;
+    margin: 0px 0 12px 0;
     padding: 0;
 }
 
