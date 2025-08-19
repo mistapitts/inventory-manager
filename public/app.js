@@ -1727,27 +1727,37 @@ function displayItemDetails(data) {
     // Store current item details globally for use in upload modal
     window.currentItemDetails = item;
     
-    title.textContent = `${item.itemType} - ${item.nickname || item.make} ${item.model}`;
+    title.textContent = `${item.itemType || 'Unknown Type'} - ${item.nickname || item.make || ''} ${item.model || ''}`;
     
     const showMaintenance = !!(item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval || item.maintenanceIntervalType);
+
+    // Helper function to safely format dates
+    const safeDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid Date';
+        }
+    };
 
     let topGridHtml = `<div class="item-detail-grid">
             <div class="item-detail-section">
                 <h3>Basics</h3>
-                <div class="item-detail-row"><span class="item-detail-label">Type:</span><span class="item-detail-value">${item.itemType}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Type:</span><span class="item-detail-value">${item.itemType || 'N/A'}</span></div>
                 <div class="item-detail-row"><span class="item-detail-label">Nickname:</span><span class="item-detail-value">${item.nickname || 'N/A'}</span></div>
                 <div class="item-detail-row"><span class="item-detail-label">Lab ID:</span><span class="item-detail-value">${item.labId || 'N/A'}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Make/Model:</span><span class="item-detail-value">${item.make} ${item.model}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Serial #:</span><span class="item-detail-value">${item.serialNumber}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Received/In Service:</span><span class="item-detail-value">${new Date(item.dateReceived).toLocaleDateString()} • ${new Date(item.datePlacedInService).toLocaleDateString()}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Location:</span><span class="item-detail-value">${item.location}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Make/Model:</span><span class="item-detail-value">${item.make || ''} ${item.model || ''}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Serial #:</span><span class="item-detail-value">${item.serialNumber || 'N/A'}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Received/In Service:</span><span class="item-detail-value">${safeDate(item.dateReceived)} • ${safeDate(item.datePlacedInService)}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Location:</span><span class="item-detail-value">${item.location || 'N/A'}</span></div>
             </div>
             <div class="item-detail-section">
                 <h3>Calibration</h3>
-                <div class="item-detail-row"><span class="item-detail-label">Type:</span><span class="item-detail-value">${item.isOutsourced ? 'Outsourced' : 'In-House'}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Last • Next:</span><span class="item-detail-value">${item.calibrationDate ? new Date(item.calibrationDate).toLocaleDateString() : 'N/A'} • ${new Date(item.nextCalibrationDue).toLocaleDateString()}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Interval:</span><span class="item-detail-value">${item.calibrationInterval} ${item.calibrationIntervalType}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Method/Company:</span><span class="item-detail-value">${item.calibrationMethod}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Type:</span><span class="item-detail-value">${(item.isOutsourced === 1 || item.isOutsourced === true) ? 'Outsourced' : 'In-House'}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Last • Next:</span><span class="item-detail-value">${safeDate(item.calibrationDate)} • ${safeDate(item.nextCalibrationDue)}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Interval:</span><span class="item-detail-value">${item.calibrationInterval || 'N/A'} ${item.calibrationIntervalType || ''}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Method/Company:</span><span class="item-detail-value">${item.calibrationMethod || 'N/A'}</span></div>
                 <div class="item-detail-row">
                     <span class="item-detail-label">Files:</span>
                     <span class="item-detail-value">
@@ -1761,7 +1771,7 @@ function displayItemDetails(data) {
         topGridHtml += `
             <div class="item-detail-section">
                 <h3>Maintenance</h3>
-                <div class="item-detail-row"><span class="item-detail-label">Last • Next:</span><span class="item-detail-value">${item.maintenanceDate ? new Date(item.maintenanceDate).toLocaleDateString() : 'N/A'} • ${item.maintenanceDue ? new Date(item.maintenanceDue).toLocaleDateString() : 'N/A'}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Last • Next:</span><span class="item-detail-value">${safeDate(item.maintenanceDate)} • ${safeDate(item.maintenanceDue)}</span></div>
                 <div class="item-detail-row"><span class="item-detail-label">Interval:</span><span class="item-detail-value">${item.maintenanceInterval || '—'} ${item.maintenanceIntervalType || ''}</span></div>
                 <div class="item-detail-row">
                     <span class="item-detail-label">Files:</span>
@@ -1775,7 +1785,7 @@ function displayItemDetails(data) {
                 <h3>Calibration Records (${calibrationRecords.length})</h3>
                 ${calibrationRecords.length > 0 ? 
                     calibrationRecords.map(record => {
-                        const displayDate = record.calibrationDate ? new Date(record.calibrationDate).toLocaleDateString() : '—';
+                        const displayDate = safeDate(record.calibrationDate);
                         const isExisting = record.method === 'Existing Document Upload';
                         const recordType = isExisting ? 'Existing Calibration' : 'New Calibration';
                         return `
@@ -1805,7 +1815,7 @@ function displayItemDetails(data) {
                 <h3>Maintenance Records (${maintenanceRecords.length})</h3>
                 ${maintenanceRecords.length > 0 ? 
                     maintenanceRecords.map(record => {
-                        const displayDate = record.maintenanceDate ? new Date(record.maintenanceDate).toLocaleDateString() : '—';
+                        const displayDate = safeDate(record.maintenanceDate);
                         const isExisting = record.type === 'Existing Document Upload';
                         const recordType = isExisting ? 'Existing Maintenance' : 'New Maintenance';
                         return `
@@ -1830,7 +1840,7 @@ function displayItemDetails(data) {
                 <h3>Calibration Records (${calibrationRecords.length})</h3>
                 ${calibrationRecords.length > 0 ? 
                     calibrationRecords.map(record => {
-                        const displayDate = record.calibrationDate ? new Date(record.calibrationDate).toLocaleDateString() : '—';
+                        const displayDate = safeDate(record.calibrationDate);
                         const isExisting = record.method === 'Existing Document Upload';
                         const recordType = isExisting ? 'Existing Calibration' : 'New Calibration';
                         return `

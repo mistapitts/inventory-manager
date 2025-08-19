@@ -348,8 +348,11 @@ app.get('/api/inventory/:id', async (req, res) => {
     if (error) throw error;
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
+    // Convert database item to frontend format (camelCase)
+    const convertedItem = convertDbItemToFrontend(item);
+
     res.json({ 
-      item, 
+      item: convertedItem, 
       calibrationRecords: [], 
       maintenanceRecords: [], 
       changelog: [{ id: generateId(), action: 'viewed', timestamp: new Date().toISOString() }] 
