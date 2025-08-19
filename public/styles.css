@@ -826,7 +826,7 @@ body {
 /* Border line positioned between legend and table */
 .inventory-header-border {
     border-top: 1px solid var(--border-color);
-    margin: 0;
+    margin: 12px 0;
     padding: 0;
 }
 
