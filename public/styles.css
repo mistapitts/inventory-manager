@@ -828,7 +828,7 @@ body {
 /* Border line positioned between legend and table */
 .inventory-header-border {
     border-top: 1px solid var(--border-color);
-    margin: 12px 0;
+    margin: 8px 0 12px 0;
     padding: 0;
 }
 
@@ -1030,7 +1030,7 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px;
-    margin-bottom: 8px;
+    margin-bottom: 0px;
 }
 
 .inventory-main-content {
