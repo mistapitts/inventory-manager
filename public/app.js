@@ -1724,6 +1724,15 @@ function displayItemDetails(data) {
     const content = document.getElementById('itemDetailContent');
     const title = document.getElementById('itemDetailTitle');
     
+    // Debug: Log the item data to see what file fields we have
+    console.log('Item data received:', item);
+    console.log('File fields:', {
+        calibrationTemplate: item.calibrationTemplate,
+        calibrationInstructions: item.calibrationInstructions,
+        maintenanceTemplate: item.maintenanceTemplate,
+        maintenanceInstructions: item.maintenanceInstructions
+    });
+    
     // Store current item details globally for use in upload modal
     window.currentItemDetails = item;
     
@@ -1776,8 +1785,8 @@ function displayItemDetails(data) {
                 <div class="item-detail-row">
                     <span class="item-detail-label">Files:</span>
                     <span class="item-detail-value">
-                        ${(item.maintenanceTemplate ? `<a href="/uploads/docs/${item.maintenanceTemplate}" target="_blank" download>Template</a>` : '—')} •
-                        ${(item.maintenanceInstructions ? `<a href="/uploads/docs/${item.maintenanceInstructions}" target="_blank" download>Instructions</a>` : '—')}
+                        ${(item.maintenanceTemplate ? `<a href="#" onclick="downloadFile('${item.maintenanceTemplate}', 'maintenance-template')" class="file-link">Template</a>` : '—')} •
+                        ${(item.maintenanceInstructions ? `<a href="#" onclick="downloadFile('${item.maintenanceInstructions}', 'maintenance-instructions')" class="file-link">Instructions</a>` : '—')}
                     </span>
                 </div>
             </div>
