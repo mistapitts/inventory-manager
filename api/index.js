@@ -125,22 +125,47 @@ app.get('/api/inventory/lists', async (req, res) => {
 
     if (error) throw error;
 
-    if (!lists || lists.length === 0) {
-      // Create default lists if none exist
-      const defaultLists = [
-        { id: 'list-1', companyId: demoCompany.id, name: 'Active Equipment', color: '#10b981', textColor: '#ffffff' },
-        { id: 'list-2', companyId: demoCompany.id, name: 'Calibration Due', color: '#f59e0b', textColor: '#ffffff' },
-        { id: 'list-3', companyId: demoCompany.id, name: 'Maintenance Required', color: '#ef4444', textColor: '#ffffff' }
-      ];
-
-      await supabase.from('lists').insert(defaultLists);
-      res.json({ lists: defaultLists });
-    } else {
-      res.json({ lists });
-    }
+    // Return empty array if no lists exist - no auto-creation
+    res.json({ lists: lists || [] });
   } catch (error) {
     console.error('Error fetching lists:', error);
     res.status(500).json({ error: 'Failed to fetch lists' });
+  }
+});
+
+// Create new list
+app.post('/api/inventory/lists', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  
+  try {
+    const { name, color = '#6b7280', textColor = '#ffffff' } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'List name is required' });
+    }
+
+    const newList = {
+      id: generateId(),
+      companyId: demoCompany.id,
+      name,
+      color,
+      textColor,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('lists')
+      .insert(newList)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (error) {
+    console.error('Error creating list:', error);
+    res.status(500).json({ error: 'Failed to create list' });
   }
 });
 
@@ -165,6 +190,43 @@ app.put('/api/inventory/lists/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating list:', error);
     res.status(500).json({ error: 'Failed to update list' });
+  }
+});
+
+// Delete list
+app.delete('/api/inventory/lists/:id', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  
+  try {
+    const listId = req.params.id;
+    
+    // Check if list has any items
+    const { data: items, error: itemsError } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .eq('listId', listId)
+      .limit(1);
+
+    if (itemsError) throw itemsError;
+
+    if (items && items.length > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete list that contains items. Move or delete items first.' 
+      });
+    }
+
+    const { error } = await supabase
+      .from('lists')
+      .delete()
+      .eq('id', listId)
+      .eq('companyId', demoCompany.id);
+
+    if (error) throw error;
+    res.json({ message: 'List deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting list:', error);
+    res.status(500).json({ error: 'Failed to delete list' });
   }
 });
 
@@ -251,7 +313,7 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       maintenanceInterval: fields.maintenanceInterval ? Number(fields.maintenanceInterval) : null,
       maintenanceIntervalType: fields.maintenanceIntervalType || null,
       isOutOfService: false,
-      listId: fields.listId || 'list-1',
+      listId: fields.listId || null, // Allow null if no list is selected
       notes: fields.notes || '',
       createdAt: now.toISOString(),
       updatedAt: now.toISOString()
