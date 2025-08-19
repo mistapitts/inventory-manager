@@ -825,9 +825,20 @@ body {
     align-items: flex-end;
 }
 
-/* Inventory title positioned above border line */
-.inventory-title-header {
+/* Inventory header row with title and legend side by side */
+.inventory-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
     margin: 8px 0 4px 0;
+    padding: 0;
+}
+
+/* Inventory title positioned on the left */
+.inventory-title-header {
+    flex: 1;
+    margin: 0;
     padding: 0;
 }
 
@@ -837,6 +848,19 @@ body {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+/* Legend positioned inline on the right */
+.inventory-legend-inline {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Border line positioned between legend and table */
