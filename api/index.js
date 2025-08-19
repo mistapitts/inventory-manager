@@ -61,6 +61,35 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }); 
 }
 
+// Ensure storage bucket exists for file uploads
+async function ensureStorageBucket() {
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets.some(bucket => bucket.name === 'inventory-docs');
+    
+    if (!bucketExists) {
+      const { error: bucketError } = await supabase.storage.createBucket('inventory-docs', {
+        public: true,
+        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        fileSizeLimit: 52428800 // 50MB
+      });
+      
+      if (bucketError) {
+        console.error('Error creating storage bucket:', bucketError);
+      } else {
+        console.log('Storage bucket created successfully');
+      }
+    } else {
+      console.log('Storage bucket already exists');
+    }
+  } catch (storageError) {
+    console.error('Error checking/creating storage bucket:', storageError);
+  }
+}
+
+// Initialize storage bucket on app startup
+ensureStorageBucket();
+
 // Health check endpoint
 app.get('/api/health', (req, res) => { 
   res.json({ 
@@ -72,8 +101,77 @@ app.get('/api/health', (req, res) => {
   }); 
 });
 
-
-
+// Temporary endpoint to check and fix database schema
+app.get('/api/fix-schema', async (req, res) => {
+  try {
+    // Check if file columns exist
+    const { data: columns, error: columnsError } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .limit(1);
+    
+    if (columnsError) throw columnsError;
+    
+    // Check if we need to add file columns
+    const sampleItem = columns[0];
+    const missingColumns = [];
+    
+    if (!sampleItem.hasOwnProperty('calibrationtemplate')) {
+      missingColumns.push('calibrationtemplate');
+    }
+    if (!sampleItem.hasOwnProperty('calibrationinstructions')) {
+      missingColumns.push('calibrationinstructions');
+    }
+    if (!sampleItem.hasOwnProperty('maintenancetemplate')) {
+      missingColumns.push('maintenancetemplate');
+    }
+    if (!sampleItem.hasOwnProperty('maintenanceinstructions')) {
+      missingColumns.push('maintenanceinstructions');
+    }
+    
+    if (missingColumns.length > 0) {
+      // Add missing columns using SQL
+      const { error: alterError } = await supabase.rpc('exec_sql', {
+        sql: `
+          ALTER TABLE inventory_items 
+          ADD COLUMN IF NOT EXISTS calibrationtemplate TEXT,
+          ADD COLUMN IF NOT EXISTS calibrationinstructions TEXT,
+          ADD COLUMN IF NOT EXISTS maintenancetemplate TEXT,
+          ADD COLUMN IF NOT EXISTS maintenanceinstructions TEXT;
+        `
+      });
+      
+      if (alterError) {
+        console.error('Error adding columns:', alterError);
+        return res.json({ 
+          status: 'error', 
+          message: 'Failed to add missing columns',
+          error: alterError.message,
+          missingColumns 
+        });
+      }
+      
+      res.json({ 
+        status: 'success', 
+        message: 'Added missing file columns',
+        addedColumns: missingColumns 
+      });
+    } else {
+      res.json({ 
+        status: 'success', 
+        message: 'All file columns already exist',
+        existingColumns: ['calibrationtemplate', 'calibrationinstructions', 'maintenancetemplate', 'maintenanceinstructions']
+      });
+    }
+  } catch (error) {
+    console.error('Error fixing schema:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Failed to check/fix schema',
+      error: error.message 
+    });
+  }
+});
 
 
 // Clean up test/placeholder items
@@ -146,28 +244,6 @@ app.post('/api/company/setup-demo', async (req, res) => {
 
     if (!existingCompany) {
       await supabase.from('companies').insert(demoCompany);
-    }
-
-    // Ensure storage bucket exists for file uploads
-    try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets.some(bucket => bucket.name === 'inventory-docs');
-      
-      if (!bucketExists) {
-        const { error: bucketError } = await supabase.storage.createBucket('inventory-docs', {
-          public: true,
-          allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-          fileSizeLimit: 52428800 // 50MB
-        });
-        
-        if (bucketError) {
-          console.error('Error creating storage bucket:', bucketError);
-        } else {
-          console.log('Storage bucket created successfully');
-        }
-      }
-    } catch (storageError) {
-      console.error('Error checking/creating storage bucket:', storageError);
     }
 
     res.json({ company: demoCompany, message: 'Demo company setup successfully' });
