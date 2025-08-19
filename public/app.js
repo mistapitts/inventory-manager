@@ -2466,23 +2466,18 @@ window.addEventListener('unhandledrejection', function(e) {
 // Update the inventory legend with current lists
 function updateInventoryLegend() {
     const legendLists = document.getElementById('legendLists');
-    const legendListsInline = document.getElementById('legendListsInline');
-    if (!window.loadedLists) return;
+    if (!legendLists || !window.loadedLists) return;
     
-    // Update both legend containers
-    [legendLists, legendListsInline].forEach(container => {
-        if (!container) return;
-        container.innerHTML = '';
-        
-        window.loadedLists.forEach(list => {
-            const legendItem = document.createElement('div');
-            legendItem.className = 'legend-list-item';
-            legendItem.innerHTML = `
-                <div class="legend-list-color" style="background-color: ${list.color}"></div>
-                <span>${list.name}</span>
-            `;
-            container.appendChild(legendItem);
-        });
+    legendLists.innerHTML = '';
+    
+    window.loadedLists.forEach(list => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-list-item';
+        legendItem.innerHTML = `
+            <div class="legend-list-color" style="background-color: ${list.color}"></div>
+            <span>${list.name}</span>
+        `;
+        legendLists.appendChild(legendItem);
     });
 }
 
