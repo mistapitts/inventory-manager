@@ -304,6 +304,11 @@ function convertDbItemToFrontend(dbItem) {
     notes: dbItem.notes,
     image: dbItem.image,
     listId: dbItem.listid,
+    // Add file fields
+    calibrationTemplate: dbItem.calibrationtemplate,
+    calibrationInstructions: dbItem.calibrationinstructions,
+    maintenanceTemplate: dbItem.maintenancetemplate,
+    maintenanceInstructions: dbItem.maintenanceinstructions,
     createdAt: dbItem.createdat,
     updatedAt: dbItem.updatedat
   };
@@ -383,6 +388,39 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       fields[key] = value === '' ? null : value;
     });
     
+    // Handle file uploads
+    const uploadedFiles = req.files || [];
+    const filePaths = {};
+    
+    // Process uploaded files
+    for (const file of uploadedFiles) {
+      if (file.fieldname === 'calibrationTemplate' || 
+          file.fieldname === 'calibrationInstructions' || 
+          file.fieldname === 'maintenanceTemplate' || 
+          file.fieldname === 'maintenanceInstructions') {
+        
+        // Generate unique filename
+        const fileExtension = file.originalname.split('.').pop();
+        const fileName = `${file.fieldname}_${itemId}.${fileExtension}`;
+        const filePath = `uploads/docs/${fileName}`;
+        
+        // Save file to filesystem
+        const fs = require('fs');
+        const path = require('path');
+        const uploadDir = path.join(__dirname, '../uploads/docs');
+        
+        // Ensure upload directory exists
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        // Write file
+        fs.writeFileSync(path.join(uploadDir, fileName), file.buffer);
+        
+        // Store file path for database
+        filePaths[file.fieldname] = fileName;
+      }
+    }
 
     
     const item = {
@@ -414,6 +452,11 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       notes: fields.notes || '',
       image: null,
       listid: fields.listId || null,
+      // Add file paths for uploaded files
+      calibrationtemplate: filePaths.calibrationTemplate || null,
+      calibrationinstructions: filePaths.calibrationInstructions || null,
+      maintenancetemplate: filePaths.maintenanceTemplate || null,
+      maintenanceinstructions: filePaths.maintenanceInstructions || null,
       createdat: now.toISOString(),
       updatedat: now.toISOString()
     };
