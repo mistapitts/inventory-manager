@@ -109,6 +109,7 @@ app.post('/api/test-item', async (req, res) => {
       serialnumber: 'TEST123',
       condition: 'Good',
       datereceived: '08/18/2025',
+      dateplacedInservice: '08/18/2025', // This was missing!
       location: 'Test Location',
       nextcalibrationdue: '08/18/2026',
       calibrationinterval: 12,
