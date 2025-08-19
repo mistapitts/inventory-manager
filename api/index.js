@@ -503,9 +503,9 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
           file.fieldname === 'maintenanceInstructions') {
         
         try {
-          // Generate unique filename
+          // Generate unique filename while preserving original name
           const fileExtension = file.originalname.split('.').pop();
-          const fileName = `${file.fieldname}_${itemId}.${fileExtension}`;
+          const fileName = `${file.fieldname}_${itemId}_${file.originalname}`;
           
           // Upload to Supabase Storage
           const { data: uploadData, error: uploadError } = await supabase.storage
@@ -701,12 +701,47 @@ app.get('/api/storage/download/:fileName', async (req, res) => {
     
     if (error) throw error;
     
-    // Set appropriate headers
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    // Get original filename from the generated filename
+    // Format: calibrationTemplate_itemId.ext -> extract original name
+    let displayName = fileName;
+    if (fileName.includes('_')) {
+      const parts = fileName.split('_');
+      if (parts.length >= 3) {
+        // Remove the fieldname and itemId parts, keep the rest as original name
+        displayName = parts.slice(2).join('_');
+      }
+    }
     
-    // Send the file
-    res.send(data);
+    // Determine content type based on file extension
+    const extension = fileName.split('.').pop().toLowerCase();
+    let contentType = 'application/octet-stream';
+    
+    switch (extension) {
+      case 'pdf':
+        contentType = 'application/pdf';
+        break;
+      case 'doc':
+        contentType = 'application/msword';
+        break;
+      case 'docx':
+        contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case 'xls':
+        contentType = 'application/vnd.ms-excel';
+        break;
+      case 'xlsx':
+        contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+    }
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${displayName}"`);
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Convert blob to buffer and send
+    const buffer = Buffer.from(await data.arrayBuffer());
+    res.send(buffer);
   } catch (error) {
     console.error('Error downloading file:', error);
     res.status(500).json({ error: 'Failed to download file' });
