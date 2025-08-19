@@ -130,31 +130,31 @@ app.get('/api/fix-schema', async (req, res) => {
     }
     
     if (missingColumns.length > 0) {
-      // Add missing columns using SQL
-      const { error: alterError } = await supabase.rpc('exec_sql', {
-        sql: `
-          ALTER TABLE inventory_items 
-          ADD COLUMN IF NOT EXISTS calibrationtemplate TEXT,
-          ADD COLUMN IF NOT EXISTS calibrationinstructions TEXT,
-          ADD COLUMN IF NOT EXISTS maintenancetemplate TEXT,
-          ADD COLUMN IF NOT EXISTS maintenanceinstructions TEXT;
-        `
-      });
-      
-      if (alterError) {
-        console.error('Error adding columns:', alterError);
-        return res.json({ 
-          status: 'error', 
-          message: 'Failed to add missing columns',
-          error: alterError.message,
-          missingColumns 
-        });
-      }
+      // Provide SQL commands for manual execution
+      const sqlCommands = `
+-- Run these SQL commands in your Supabase SQL Editor to add the missing columns:
+
+ALTER TABLE inventory_items 
+ADD COLUMN IF NOT EXISTS calibrationtemplate TEXT;
+
+ALTER TABLE inventory_items 
+ADD COLUMN IF NOT EXISTS calibrationinstructions TEXT;
+
+ALTER TABLE inventory_items 
+ADD COLUMN IF NOT EXISTS maintenancetemplate TEXT;
+
+ALTER TABLE inventory_items 
+ADD COLUMN IF NOT EXISTS maintenanceinstructions TEXT;
+
+-- After running these commands, refresh this page to verify the columns were added.
+      `;
       
       res.json({ 
-        status: 'success', 
-        message: 'Added missing file columns',
-        addedColumns: missingColumns 
+        status: 'manual_action_required', 
+        message: 'Please run the SQL commands below in your Supabase SQL Editor',
+        missingColumns,
+        sqlCommands: sqlCommands.trim(),
+        instructions: '1. Go to your Supabase dashboard > SQL Editor 2. Copy and paste the SQL commands above 3. Click "Run" 4. Refresh this page to verify'
       });
     } else {
       res.json({ 
@@ -164,10 +164,10 @@ app.get('/api/fix-schema', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error fixing schema:', error);
+    console.error('Error checking schema:', error);
     res.status(500).json({ 
       status: 'error', 
-      message: 'Failed to check/fix schema',
+      message: 'Failed to check schema',
       error: error.message 
     });
   }
