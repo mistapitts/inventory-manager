@@ -72,6 +72,35 @@ app.get('/api/health', (req, res) => {
   }); 
 });
 
+// Test lists query
+app.get('/api/test-lists', async (req, res) => {
+  try {
+    // First, let's check if we can query the lists table at all
+    const { data: allLists, error: allError } = await supabase
+      .from('lists')
+      .select('*');
+    
+    console.log('All lists query result:', { data: allLists, error: allError });
+    
+    // Then try the problematic query
+    const { data: companyLists, error: companyError } = await supabase
+      .from('lists')
+      .select('*')
+      .eq('companyId', demoCompany.id);
+    
+    console.log('Company lists query result:', { data: companyLists, error: companyError });
+    
+    res.json({
+      allLists: { data: allLists, error: allError },
+      companyLists: { data: companyLists, error: companyError },
+      demoCompanyId: demoCompany.id
+    });
+  } catch (error) {
+    console.error('Test lists error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Demo login endpoint
 app.post('/api/auth/login', (req, res) => {
   try {

@@ -77,6 +77,18 @@ function setupEventListeners() {
         setupCompanyBtn.addEventListener('click', setupDemoCompany);
     }
     
+    // Create first list button
+    const createFirstListBtn = document.getElementById('createFirstListBtn');
+    if (createFirstListBtn) {
+        createFirstListBtn.addEventListener('click', showCreateFirstListModal);
+    }
+    
+    // Create list from form button
+    const createListFromFormBtn = document.getElementById('createListFromForm');
+    if (createListFromFormBtn) {
+        createListFromFormBtn.addEventListener('click', showCreateListFromFormModal);
+    }
+    
     // Maintenance checkbox toggle
     const useMaintenanceCheckbox = document.getElementById('useMaintenance');
     const maintenanceFields = document.getElementById('maintenanceFields');
@@ -364,10 +376,15 @@ async function setupDemoCompany() {
             if (setupCompanyBtn) {
                 setupCompanyBtn.style.display = 'none';
             }
+            // Show the create first list button
+            const createFirstListBtn = document.getElementById('createFirstListBtn');
+            if (createFirstListBtn) {
+                createFirstListBtn.style.display = 'inline-block';
+            }
             // Update welcome message
             const welcomeMessage = document.getElementById('welcomeMessage');
             if (welcomeMessage) {
-                welcomeMessage.querySelector('p').textContent = 'Your company is set up! Start by adding your first item.';
+                welcomeMessage.querySelector('p').textContent = 'Your company is set up! Create your first list, then add items.';
             }
         } else {
             const error = await response.json();
@@ -1232,6 +1249,13 @@ async function handleAddItem(event) {
             formData.set('calibrationType', 'in_house');
         }
         
+        // Check if a list is selected, if not, show the create list modal
+        const selectedListId = formData.get('listId');
+        if (!selectedListId) {
+            showToast('Please select a list or create a new one', 'error');
+            return;
+        }
+        
         // Note: Do NOT append inputs again. FormData(form) already contains all fields and files.
         
         const response = await fetch('/api/inventory', {
@@ -1358,10 +1382,23 @@ async function loadListsIntoSelectors(selectAfterName) {
                 lists.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
             if (selectAfterName) {
                 const created = (lists || []).find(l => l.name === selectAfterName);
-                if (created) listSelect.value = created.id;
+                if (created) {
+                    listSelect.value = created.id;
+                    // If this was created from the form, show a success message
+                    const modal = document.getElementById('createListModal');
+                    if (modal && modal.getAttribute('data-create-from-form') === 'true') {
+                        showToast(`List "${created.name}" created and selected! You can now submit your item.`, 'success');
+                    }
+                }
             } else if (current) {
                 listSelect.value = current;
             }
+        }
+        
+        // Show/hide the "Create New List" button in the Add Item form
+        const createListFromFormBtn = document.getElementById('createListFromForm');
+        if (createListFromFormBtn) {
+            createListFromFormBtn.style.display = lists.length === 0 ? 'inline-block' : 'none';
         }
         const listOptions = document.getElementById('listOptions');
         if (listOptions) {
@@ -2469,6 +2506,34 @@ function showCreateListModal() {
     }
 }
 
+// Show create first list modal (from welcome screen)
+function showCreateFirstListModal() {
+    console.log('Showing create first list modal...');
+    const modal = document.getElementById('createListModal');
+    if (modal) {
+        modal.classList.add('show');
+        setupColorSelection();
+        // Set a special flag to hide the button after creation
+        modal.setAttribute('data-create-first', 'true');
+    } else {
+        console.error('Create list modal not found!');
+    }
+}
+
+// Show create list modal from Add Item form
+function showCreateListFromFormModal() {
+    console.log('Showing create list modal from form...');
+    const modal = document.getElementById('createListModal');
+    if (modal) {
+        modal.classList.add('show');
+        setupColorSelection();
+        // Set a special flag to handle form submission after creation
+        modal.setAttribute('data-create-from-form', 'true');
+    } else {
+        console.error('Create list modal not found!');
+    }
+}
+
 // Hide create list modal
 function hideCreateListModal() {
     const modal = document.getElementById('createListModal');
@@ -2743,6 +2808,31 @@ async function handleCreateList(e) {
         hideCreateListModal();
         await loadListsIntoSelectors(result.name);
         await loadInventoryItems();
+        
+        // Handle special cases
+        const modal = document.getElementById('createListModal');
+        if (modal) {
+            // If this was the first list creation, hide the button
+            if (modal.getAttribute('data-create-first') === 'true') {
+                const createFirstListBtn = document.getElementById('createFirstListBtn');
+                if (createFirstListBtn) {
+                    createFirstListBtn.style.display = 'none';
+                }
+                // Update welcome message
+                const welcomeMessage = document.getElementById('welcomeMessage');
+                if (welcomeMessage) {
+                    welcomeMessage.querySelector('p').textContent = 'Great! Now you can add your first item.';
+                }
+                modal.removeAttribute('data-create-first');
+            }
+            
+            // If this was from the Add Item form, handle form submission
+            if (modal.getAttribute('data-create-from-form') === 'true') {
+                // The list is now created, so we can proceed with item creation
+                // The form will be submitted normally with the new list ID
+                modal.removeAttribute('data-create-from-form');
+            }
+        }
         
         // Reset form
         e.target.reset();
