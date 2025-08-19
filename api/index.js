@@ -94,6 +94,53 @@ app.get('/api/debug-schema', async (req, res) => {
   }
 });
 
+// Test minimal item creation
+app.post('/api/test-item', async (req, res) => {
+  try {
+    const itemId = 'test-' + Date.now();
+    
+    // Try with minimal required fields first
+    const minimalItem = {
+      id: itemId,
+      companyid: demoCompany.id,
+      itemtype: 'Equipment',
+      make: 'Test Make',
+      model: 'Test Model',
+      serialnumber: 'TEST123',
+      condition: 'Good',
+      datereceived: '08/18/2025',
+      location: 'Test Location',
+      nextcalibrationdue: '08/18/2026',
+      calibrationinterval: 12,
+      calibrationintervaltype: 'months',
+      calibrationmethod: 'In-House',
+      isoutsourced: false,
+      createdat: new Date().toISOString(),
+      updatedat: new Date().toISOString()
+    };
+    
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .insert(minimalItem)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    res.json({
+      message: 'Test item created successfully',
+      item: data,
+      columns_used: Object.keys(minimalItem)
+    });
+  } catch (error) {
+    console.error('Test item creation error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: error
+    });
+  }
+});
+
 // Clean up auto-generated demo lists
 app.get('/api/cleanup-demo-lists', async (req, res) => {
   try {
