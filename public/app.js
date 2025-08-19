@@ -842,10 +842,13 @@ function createInventoryRow(item) {
     });
     
     // Add color coding for calibration type (border for outsourced)
-    if (item.isOutsourced === 1) {
+    console.log('Item isOutsourced value:', item.isOutsourced, 'type:', typeof item.isOutsourced);
+    if (item.isOutsourced === 1 || item.isOutsourced === true) {
         row.classList.add('outsourced');
+        console.log('Added outsourced class to item:', item.nickname);
     } else {
         row.classList.add('in-house');
+        console.log('Added in-house class to item:', item.nickname);
     }
     
     // Add list ID attribute for CSS targeting
