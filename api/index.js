@@ -346,11 +346,18 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
     const nextCal = new Date(now.getTime() + 365*24*60*60*1000);
     const nextMaint = new Date(now.getTime() + 180*24*60*60*1000);
 
-    const fields = req.body || {};
+    // Handle multipart form data
+    const fields = {};
+    
+    // Extract all form fields from multer parsed data
+    Object.keys(req.body || {}).forEach(key => {
+      fields[key] = req.body[key];
+    });
     
     // Debug logging
     console.log('=== ITEM CREATION DEBUG ===');
-    console.log('Received fields:', JSON.stringify(fields, null, 2));
+    console.log('Raw req.body:', JSON.stringify(req.body, null, 2));
+    console.log('Processed fields:', JSON.stringify(fields, null, 2));
     console.log('Field keys:', Object.keys(fields));
     
     const item = {
