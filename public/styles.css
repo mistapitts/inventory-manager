@@ -814,11 +814,11 @@ body {
 
 /* Reduce spacing for inventory section header */
 .inventory-section .section-header {
-    margin-bottom: 12px;
-    padding: 8px 0;
+    margin-bottom: 16px;
+    padding: 8px 0 8px 0;
     position: static;
     background: transparent;
-    border-bottom: none;
+    border-bottom: 1px solid var(--border-color);
     backdrop-filter: none;
     box-shadow: none;
 }
