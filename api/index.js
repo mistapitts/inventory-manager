@@ -72,11 +72,25 @@ app.get('/api/health', (req, res) => {
   }); 
 });
 
-// Debug: Check actual database schema
+// Debug: Check actual database schema - including empty table structure
 app.get('/api/debug-schema', async (req, res) => {
   try {
-    // Get one item to see actual column names
-    const { data: items, error } = await supabase
+    // Try to get table column info directly
+    const { data: tableInfo, error: tableError } = await supabase
+      .rpc('get_table_columns', { table_name: 'inventory_items' })
+      .catch(() => null);
+    
+    // Fallback: try a simple insert with one field to see what's available
+    const testId = 'schema-test-' + Date.now();
+    const { data: insertTest, error: insertError } = await supabase
+      .from('inventory_items')
+      .insert({ id: testId })
+      .select()
+      .single()
+      .catch(err => ({ error: err }));
+    
+    // Get existing items to see column names
+    const { data: items, error: selectError } = await supabase
       .from('inventory_items')
       .select('*')
       .limit(1);
@@ -87,52 +101,78 @@ app.get('/api/debug-schema', async (req, res) => {
     res.json({
       message: 'Database schema debug',
       sample_item_columns: columns,
-      sample_item: sample
+      sample_item: sample,
+      insert_test_error: insertError ? insertError.message : 'No error',
+      table_info: tableInfo
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Test minimal item creation
+// Test minimal item creation with different column name variations
 app.post('/api/test-item', async (req, res) => {
   try {
     const itemId = 'test-' + Date.now();
     
-    // Try with minimal required fields first
-    const minimalItem = {
-      id: itemId,
-      companyid: demoCompany.id,
-      itemtype: 'Equipment',
-      make: 'Test Make',
-      model: 'Test Model',
-      serialnumber: 'TEST123',
-      condition: 'Good',
-      datereceived: '08/18/2025',
-      dateplacedInservice: '08/18/2025', // This was missing!
-      location: 'Test Location',
-      nextcalibrationdue: '08/18/2026',
-      calibrationinterval: 12,
-      calibrationintervaltype: 'months',
-      calibrationmethod: 'In-House',
-      isoutsourced: false,
-      createdat: new Date().toISOString(),
-      updatedat: new Date().toISOString()
-    };
+    // Try with different possible column names for the problematic field
+    const variations = [
+      'dateplacedInservice',  // Current attempt
+      'dateplaceinservice',   // All lowercase
+      'dateplacedinservice',  // Alternative
+      'date_placed_in_service' // Snake case
+    ];
     
-    const { data, error } = await supabase
-      .from('inventory_items')
-      .insert(minimalItem)
-      .select()
-      .single();
+    for (let i = 0; i < variations.length; i++) {
+      const columnName = variations[i];
+      
+      try {
+        const testItem = {
+          id: itemId + '-' + i,
+          companyid: demoCompany.id,
+          itemtype: 'Equipment',
+          make: 'Test Make',
+          model: 'Test Model',
+          serialnumber: 'TEST123',
+          condition: 'Good',
+          datereceived: '08/18/2025',
+          [columnName]: '08/18/2025',
+          location: 'Test Location',
+          nextcalibrationdue: '08/18/2026',
+          calibrationinterval: 12,
+          calibrationintervaltype: 'months',
+          calibrationmethod: 'In-House',
+          isoutsourced: false,
+          createdat: new Date().toISOString(),
+          updatedat: new Date().toISOString()
+        };
+        
+        const { data, error } = await supabase
+          .from('inventory_items')
+          .insert(testItem)
+          .select()
+          .single();
+        
+        if (!error) {
+          return res.json({
+            message: 'Test item created successfully!',
+            working_column_name: columnName,
+            item: data,
+            variation_tried: i + 1
+          });
+        }
+      } catch (err) {
+        console.log(`Variation ${i} (${columnName}) failed:`, err.message);
+        continue;
+      }
+    }
     
-    if (error) throw error;
-    
-    res.json({
-      message: 'Test item created successfully',
-      item: data,
-      columns_used: Object.keys(minimalItem)
+    // If we get here, all variations failed
+    res.status(500).json({ 
+      error: 'All column name variations failed',
+      tried_variations: variations
     });
+    
   } catch (error) {
     console.error('Test item creation error:', error);
     res.status(500).json({ 
