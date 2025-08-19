@@ -273,6 +273,42 @@ app.delete('/api/inventory/lists/:id', async (req, res) => {
   }
 });
 
+// Helper function to convert database fields to frontend format
+function convertDbItemToFrontend(dbItem) {
+  return {
+    id: dbItem.id,
+    companyId: dbItem.companyid,
+    itemType: dbItem.itemtype,
+    nickname: dbItem.nickname,
+    labId: dbItem.labid,
+    make: dbItem.make,
+    model: dbItem.model,
+    serialNumber: dbItem.serialnumber,
+    condition: dbItem.condition,
+    dateReceived: dbItem.datereceived,
+    datePlacedInService: dbItem.dateplacedinservice,
+    location: dbItem.location,
+    calibrationDate: dbItem.calibrationdate,
+    nextCalibrationDue: dbItem.nextcalibrationdue,
+    calibrationInterval: dbItem.calibrationinterval,
+    calibrationIntervalType: dbItem.calibrationintervaltype,
+    calibrationMethod: dbItem.calibrationmethod,
+    maintenanceDate: dbItem.maintenancedate,
+    maintenanceDue: dbItem.maintenancedue,
+    maintenanceInterval: dbItem.maintenanceinterval,
+    maintenanceIntervalType: dbItem.maintenanceintervaltype,
+    isOutsourced: dbItem.isoutsourced,
+    isOutOfService: dbItem.isoutofservice,
+    outOfServiceDate: dbItem.outofservicedate,
+    outOfServiceReason: dbItem.outofservicereason,
+    notes: dbItem.notes,
+    image: dbItem.image,
+    listId: dbItem.listid,
+    createdAt: dbItem.createdat,
+    updatedAt: dbItem.updatedat
+  };
+}
+
 // Inventory: list
 app.get('/api/inventory', async (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -285,7 +321,11 @@ app.get('/api/inventory', async (req, res) => {
       .eq('companyid', demoCompany.id);
 
     if (error) throw error;
-    res.json({ items: items || [] });
+    
+    // Convert database format to frontend format
+    const convertedItems = (items || []).map(convertDbItemToFrontend);
+    
+    res.json({ items: convertedItems });
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ error: 'Failed to fetch inventory' });
@@ -340,14 +380,7 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       fields[key] = value === '' ? null : value;
     });
     
-    // Debug: Log the exact mapping we're about to use
-    console.log('=== FIELD MAPPING DEBUG ===');
-    console.log('itemType from form:', fields.itemType, '-> itemtype in DB');
-    console.log('labId from form:', fields.labId, '-> labid in DB'); 
-    console.log('serialNumber from form:', fields.serialNumber, '-> serialnumber in DB');
-    console.log('nickname from form:', fields.nickname, '-> nickname in DB');
-    console.log('make from form:', fields.make, '-> make in DB');
-    console.log('model from form:', fields.model, '-> model in DB');
+
     
     const item = {
       id: itemId,
@@ -389,10 +422,6 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       .single();
 
     if (error) throw error;
-    
-    // Debug: Log what actually got saved to database
-    console.log('=== DATABASE RESULT ===');
-    console.log('Saved item:', JSON.stringify(data, null, 2));
 
     const qrCodeUrl = generateQRCodeUrl(itemId);
     res.status(201).json({ 
