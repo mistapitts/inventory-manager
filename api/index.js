@@ -782,6 +782,202 @@ app.get('/api/storage/download/:fileName', async (req, res) => {
   }
 });
 
+// Upload calibration or maintenance record
+app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req, res) => {
+  console.log('🚀 POST /upload-record endpoint called');
+  console.log('📝 Request body:', req.body);
+  console.log('📁 File:', req.file);
+  
+  try {
+    const { type, itemId, recordType } = req.body; // 'calibration' or 'maintenance'
+    const { recordDate, nextDue, method, notes, existingRecordDate } = req.body;
+    const file = req.file;
+    
+    console.log('📝 Upload record request received:', {
+      type,
+      itemId,
+      recordType,
+      recordDate,
+      nextDue,
+      method,
+      notes,
+      hasFile: !!file
+    });
+    
+    if (!type || !itemId || !recordType) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    if (recordType === 'existing') {
+      console.log('📄 Processing existing document upload');
+      
+      // For existing documents, store the file and create a record entry
+      // but don't update item dates since this is an existing record
+      if (!req.file) {
+        return res.status(400).json({ error: 'File is required for existing document upload' });
+      }
+      
+      // Generate record ID for the existing document
+      const recordId = generateId();
+      
+      // Use the optional existingRecordDate if provided, otherwise leave blank
+      // Handle empty string case - convert to null
+      const recordDate = existingRecordDate && existingRecordDate.trim() !== '' ? existingRecordDate : null;
+      const formattedRecordDate = recordDate ? recordDate + ' 00:00:00' : null;
+      
+      if (type === 'calibration') {
+        // Insert calibration record for existing document
+        const { error: calError } = await supabase
+          .from('calibration_records')
+          .insert({
+            id: recordId,
+            item_id: itemId,
+            user_id: req.user?.id || 'system',
+            calibration_date: formattedRecordDate,
+            next_calibration_due: null,
+            method: 'Existing Document Upload',
+            notes: notes || null,
+            file_path: req.file.filename,
+            created_at: new Date().toISOString()
+          });
+        
+        if (calError) throw calError;
+        
+        console.log('✅ Existing calibration document uploaded and record created');
+        
+      } else if (type === 'maintenance') {
+        // Insert maintenance record for existing document
+        const { error: maintError } = await supabase
+          .from('maintenance_records')
+          .insert({
+            id: recordId,
+            item_id: itemId,
+            user_id: req.user?.id || 'system',
+            maintenance_date: formattedRecordDate,
+            next_maintenance_due: null,
+            type: 'Existing Document Upload',
+            notes: notes || null,
+            file_path: req.file.filename,
+            created_at: new Date().toISOString()
+          });
+        
+        if (maintError) throw maintError;
+        
+        console.log('✅ Existing maintenance document uploaded and record created');
+      }
+      
+      res.status(201).json({ 
+        message: `${type} document uploaded successfully`,
+        filename: req.file.filename,
+        recordId: recordId
+      });
+      
+    } else if (recordType === 'new') {
+      console.log('🆕 Processing new record creation');
+      // For new records, require all fields and update item dates
+      if (!recordDate || !nextDue || !method) {
+        console.log('❌ Missing required fields for new record:', { recordDate, nextDue, method });
+        return res.status(400).json({ error: 'Missing required fields for new record' });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'File is required for new record' });
+      }
+      
+      // Generate record ID
+      const recordId = generateId();
+      
+      if (type === 'calibration') {
+        console.log('🔧 Creating new calibration record and updating item dates');
+        
+        // Insert calibration record
+        const { error: calError } = await supabase
+          .from('calibration_records')
+          .insert({
+            id: recordId,
+            item_id: itemId,
+            user_id: req.user?.id || 'system',
+            calibration_date: recordDate + ' 00:00:00',
+            next_calibration_due: nextDue + ' 00:00:00',
+            method: method,
+            notes: notes || null,
+            file_path: req.file.filename,
+            created_at: new Date().toISOString()
+          });
+        
+        if (calError) throw calError;
+        
+        console.log('✅ Calibration record inserted successfully');
+        
+        // Update item's calibration date and next calibration due date
+        const { error: updateError } = await supabase
+          .from('inventory_items')
+          .update({
+            calibration_date: recordDate + ' 00:00:00',
+            next_calibration_due: nextDue + ' 00:00:00',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', itemId);
+        
+        if (updateError) throw updateError;
+        
+        console.log('✅ Calibration record created and item dates updated');
+        
+      } else if (type === 'maintenance') {
+        console.log('🔧 Creating new maintenance record and updating item dates');
+        
+        // Insert maintenance record
+        const { error: maintError } = await supabase
+          .from('maintenance_records')
+          .insert({
+            id: recordId,
+            item_id: itemId,
+            user_id: req.user?.id || 'system',
+            maintenance_date: recordDate + ' 00:00:00',
+            next_maintenance_due: nextDue + ' 00:00:00',
+            type: method,
+            notes: notes || null,
+            file_path: req.file.filename,
+            created_at: new Date().toISOString()
+          });
+        
+        if (maintError) throw maintError;
+        
+        console.log('✅ Maintenance record inserted successfully');
+        
+        // Update item's maintenance date and next maintenance due date
+        const { error: updateError } = await supabase
+          .from('inventory_items')
+          .update({
+            maintenance_date: recordDate + ' 00:00:00',
+            maintenance_due: nextDue + ' 00:00:00',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', itemId);
+        
+        if (updateError) throw updateError;
+        
+        console.log('✅ Maintenance record created and item dates updated');
+        
+      } else {
+        return res.status(400).json({ error: 'Invalid record type' });
+      }
+      
+      res.status(201).json({ 
+        message: `${type} record added successfully`,
+        recordId
+      });
+      
+    } else {
+      return res.status(400).json({ error: 'Invalid record type' });
+    }
+    
+  } catch (error) {
+    console.error('Error uploading record:', error);
+    res.status(500).json({ error: 'Failed to upload record' });
+  }
+});
+
 // SPA fallback
 app.get(/^\/(?!api).*/, (req, res) => { 
   res.sendFile(path.join(__dirname, '../public/index.html')); 
