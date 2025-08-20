@@ -924,13 +924,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 280px; /* Account for sidebar width */
-    right: 0;
     z-index: 300;
-    /* Ensure fixed positioning works */
-    width: calc(100% - 280px);
+    /* Ensure sticky positioning works */
+    width: 100%;
     box-sizing: border-box;
 }
 
@@ -945,7 +943,6 @@ body {
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 70px; /* Account for fixed header */
 }
 
 .inventory-table th {
