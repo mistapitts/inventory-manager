@@ -828,7 +828,7 @@ body {
 /* Inventory title with absolute positioning for precise control */
 .inventory-title-header {
     position: absolute;
-    top: 8px; /* Position within the padding area we added */
+    top: -32px; /* Position above the border and table */
     left: 0;
     margin: 0;
     padding: 0;
@@ -846,7 +846,7 @@ body {
 /* Border line positioned between legend and table */
 .inventory-header-border {
     border-top: 1px solid var(--border-color);
-    margin: 0px 0 12px 0;
+    margin: 40px 0 12px 0; /* Add top margin for title space */
     padding: 0;
 }
 
@@ -1054,7 +1054,6 @@ body {
 .inventory-main-content {
     position: relative; /* Enable absolute positioning for title */
     flex: 1;
-    padding-top: 40px; /* Add space for the absolute title */
 }
 
 /* Inventory Legend */
@@ -1068,7 +1067,6 @@ body {
     border-radius: 6px;
     flex-shrink: 0; /* Prevent legend from shrinking */
     min-width: 200px; /* Ensure minimum width */
-    margin-top: -40px; /* Pull legend back up to counteract title padding */
 }
 
 .legend-item {
