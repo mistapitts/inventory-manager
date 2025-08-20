@@ -1080,6 +1080,58 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
   }
 });
 
+// Delete calibration or maintenance record
+app.delete('/api/inventory/:itemId/records/:recordId', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
+  
+  try {
+    const { itemId, recordId } = req.params;
+    const { type } = req.query; // 'calibration' or 'maintenance'
+    
+    if (!type || !['calibration', 'maintenance'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid record type. Must be "calibration" or "maintenance"' });
+    }
+    
+    console.log(`🗑️ Deleting ${type} record ${recordId} for item ${itemId}`);
+    
+    let deleteError;
+    
+    if (type === 'calibration') {
+      // Delete calibration record
+      const { error } = await supabase
+        .from('calibration_records')
+        .delete()
+        .eq('id', recordId)
+        .eq('itemid', itemId);
+      
+      deleteError = error;
+    } else if (type === 'maintenance') {
+      // Delete maintenance record
+      const { error } = await supabase
+        .from('maintenance_records')
+        .delete()
+        .eq('id', recordId)
+        .eq('itemid', itemId);
+      
+      deleteError = error;
+    }
+    
+    if (deleteError) {
+      console.error(`❌ Error deleting ${type} record:`, deleteError);
+      throw deleteError;
+    }
+    
+    console.log(`✅ ${type} record ${recordId} deleted successfully`);
+    
+    res.json({ message: `${type} record deleted successfully` });
+    
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    res.status(500).json({ error: 'Failed to delete record' });
+  }
+});
+
 // SPA fallback
 app.get(/^\/(?!api).*/, (req, res) => { 
   res.sendFile(path.join(__dirname, '../public/index.html')); 
