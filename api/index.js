@@ -84,7 +84,9 @@ async function ensureStorageBucket() {
     console.log('Attempting to create inventory-docs storage bucket...');
     
     const { error: createError } = await supabase.storage.createBucket('inventory-docs', {
-      public: true
+      public: true,
+      allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'],
+      fileSizeLimit: 52428800 // 50MB
     });
     
     if (createError) {
@@ -96,6 +98,7 @@ async function ensureStorageBucket() {
         console.log('Storage bucket creation blocked by RLS policies. Please create the bucket manually in Supabase dashboard.');
         console.log('Bucket name: inventory-docs');
         console.log('Required settings: public: true');
+        console.log('Required MIME types: image/png, image/jpeg, application/pdf, etc.');
       }
     } else {
       console.log('Storage bucket created successfully');
@@ -881,14 +884,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('calibration_records')
           .insert({
             id: recordId,
-            itemId: itemId,
-            userId: req.user?.id || 'system',
-            calibrationDate: formattedRecordDate,
-            nextCalibrationDue: null,
+            itemid: itemId,
+            userid: req.user?.id || 'system',
+            calibrationdate: formattedRecordDate,
+            nextcalibrationdue: null,
             method: 'Existing Document Upload',
             notes: notes || null,
-            filePath: filePath,
-            createdAt: new Date().toISOString()
+            filepath: filePath,
+            createdat: new Date().toISOString()
           });
         
         if (calError) throw calError;
@@ -901,14 +904,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('maintenance_records')
           .insert({
             id: recordId,
-            itemId: itemId,
-            userId: req.user?.id || 'system',
-            maintenanceDate: formattedRecordDate,
-            nextMaintenanceDue: null,
+            itemid: itemId,
+            userid: req.user?.id || 'system',
+            maintenancedate: formattedRecordDate,
+            nextmaintenancedue: null,
             type: 'Existing Document Upload',
             notes: notes || null,
-            filePath: filePath,
-            createdAt: new Date().toISOString()
+            filepath: filePath,
+            createdat: new Date().toISOString()
           });
         
         if (maintError) throw maintError;
@@ -941,14 +944,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('calibration_records')
           .insert({
             id: recordId,
-            itemId: itemId,
-            userId: req.user?.id || 'system',
-            calibrationDate: recordDate + ' 00:00:00',
-            nextCalibrationDue: nextDue + ' 00:00:00',
+            itemid: itemId,
+            userid: req.user?.id || 'system',
+            calibrationdate: recordDate + ' 00:00:00',
+            nextcalibrationdue: nextDue + ' 00:00:00',
             method: method,
             notes: notes || null,
-            filePath: filePath,
-            createdAt: new Date().toISOString()
+            filepath: filePath,
+            createdat: new Date().toISOString()
           });
         
         if (calError) throw calError;
@@ -959,9 +962,9 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
-            calibrationDate: recordDate + ' 00:00:00',
-            nextCalibrationDue: nextDue + ' 00:00:00',
-            updatedAt: new Date().toISOString()
+            calibrationdate: recordDate + ' 00:00:00',
+            nextcalibrationdue: nextDue + ' 00:00:00',
+            updatedat: new Date().toISOString()
           })
           .eq('id', itemId);
         
@@ -977,14 +980,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('maintenance_records')
           .insert({
             id: recordId,
-            itemId: itemId,
-            userId: req.user?.id || 'system',
-            maintenanceDate: recordDate + ' 00:00:00',
-            nextMaintenanceDue: nextDue + ' 00:00:00',
+            itemid: itemId,
+            userid: req.user?.id || 'system',
+            maintenancedate: recordDate + ' 00:00:00',
+            nextmaintenancedue: nextDue + ' 00:00:00',
             type: method,
             notes: notes || null,
-            filePath: filePath,
-            createdAt: new Date().toISOString()
+            filepath: filePath,
+            createdat: new Date().toISOString()
           });
         
         if (maintError) throw maintError;
@@ -995,9 +998,9 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
-            maintenanceDate: recordDate + ' 00:00:00',
-            maintenanceDue: nextDue + ' 00:00:00',
-            updatedAt: new Date().toISOString()
+            maintenancedate: recordDate + ' 00:00:00',
+            maintenancedue: nextDue + ' 00:00:00',
+            updatedat: new Date().toISOString()
           })
           .eq('id', itemId);
         
