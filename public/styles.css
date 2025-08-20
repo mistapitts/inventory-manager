@@ -2236,22 +2236,10 @@ body {
     gap: 8px;
 }
 
-/* Button container with no gap between edit and delete buttons */
+/* General margin reset for list buttons */
 .list-row .edit-list-btn,
 .list-row .delete-list-btn {
     margin: 0; /* Remove any margins */
-}
-
-.list-row .edit-list-btn {
-    border-top-right-radius: 0; /* Square off right side to connect with delete button */
-    border-bottom-right-radius: 0;
-    border-right: none; /* Remove right border to connect seamlessly */
-}
-
-.list-row .delete-list-btn {
-    border-top-left-radius: 0; /* Square off left side to connect with edit button */
-    border-bottom-left-radius: 0;
-    margin-left: 0; /* Ensure no gap */
 }
 .delete-list-btn {
     background: transparent;
@@ -2275,6 +2263,19 @@ body {
 }
 
 .edit-list-btn:hover { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+
+/* Connected button styles - must come after general button styles to override */
+.list-row .edit-list-btn {
+    border-top-right-radius: 0 !important; /* Square off right side to connect with delete button */
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important; /* Remove right border to connect seamlessly */
+}
+
+.list-row .delete-list-btn {
+    border-top-left-radius: 0 !important; /* Square off left side to connect with edit button */
+    border-bottom-left-radius: 0 !important;
+    margin-left: 0 !important; /* Ensure no gap */
+}
 
 .column-option {
     display: flex;
