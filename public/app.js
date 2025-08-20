@@ -935,7 +935,10 @@ function toggleActionMenu(e) {
 
             // Temporarily show to measure natural size
             const prevDisplay = list.style.display;
+            const prevVisibility = list.style.visibility;
             list.style.display = 'flex';
+            list.style.visibility = 'hidden'; // Hide while measuring to prevent flicker
+            
             const btnRect = e.currentTarget.getBoundingClientRect();
             const listRect = list.getBoundingClientRect();
             const spaceBelow = window.innerHeight - btnRect.bottom;
@@ -948,25 +951,32 @@ function toggleActionMenu(e) {
                 menu.classList.add('open-up');
             }
 
-            // If the table container clips overflow, render as fixed-position floating
-            const container = document.querySelector('.inventory-table-container') || document.querySelector('.main-content') || document.body;
-            const containerStyles = window.getComputedStyle(container);
-            const containerOverflowHidden = containerStyles && (containerStyles.overflow === 'hidden' || containerStyles.overflowY === 'hidden');
-            if (containerOverflowHidden) {
-                list.classList.add('floating');
-                // Anchor to viewport using the button coordinates
-                const top = openUp ? (btnRect.top - wantHeight - 8) : (btnRect.bottom + 8);
-                const left = Math.max(8, Math.min(window.innerWidth - (listRect.width || 200) - 8, btnRect.right - (listRect.width || 200)));
-                list.style.top = `${top}px`;
-                list.style.left = `${left}px`;
-            } else {
-                // Reset any inline coords if not floating
-                list.style.top = '';
-                list.style.left = '';
+            // Always use floating positioning to avoid scrollbar and container clipping issues
+            list.classList.add('floating');
+            
+            // Anchor to viewport using the button coordinates
+            const top = openUp ? (btnRect.top - wantHeight - 8) : (btnRect.bottom + 8);
+            
+            // Ensure the menu doesn't extend beyond the right edge of the viewport
+            const menuWidth = listRect.width || 180;
+            let left = btnRect.right - menuWidth; // Align right edge of menu with right edge of button
+            
+            // If menu would go off the left edge, align left edge with button's left edge
+            if (left < 8) {
+                left = btnRect.left;
             }
+            
+            // If menu would go off the right edge, move it left
+            if (left + menuWidth > window.innerWidth - 8) {
+                left = window.innerWidth - menuWidth - 8;
+            }
+            
+            list.style.top = `${top}px`;
+            list.style.left = `${left}px`;
 
-            // Restore original display if it was hidden by toggle logic
+            // Restore original display properties
             list.style.display = prevDisplay || '';
+            list.style.visibility = prevVisibility || '';
         }
     }
 }
