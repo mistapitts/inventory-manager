@@ -3223,11 +3223,21 @@ function positionColumnCustomizerMenu() {
     // Get button position relative to viewport
     const buttonRect = button.getBoundingClientRect();
     
-    // Calculate menu dimensions
-    const menuWidth = 280; // min-width from CSS
-    const menuHeight = 300; // approximate height
+    // Temporarily show menu off-screen to measure its actual dimensions
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    menu.style.left = '-9999px';
+    menu.style.top = '-9999px';
     
-    // Position menu below and to the right of the button
+    // Get actual menu dimensions
+    const menuRect = menu.getBoundingClientRect();
+    const menuWidth = menuRect.width;
+    const menuHeight = menuRect.height;
+    
+    // Reset visibility
+    menu.style.visibility = 'visible';
+    
+    // Calculate optimal position (start with default: below and to the right)
     let left = buttonRect.right + 10; // 10px offset from button
     let top = buttonRect.bottom + 10; // 10px offset from button
     
@@ -3243,9 +3253,16 @@ function positionColumnCustomizerMenu() {
         top = buttonRect.top - menuHeight - 10;
     }
     
+    // Final safety checks to ensure menu stays within viewport
+    
     // Ensure menu doesn't go off the left edge
     if (left < 20) {
         left = 20;
+    }
+    
+    // Ensure menu doesn't go off the right edge
+    if (left + menuWidth > window.innerWidth - 20) {
+        left = window.innerWidth - menuWidth - 20;
     }
     
     // Ensure menu doesn't go off the top edge
@@ -3253,7 +3270,20 @@ function positionColumnCustomizerMenu() {
         top = 20;
     }
     
-    // Apply positioning
+    // Ensure menu doesn't go off the bottom edge (final check)
+    if (top + menuHeight > window.innerHeight - 20) {
+        top = window.innerHeight - menuHeight - 20;
+        
+        // If still not fitting, limit the menu height and add scroll
+        if (top < 20) {
+            top = 20;
+            const maxHeight = window.innerHeight - 40; // 20px margin top and bottom
+            menu.style.maxHeight = maxHeight + 'px';
+            menu.style.overflowY = 'auto';
+        }
+    }
+    
+    // Apply final positioning
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
     menu.style.right = 'auto';

@@ -2167,6 +2167,9 @@ body {
     /* Ensure menu doesn't get cut off by scrollbars */
     max-width: calc(100vw - 40px); /* Prevent extending beyond viewport */
     overflow: visible;
+    /* When height is limited by viewport, enable smooth scrolling */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
 }
 
 .column-customizer-menu.show, .list-menu.show {
