@@ -2224,8 +2224,9 @@ body {
 }
 
 .menu-footer {
-    margin-top: 16px; /* Add space under the Add list button */
-    padding-top: 16px; /* Additional padding for visual separation */
+    margin-top: 8px; /* Reduced space above Add List button */
+    padding-top: 8px; /* Reduced padding above Add List button */
+    padding-bottom: 20px; /* Add space below Add List button for separation from Visible Columns */
 }
 
 .list-row {
