@@ -1433,26 +1433,32 @@ async function loadListsIntoSelectors(selectAfterName) {
                     label.appendChild(text);
                     row.appendChild(label);
                     if (l.id) {
+                        // Create connected button group
+                        const buttonGroup = document.createElement('div');
+                        buttonGroup.className = 'list-button-group';
+                        
+                        // Edit button
                         const edit = document.createElement('button');
-                        edit.className = 'edit-list-btn';
+                        edit.className = 'edit-btn';
                         edit.setAttribute('data-edit-id', l.id);
                         edit.setAttribute('data-edit-name', l.name);
                         edit.setAttribute('data-edit-color', l.color);
                         edit.setAttribute('data-edit-text-color', l.textColor);
                         edit.title = 'Edit list';
                         edit.textContent = '✎';
-                        row.appendChild(edit);
+                        buttonGroup.appendChild(edit);
                         edit.addEventListener('click', async (e) => {
                             e.stopPropagation();
                             showEditListModal(l.id, l.name, l.color, l.textColor);
                         });
                         
+                        // Delete button
                         const del = document.createElement('button');
-                        del.className = 'delete-list-btn';
+                        del.className = 'delete-btn';
                         del.setAttribute('data-delete-id', l.id);
                         del.title = 'Delete list';
                         del.textContent = '✕';
-                        row.appendChild(del);
+                        buttonGroup.appendChild(del);
                         del.addEventListener('click', async (e) => {
                             e.stopPropagation();
                             
@@ -1487,6 +1493,9 @@ async function loadListsIntoSelectors(selectAfterName) {
                             
                             document.body.appendChild(dialog);
                         });
+                        
+                        // Add the button group to the row
+                        row.appendChild(buttonGroup);
                     }
                     listOptions.appendChild(row);
                     cb.addEventListener('change', async function() {
