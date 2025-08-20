@@ -70,8 +70,9 @@ async function ensureStorageBucket() {
     if (!bucketExists) {
       const { error: bucketError } = await supabase.storage.createBucket('inventory-docs', {
         public: true,
-        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-        fileSizeLimit: 52428800 // 50MB
+        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 52428800, // 50MB
+        restriction: 'none' // Disable RLS restrictions for file uploads
       });
       
       if (bucketError) {
@@ -84,6 +85,7 @@ async function ensureStorageBucket() {
     }
   } catch (storageError) {
     console.error('Error checking/creating storage bucket:', storageError);
+    // Continue anyway - bucket might exist or be created manually
   }
 }
 

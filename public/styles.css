@@ -924,6 +924,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 /* Table title inside the header */
@@ -2232,8 +2235,8 @@ body {
 .list-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Align items to the left */
-    gap: 12px; /* Slightly larger gap to separate text from buttons */
+    justify-content: space-between; /* Align buttons cleanly to the right */
+    gap: 8px;
 }
 
 /* Connected Button Group for Edit/Delete */

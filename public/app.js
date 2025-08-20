@@ -1051,10 +1051,20 @@ function editItem(itemId) {
     form.querySelector('#calibrationInterval').value = item.calibrationInterval || 12;
     form.querySelector('#calibrationIntervalType').value = item.calibrationIntervalType || 'months';
     form.querySelector('#calibrationMethod').value = item.calibrationMethod || '';
+    
+    // Set calibration type and trigger change event to update method label
+    const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
+    form.querySelector('#calibrationType').value = calibrationType;
+    handleCalibrationTypeChange(); // Update the form labels
+    
     form.querySelector('#maintenanceDate').value = item.maintenanceDate ? item.maintenanceDate.split('T')[0] : '';
     form.querySelector('#maintenanceDue').value = item.maintenanceDue ? item.maintenanceDue.split('T')[0] : '';
     form.querySelector('#maintenanceInterval').value = item.maintenanceInterval || '';
     form.querySelector('#maintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
+    
+    // Enhanced file upload areas for edit mode
+    enhanceFileUploadsForEdit(item);
+    
     // Ensure the create-item handler does not run in edit mode
     try { form.removeEventListener('submit', handleAddItem); } catch {}
     // Change submit handler to PUT
@@ -1101,6 +1111,49 @@ function markOutOfService(itemId) {
         showToast(`Marking item ${itemId} as out of service - Feature coming soon!`, 'info');
         // TODO: Implement out of service functionality
     }
+}
+
+// Enhance file upload areas for edit mode
+function enhanceFileUploadsForEdit(item) {
+    const fileFields = [
+        { field: 'calibrationTemplate', path: item.calibrationTemplatePath, label: 'Calibration Template' },
+        { field: 'calibrationInstructions', path: item.calibrationInstructionsPath, label: 'Calibration Instructions' },
+        { field: 'maintenanceTemplate', path: item.maintenanceTemplatePath, label: 'Maintenance Template' },
+        { field: 'maintenanceInstructions', path: item.maintenanceInstructionsPath, label: 'Maintenance Instructions' }
+    ];
+    
+    fileFields.forEach(({ field, path, label }) => {
+        const fileInput = document.getElementById(field);
+        const fileInfo = fileInput.nextElementSibling; // The .file-info span
+        
+        if (path) {
+            // File exists - show file name and replace option
+            fileInfo.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                    <i class="fas fa-file-alt" style="color: var(--accent-primary);"></i>
+                    <span style="color: var(--text-primary); font-weight: 500;">
+                        ${path.split('/').pop()} 
+                    </span>
+                    <button type="button" onclick="downloadFile('${path}', '${field}')" 
+                            style="background: var(--accent-primary); color: white; border: none; 
+                                   padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;"
+                            title="Download ${label}">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+                <div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-secondary);">
+                    Upload a new file to replace the current one
+                </div>
+            `;
+        } else {
+            // No file - show upload prompt
+            fileInfo.innerHTML = `
+                <div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-secondary);">
+                    No ${label.toLowerCase()} uploaded
+                </div>
+            `;
+        }
+    });
 }
 
 // Modal functionality
