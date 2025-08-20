@@ -925,7 +925,7 @@ body {
     justify-content: space-between;
     align-items: center;
     position: fixed;
-    top: 70px; /* Account for the top navigation bar */
+    top: 120px; /* Position below the top navigation bar with proper spacing */
     left: 280px; /* Account for the left sidebar */
     right: 0;
     z-index: 300;
@@ -944,7 +944,7 @@ body {
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 70px; /* Add margin to prevent content from being hidden behind fixed header */
+    margin-top: 120px; /* Add margin to prevent content from being hidden behind fixed header */
 }
 
 .inventory-table th {
