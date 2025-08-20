@@ -825,10 +825,14 @@ body {
     align-items: flex-end;
 }
 
-/* Inventory title positioned above border line */
+/* Inventory title with absolute positioning for precise control */
 .inventory-title-header {
-    margin: 8px 0 4px 0;
+    position: absolute;
+    top: -40px; /* Position above the border line */
+    left: 0;
+    margin: 0;
     padding: 0;
+    z-index: 10; /* Ensure it stays on top */
 }
 
 .inventory-title-header h2 {
@@ -1040,11 +1044,13 @@ body {
 
 /* Inventory content wrapper for legend positioning */
 .inventory-content-wrapper {
+    position: relative; /* Enable absolute positioning for children */
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px;
     margin-bottom: 0px;
+    padding-top: 48px; /* Add space for absolute title */
 }
 
 .inventory-main-content {
