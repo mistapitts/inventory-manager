@@ -1115,11 +1115,14 @@ function markOutOfService(itemId) {
 
 // Enhance file upload areas for edit mode
 function enhanceFileUploadsForEdit(item) {
+    // Debug: log the item to see what fields exist
+    console.log('Edit item data:', item);
+    
     const fileFields = [
-        { field: 'calibrationTemplate', path: item.calibrationTemplatePath, label: 'Calibration Template' },
-        { field: 'calibrationInstructions', path: item.calibrationInstructionsPath, label: 'Calibration Instructions' },
-        { field: 'maintenanceTemplate', path: item.maintenanceTemplatePath, label: 'Maintenance Template' },
-        { field: 'maintenanceInstructions', path: item.maintenanceInstructionsPath, label: 'Maintenance Instructions' }
+        { field: 'calibrationTemplate', path: item.calibrationTemplate || item.calibrationTemplatePath, label: 'Calibration Template' },
+        { field: 'calibrationInstructions', path: item.calibrationInstructions || item.calibrationInstructionsPath, label: 'Calibration Instructions' },
+        { field: 'maintenanceTemplate', path: item.maintenanceTemplate || item.maintenanceTemplatePath, label: 'Maintenance Template' },
+        { field: 'maintenanceInstructions', path: item.maintenanceInstructions || item.maintenanceInstructionsPath, label: 'Maintenance Instructions' }
     ];
     
     fileFields.forEach(({ field, path, label }) => {

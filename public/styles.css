@@ -914,6 +914,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
+    position: relative; /* Enable positioned children */
 }
 
 /* Unified header inside the table container */
@@ -926,7 +927,10 @@ body {
     align-items: center;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 200; /* Higher z-index */
+    /* Ensure full coverage */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Table title inside the header */

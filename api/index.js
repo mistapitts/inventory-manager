@@ -68,15 +68,24 @@ async function ensureStorageBucket() {
     const bucketExists = buckets.some(bucket => bucket.name === 'inventory-docs');
     
     if (!bucketExists) {
+      // Try creating bucket without restrictions first
       const { error: bucketError } = await supabase.storage.createBucket('inventory-docs', {
         public: true,
         allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: 52428800, // 50MB
-        restriction: 'none' // Disable RLS restrictions for file uploads
+        fileSizeLimit: 52428800 // 50MB
       });
       
       if (bucketError) {
         console.error('Error creating storage bucket:', bucketError);
+        // Try alternative approach - create bucket with minimal config
+        const { error: simpleError } = await supabase.storage.createBucket('inventory-docs', {
+          public: true
+        });
+        if (simpleError) {
+          console.error('Failed to create bucket with simple config:', simpleError);
+        } else {
+          console.log('Storage bucket created with simple config');
+        }
       } else {
         console.log('Storage bucket created successfully');
       }
