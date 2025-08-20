@@ -2236,8 +2236,22 @@ body {
     gap: 8px;
 }
 
-.list-row .edit-list-btn + .delete-list-btn {
-    margin-left: -3px; /* Make delete button border the edit button */
+/* Button container with no gap between edit and delete buttons */
+.list-row .edit-list-btn,
+.list-row .delete-list-btn {
+    margin: 0; /* Remove any margins */
+}
+
+.list-row .edit-list-btn {
+    border-top-right-radius: 0; /* Square off right side to connect with delete button */
+    border-bottom-right-radius: 0;
+    border-right: none; /* Remove right border to connect seamlessly */
+}
+
+.list-row .delete-list-btn {
+    border-top-left-radius: 0; /* Square off left side to connect with edit button */
+    border-bottom-left-radius: 0;
+    margin-left: 0; /* Ensure no gap */
 }
 .delete-list-btn {
     background: transparent;

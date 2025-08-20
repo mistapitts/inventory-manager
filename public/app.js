@@ -3224,21 +3224,26 @@ function positionColumnCustomizerMenu() {
     const buttonRect = button.getBoundingClientRect();
     
     // Temporarily show menu off-screen to measure its actual dimensions
+    const originalDisplay = menu.style.display;
+    const originalVisibility = menu.style.visibility;
+    const originalLeft = menu.style.left;
+    const originalTop = menu.style.top;
+    
     menu.style.visibility = 'hidden';
     menu.style.display = 'block';
     menu.style.left = '-9999px';
     menu.style.top = '-9999px';
-    menu.style.right = 'auto';
-    menu.style.bottom = 'auto';
     
     // Get actual menu dimensions
     const menuRect = menu.getBoundingClientRect();
     const menuWidth = menuRect.width;
     const menuHeight = menuRect.height;
     
-    // Reset visibility and hide menu again (it will be shown properly after positioning)
-    menu.style.visibility = 'visible';
-    menu.style.display = 'none';
+    // Restore original state temporarily
+    menu.style.display = originalDisplay;
+    menu.style.visibility = originalVisibility;
+    menu.style.left = originalLeft;
+    menu.style.top = originalTop;
     
     // Calculate optimal position (start with default: below and to the right)
     let left = buttonRect.right + 10; // 10px offset from button
@@ -3286,12 +3291,11 @@ function positionColumnCustomizerMenu() {
         }
     }
     
-    // Apply final positioning and show menu
+    // Apply final positioning (don't force display here - let the toggle handle that)
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
     menu.style.right = 'auto';
     menu.style.bottom = 'auto';
-    menu.style.display = 'block';
 }
 
 // Function to download files from Supabase Storage
