@@ -6,13 +6,13 @@
 - **Issue**: Container gets cut off by bottom of page instead of repositioning
 - **Solution**: Implement smart positioning logic to ensure container is always fully visible
 - **Priority**: HIGH
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED (BATCH 1.1)
 
 ### 2. 📏 Adjust Padding in "Edit Lists and Columns" Container
 - **Issue**: Reduce padding between checkbox list and "Add List" button
 - **Solution**: Move padding to be beneath "Add List" button, creating space from "Visible Columns" title
 - **Priority**: MEDIUM
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED (BATCH 1.1)
 
 ### 3. 🔒 Lock "Edit Lists and Columns" Button Position
 - **Issue**: Button moves when scrolling
@@ -45,10 +45,11 @@
   - Implement file replacement logic (delete old, upload new)
   - Ensure changes only apply to Edit form, not Add form
 - **Priority**: HIGH
-- **Status**: 🔴 PENDING
+- **Status**: 🔴 ALMOST COMPLETE
 - **Notes**: 
-  - Calibration Type auto-selection implemented but needs testing
-  - File detection enhanced but may need further refinement
+  - Calibration Type auto-selection: ✅ COMPLETED
+  - File detection enhanced: ✅ COMPLETED
+  - Need to adjust text alignment in the form for better visual appearance
 
 ## 🚫 **Phase 3: Out-of-Service Functionality**
 
@@ -120,11 +121,11 @@ Starting with **Phase 1** - fixing the UI/UX issues to ensure a solid foundation
 
 ## 📊 **Progress Tracking**
 - **Total Tasks**: 14
-- **Completed**: 0
-- **In Progress**: 0
-- **Pending**: 13
+- **Completed**: 2
+- **In Progress**: 1
+- **Pending**: 10
 - **Aborted**: 1
-- **Completion**: 0%
+- **Completion**: 14%
 
 ---
 

@@ -624,15 +624,18 @@ app.put('/api/inventory/:id', async (req, res) => {
     Object.keys(req.body).forEach(key => {
       const value = req.body[key];
       if (value !== undefined && value !== '') {
-        updateData[key] = value;
+        // Convert camelCase to snake_case for database columns
+        const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        updateData[dbKey] = value;
       } else if (value === '') {
-        updateData[key] = null;
+        const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        updateData[dbKey] = null;
       }
     });
     
-    updateData.updatedAt = new Date().toISOString();
+    updateData.updated_at = new Date().toISOString();
     
-    console.log('Cleaned update data:', updateData);
+    console.log('Cleaned update data (converted to DB format):', updateData);
     
     const { data, error } = await supabase
       .from('inventory_items')
