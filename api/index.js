@@ -503,10 +503,36 @@ app.get('/api/inventory/:id', async (req, res) => {
     // Convert database item to frontend format (camelCase)
     const convertedItem = convertDbItemToFrontend(item);
 
+    // Convert calibration records to frontend format (camelCase)
+    const convertedCalibrationRecords = (calibrationRecords || []).map(record => ({
+      id: record.id,
+      itemId: record.itemid,
+      userId: record.userid,
+      calibrationDate: record.calibrationdate,
+      nextCalibrationDue: record.nextcalibrationdue,
+      method: record.method,
+      notes: record.notes,
+      filePath: record.filepath,
+      createdAt: record.createdat
+    }));
+
+    // Convert maintenance records to frontend format (camelCase)
+    const convertedMaintenanceRecords = (maintenanceRecords || []).map(record => ({
+      id: record.id,
+      itemId: record.itemid,
+      userId: record.userid,
+      maintenanceDate: record.maintenancedate,
+      nextMaintenanceDue: record.nextmaintenancedue,
+      type: record.type,
+      notes: record.notes,
+      filePath: record.filepath,
+      createdAt: record.createdat
+    }));
+
     res.json({ 
       item: convertedItem, 
-      calibrationRecords: calibrationRecords || [], 
-      maintenanceRecords: maintenanceRecords || [], 
+      calibrationRecords: convertedCalibrationRecords, 
+      maintenanceRecords: convertedMaintenanceRecords, 
       changelog: [{ id: generateId(), action: 'viewed', timestamp: new Date().toISOString() }] 
     });
   } catch (error) {
