@@ -916,6 +916,15 @@ body {
     overflow: visible; /* Allow sticky positioning to work */
 }
 
+/* Scrollable container for inventory table */
+.inventory-scroll-container {
+    max-height: 70vh; /* Set a reasonable height for scrolling */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
 /* Unified header inside the table container */
 .inventory-table-header {
     background: var(--bg-secondary);
@@ -924,10 +933,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative; /* Normal document flow positioning */
+    position: sticky; /* Now sticky within the scroll container */
+    top: 0;
+    z-index: 300;
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 16px; /* Add some space below the header */
+    margin-bottom: 0; /* Remove margin since it's now sticky */
 }
 
 /* Table title inside the header */
