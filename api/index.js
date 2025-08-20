@@ -617,19 +617,39 @@ app.put('/api/inventory/:id', async (req, res) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   
   try {
+    console.log('Update item request body:', req.body);
+    
+    // Clean the request body - remove undefined values and convert empty strings to null
+    const updateData = {};
+    Object.keys(req.body).forEach(key => {
+      const value = req.body[key];
+      if (value !== undefined && value !== '') {
+        updateData[key] = value;
+      } else if (value === '') {
+        updateData[key] = null;
+      }
+    });
+    
+    updateData.updatedAt = new Date().toISOString();
+    
+    console.log('Cleaned update data:', updateData);
+    
     const { data, error } = await supabase
       .from('inventory_items')
-      .update({ ...req.body, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', req.params.id)
       .eq('companyid', demoCompany.id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error details:', error);
+      throw error;
+    }
     res.json(data);
   } catch (error) {
     console.error('Error updating item:', error);
-    res.status(500).json({ error: 'Failed to update item' });
+    res.status(500).json({ error: 'Failed to update item', details: error.message });
   }
 });
 

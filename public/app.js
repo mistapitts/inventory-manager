@@ -1117,12 +1117,29 @@ function markOutOfService(itemId) {
 function enhanceFileUploadsForEdit(item) {
     // Debug: log the item to see what fields exist
     console.log('Edit item data:', item);
+    console.log('Available item keys:', Object.keys(item));
     
     const fileFields = [
-        { field: 'calibrationTemplate', path: item.calibrationTemplate || item.calibrationTemplatePath, label: 'Calibration Template' },
-        { field: 'calibrationInstructions', path: item.calibrationInstructions || item.calibrationInstructionsPath, label: 'Calibration Instructions' },
-        { field: 'maintenanceTemplate', path: item.maintenanceTemplate || item.maintenanceTemplatePath, label: 'Maintenance Template' },
-        { field: 'maintenanceInstructions', path: item.maintenanceInstructions || item.maintenanceInstructionsPath, label: 'Maintenance Instructions' }
+        { 
+            field: 'calibrationTemplate', 
+            path: item.calibrationTemplate || item.calibrationTemplatePath || item.calibration_template || item.calibration_template_path,
+            label: 'Calibration Template' 
+        },
+        { 
+            field: 'calibrationInstructions', 
+            path: item.calibrationInstructions || item.calibrationInstructionsPath || item.calibration_instructions || item.calibration_instructions_path,
+            label: 'Calibration Instructions' 
+        },
+        { 
+            field: 'maintenanceTemplate', 
+            path: item.maintenanceTemplate || item.maintenanceTemplatePath || item.maintenance_template || item.maintenance_template_path,
+            label: 'Maintenance Template' 
+        },
+        { 
+            field: 'maintenanceInstructions', 
+            path: item.maintenanceInstructions || item.maintenanceInstructionsPath || item.maintenance_instructions || item.maintenance_instructions_path,
+            label: 'Maintenance Instructions' 
+        }
     ];
     
     fileFields.forEach(({ field, path, label }) => {
@@ -1162,6 +1179,25 @@ function enhanceFileUploadsForEdit(item) {
 // Modal functionality
 function showAddItemModal() {
     const modal = document.getElementById('addItemModal');
+    const form = document.getElementById('addItemForm');
+    
+    // RESET modal to ADD mode (not edit mode)
+    const titleEl = document.querySelector('#addItemModal .modal-header h2');
+    if (titleEl) titleEl.textContent = 'Add New Inventory Item';
+    
+    const submitBtn = form.querySelector('.btn-primary .btn-text');
+    if (submitBtn) submitBtn.textContent = 'Add Item';
+    
+    // Clear edit mode data attributes
+    delete form.dataset.editing;
+    delete form.dataset.itemId;
+    
+    // Reset form to original submit handler
+    form.onsubmit = null; // Clear any custom edit submit handler
+    
+    // Reset all file upload areas to default state
+    resetFileUploadAreas();
+    
     modal.classList.add('show');
     
     // Set default dates
@@ -1181,6 +1217,28 @@ function showAddItemModal() {
     const nextMaintenance = new Date();
     nextMaintenance.setMonth(nextMaintenance.getMonth() + 6);
     document.getElementById('maintenanceDue').value = nextMaintenance.toISOString().split('T')[0];
+}
+
+// Reset file upload areas to default state
+function resetFileUploadAreas() {
+    const fileFields = ['calibrationTemplate', 'calibrationInstructions', 'maintenanceTemplate', 'maintenanceInstructions'];
+    
+    fileFields.forEach(field => {
+        const fileInput = document.getElementById(field);
+        const fileInfo = fileInput.nextElementSibling;
+        
+        if (fileInfo) {
+            // Reset to default text
+            const defaultTexts = {
+                'calibrationTemplate': 'Upload template form',
+                'calibrationInstructions': 'Upload procedure',
+                'maintenanceTemplate': 'Upload template form',
+                'maintenanceInstructions': 'Upload procedure'
+            };
+            
+            fileInfo.innerHTML = `<span class="file-info">${defaultTexts[field]}</span>`;
+        }
+    });
 }
 
 function hideAddItemModal() {
