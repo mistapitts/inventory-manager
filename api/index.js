@@ -885,7 +885,7 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .insert({
             id: recordId,
             itemid: itemId,
-            userid: req.user?.id || 'system',
+            userid: demoUser.id,
             calibrationdate: formattedRecordDate,
             nextcalibrationdue: null,
             method: 'Existing Document Upload',
@@ -905,7 +905,7 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .insert({
             id: recordId,
             itemid: itemId,
-            userid: req.user?.id || 'system',
+            userid: demoUser.id,
             maintenancedate: formattedRecordDate,
             nextmaintenancedue: null,
             type: 'Existing Document Upload',
@@ -945,7 +945,7 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .insert({
             id: recordId,
             itemid: itemId,
-            userid: req.user?.id || 'system',
+            userid: demoUser.id,
             calibrationdate: recordDate + ' 00:00:00',
             nextcalibrationdue: nextDue + ' 00:00:00',
             method: method,
@@ -981,7 +981,7 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .insert({
             id: recordId,
             itemid: itemId,
-            userid: req.user?.id || 'system',
+            userid: demoUser.id,
             maintenancedate: recordDate + ' 00:00:00',
             nextmaintenancedue: nextDue + ' 00:00:00',
             type: method,
