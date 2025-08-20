@@ -1090,19 +1090,27 @@ function editItem(itemId) {
                 const err = await resp.json().catch(() => ({}));
                 showToast(err.error || 'Failed to update item', 'error');
             }
-        } finally {
+        } catch (error) {
+            // Keep form in edit mode if there's an error
+            console.error('Error updating item:', error);
             btnText.style.display = 'block';
             btnLoader.style.display = 'none';
-            // Restore default submit handler for create mode
-            form.onsubmit = null;
-            try { form.addEventListener('submit', handleAddItem); } catch {}
-            delete form.dataset.editing;
-            delete form.dataset.itemId;
-            const titleEl2 = document.querySelector('#addItemModal .modal-header h2');
-            if (titleEl2) titleEl2.textContent = 'Add New Inventory Item';
-            const submitText = form.querySelector('.btn-primary .btn-text');
-            if (submitText) submitText.textContent = 'Add Item';
+            // Don't reset the form - keep it in edit mode
+            return;
         }
+        
+        // Only reset form on successful update
+        btnText.style.display = 'block';
+        btnLoader.style.display = 'none';
+        // Restore default submit handler for create mode
+        form.onsubmit = null;
+        try { form.addEventListener('submit', handleAddItem); } catch {}
+        delete form.dataset.editing;
+        delete form.dataset.itemId;
+        const titleEl2 = document.querySelector('#addItemModal .modal-header h2');
+        if (titleEl2) titleEl2.textContent = 'Add New Inventory Item';
+        const submitText = form.querySelector('.btn-primary .btn-text');
+        if (submitText) submitText.textContent = 'Add Item';
     };
 }
 
