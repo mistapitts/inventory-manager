@@ -463,23 +463,50 @@ app.get('/api/inventory/:id', async (req, res) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
   
   try {
-    const { data: item, error } = await supabase
+    const itemId = req.params.id;
+    
+    // Fetch the item
+    const { data: item, error: itemError } = await supabase
       .from('inventory_items')
       .select('*')
-      .eq('id', req.params.id)
+      .eq('id', itemId)
       .eq('companyid', demoCompany.id)
       .single();
 
-    if (error) throw error;
+    if (itemError) throw itemError;
     if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    // Fetch calibration records
+    const { data: calibrationRecords, error: calError } = await supabase
+      .from('calibration_records')
+      .select('*')
+      .eq('itemid', itemId)
+      .order('calibrationdate', { ascending: false });
+
+    if (calError) {
+      console.error('Error fetching calibration records:', calError);
+      // Continue with empty array if there's an error
+    }
+
+    // Fetch maintenance records
+    const { data: maintenanceRecords, error: maintError } = await supabase
+      .from('maintenance_records')
+      .select('*')
+      .eq('itemid', itemId)
+      .order('maintenancedate', { ascending: false });
+
+    if (maintError) {
+      console.error('Error fetching maintenance records:', maintError);
+      // Continue with empty array if there's an error
+    }
 
     // Convert database item to frontend format (camelCase)
     const convertedItem = convertDbItemToFrontend(item);
 
     res.json({ 
       item: convertedItem, 
-      calibrationRecords: [], 
-      maintenanceRecords: [], 
+      calibrationRecords: calibrationRecords || [], 
+      maintenanceRecords: maintenanceRecords || [], 
       changelog: [{ id: generateId(), action: 'viewed', timestamp: new Date().toISOString() }] 
     });
   } catch (error) {
