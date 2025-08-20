@@ -18,7 +18,7 @@
 - **Issue**: Button moves when scrolling
 - **Solution**: Fix button position to prevent movement during scroll
 - **Priority**: MEDIUM
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED (BATCH 1.1)
 
 ## 📝 **Phase 2: Form Functionality & Data Management**
 
@@ -27,7 +27,7 @@
 - **Error**: `StorageApiError: new row violates row-level security policy`
 - **Solution**: Fix Supabase storage permissions and RLS policies
 - **Priority**: CRITICAL
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED (BATCH 1.1)
 
 ### 5. ✏️ Enhance "Edit Item" Form
 - **Issue 1**: Calibration Type not auto-selected with existing value
@@ -38,7 +38,7 @@
   - Implement file replacement logic (delete old, upload new)
   - Ensure changes only apply to Edit form, not Add form
 - **Priority**: HIGH
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED (BATCH 1.1)
 
 ## 🚫 **Phase 3: Out-of-Service Functionality**
 
@@ -109,13 +109,32 @@
 Starting with **Phase 1** - fixing the UI/UX issues to ensure a solid foundation before building new features.
 
 ## 📊 **Progress Tracking**
-- **Total Tasks**: 11
-- **Completed**: 0
+- **Total Tasks**: 13
+- **Completed**: 3
 - **In Progress**: 0
-- **Pending**: 11
-- **Completion**: 0%
+- **Pending**: 10
+- **Completion**: 23%
 
 ---
 
-*Last Updated: 2025-08-19*
+## 🚨 **Phase 7: Critical Issues Discovered During Testing**
+
+### 12. 🗄️ Fix Database Schema Mismatch (PGRST204 Error)
+- **Issue**: `calibrationDate` column not found in `inventory_items` table schema
+- **Error**: `"Could not find the 'calibrationDate' column of 'inventory_items' in the schema cache"`
+- **Impact**: Prevents updating items from in-house to outsourced calibration
+- **Solution**: Align database schema with application data model
+- **Priority**: CRITICAL
+- **Status**: 🔴 PENDING
+
+### 13. 🔄 Fix Save Button Behavior After Errors
+- **Issue**: "Save item" button changes to "Add item" button after update errors
+- **Impact**: Creates duplicate items instead of updating existing ones
+- **Solution**: Maintain button state and prevent duplicate item creation
+- **Priority**: HIGH
+- **Status**: 🔴 PENDING
+
+---
+
+*Last Updated: 2025-08-20*
 *Next Review: After Phase 1 completion*

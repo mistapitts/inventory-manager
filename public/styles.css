@@ -914,10 +914,9 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
-    position: relative; /* Enable positioned children */
 }
 
-/* Unified header inside the table container - TRULY FIXED */
+/* Unified header inside the table container */
 .inventory-table-header {
     background: var(--bg-secondary);
     padding: 16px 20px;
@@ -925,14 +924,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: fixed; /* Changed from sticky to fixed */
+    position: sticky;
     top: 0;
-    left: 280px; /* Account for sidebar width */
-    right: 0;
-    z-index: 300; /* Even higher z-index */
-    /* Ensure proper positioning */
-    width: calc(100% - 280px); /* Full width minus sidebar */
-    box-sizing: border-box;
+    z-index: 100;
 }
 
 /* Table title inside the header */
@@ -946,7 +940,6 @@ body {
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 70px; /* Account for fixed header height */
 }
 
 .inventory-table th {
@@ -984,7 +977,6 @@ body {
 
 .inventory-table tbody tr {
     transition: background 0.3s ease;
-    position: relative; /* Enable absolute positioning for pseudo-elements */
 }
 
 .inventory-table tbody tr:hover {
@@ -1004,17 +996,7 @@ body {
     background: rgba(245, 158, 11, 0.05); /* Light orange background for better visibility */
 }
 
-/* Make orange tab position fixed during scroll */
-.inventory-table tbody tr.outsourced::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    background: #f59e0b;
-    z-index: 10;
-}
+
 
 /* List color coding - dynamic colors applied via JavaScript */
 .inventory-table tbody tr[data-list-id] {
