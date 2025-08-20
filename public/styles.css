@@ -814,8 +814,8 @@ body {
 
 /* Reduce spacing for inventory section header */
 .inventory-section .section-header {
-    margin-bottom: 0px;
-    padding: 8px 0 4px 0;
+    margin-bottom: 24px;
+    padding: 0;
     position: static;
     background: transparent;
     border-bottom: none;
@@ -825,30 +825,7 @@ body {
     align-items: flex-end;
 }
 
-/* Inventory title with absolute positioning for precise control */
-.inventory-title-header {
-    position: absolute;
-    top: -32px; /* Position above the border and table */
-    left: 0;
-    margin: 0;
-    padding: 0;
-    z-index: 10; /* Ensure it stays on top */
-}
-
-.inventory-title-header h2 {
-    margin: 0;
-    padding: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* Border line positioned between legend and table */
-.inventory-header-border {
-    border-top: 1px solid var(--border-color);
-    margin: 40px 0 12px 0; /* Add top margin for title space */
-    padding: 0;
-}
+/* Remove the absolute positioned title - we'll put it inside the table container */
 
 .section-header h2 {
     color: var(--text-primary);
@@ -937,6 +914,17 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
+}
+
+/* Table title inside the container */
+.inventory-table-title {
+    background: var(--bg-secondary);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .inventory-table {
