@@ -1068,6 +1068,7 @@ body {
     border-radius: 6px;
     flex-shrink: 0; /* Prevent legend from shrinking */
     min-width: 200px; /* Ensure minimum width */
+    margin-top: -40px; /* Pull legend back up to counteract title padding */
 }
 
 .legend-item {
