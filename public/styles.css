@@ -924,13 +924,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: fixed;
-    top: 120px; /* Position below the top navigation bar with proper spacing */
-    left: 280px; /* Account for the left sidebar */
-    right: 0;
-    z-index: 300;
-    width: calc(100% - 280px); /* Adjust width to account for sidebar */
+    position: relative; /* Normal document flow positioning */
+    width: 100%;
     box-sizing: border-box;
+    margin-bottom: 16px; /* Add some space below the header */
 }
 
 /* Table title inside the header */
@@ -944,7 +941,6 @@ body {
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 120px; /* Add margin to prevent content from being hidden behind fixed header */
 }
 
 .inventory-table th {
