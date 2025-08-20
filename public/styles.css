@@ -916,11 +916,18 @@ body {
     overflow: hidden;
 }
 
-/* Table title inside the container */
-.inventory-table-title {
+/* Unified header inside the table container */
+.inventory-table-header {
     background: var(--bg-secondary);
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Table title inside the header */
+.inventory-table-title {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
@@ -2108,11 +2115,11 @@ body {
     font-size: 0.875rem;
 }
 
-/* Column customizer styles */
+/* Column customizer styles - now part of the header */
 .table-header-controls {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 16px;
+    margin: 0; /* Remove margin since it's now in the header flex layout */
 }
 
 .column-customizer {
