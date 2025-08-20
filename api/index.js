@@ -624,16 +624,20 @@ app.put('/api/inventory/:id', async (req, res) => {
     Object.keys(req.body).forEach(key => {
       const value = req.body[key];
       if (value !== undefined && value !== '') {
-        // Convert camelCase to snake_case for database columns
-        const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updateData[dbKey] = value;
+        // Keep camelCase for database columns - database schema uses camelCase
+        updateData[key] = value;
       } else if (value === '') {
-        const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updateData[dbKey] = null;
+        updateData[key] = null;
       }
     });
     
-    updateData.updated_at = new Date().toISOString();
+    // Handle special case for calibrationType
+    if (updateData.calibrationType) {
+      updateData.isOutsourced = updateData.calibrationType === 'outsourced';
+      delete updateData.calibrationType;
+    }
+    
+    updateData.updatedAt = new Date().toISOString();
     
     console.log('Cleaned update data (converted to DB format):', updateData);
     
@@ -831,14 +835,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('calibration_records')
           .insert({
             id: recordId,
-            item_id: itemId,
-            user_id: req.user?.id || 'system',
-            calibration_date: formattedRecordDate,
-            next_calibration_due: null,
+            itemId: itemId,
+            userId: req.user?.id || 'system',
+            calibrationDate: formattedRecordDate,
+            nextCalibrationDue: null,
             method: 'Existing Document Upload',
             notes: notes || null,
-            file_path: req.file.filename,
-            created_at: new Date().toISOString()
+            filePath: req.file.filename,
+            createdAt: new Date().toISOString()
           });
         
         if (calError) throw calError;
@@ -851,14 +855,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('maintenance_records')
           .insert({
             id: recordId,
-            item_id: itemId,
-            user_id: req.user?.id || 'system',
-            maintenance_date: formattedRecordDate,
-            next_maintenance_due: null,
+            itemId: itemId,
+            userId: req.user?.id || 'system',
+            maintenanceDate: formattedRecordDate,
+            nextMaintenanceDue: null,
             type: 'Existing Document Upload',
             notes: notes || null,
-            file_path: req.file.filename,
-            created_at: new Date().toISOString()
+            filePath: req.file.filename,
+            createdAt: new Date().toISOString()
           });
         
         if (maintError) throw maintError;
@@ -895,14 +899,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('calibration_records')
           .insert({
             id: recordId,
-            item_id: itemId,
-            user_id: req.user?.id || 'system',
-            calibration_date: recordDate + ' 00:00:00',
-            next_calibration_due: nextDue + ' 00:00:00',
+            itemId: itemId,
+            userId: req.user?.id || 'system',
+            calibrationDate: recordDate + ' 00:00:00',
+            nextCalibrationDue: nextDue + ' 00:00:00',
             method: method,
             notes: notes || null,
-            file_path: req.file.filename,
-            created_at: new Date().toISOString()
+            filePath: req.file.filename,
+            createdAt: new Date().toISOString()
           });
         
         if (calError) throw calError;
@@ -913,9 +917,9 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
-            calibration_date: recordDate + ' 00:00:00',
-            next_calibration_due: nextDue + ' 00:00:00',
-            updated_at: new Date().toISOString()
+            calibrationDate: recordDate + ' 00:00:00',
+            nextCalibrationDue: nextDue + ' 00:00:00',
+            updatedAt: new Date().toISOString()
           })
           .eq('id', itemId);
         
@@ -931,14 +935,14 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
           .from('maintenance_records')
           .insert({
             id: recordId,
-            item_id: itemId,
-            user_id: req.user?.id || 'system',
-            maintenance_date: recordDate + ' 00:00:00',
-            next_maintenance_due: nextDue + ' 00:00:00',
+            itemId: itemId,
+            userId: req.user?.id || 'system',
+            maintenanceDate: recordDate + ' 00:00:00',
+            nextMaintenanceDue: nextDue + ' 00:00:00',
             type: method,
             notes: notes || null,
-            file_path: req.file.filename,
-            created_at: new Date().toISOString()
+            filePath: req.file.filename,
+            createdAt: new Date().toISOString()
           });
         
         if (maintError) throw maintError;
@@ -949,9 +953,9 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
-            maintenance_date: recordDate + ' 00:00:00',
-            maintenance_due: nextDue + ' 00:00:00',
-            updated_at: new Date().toISOString()
+            maintenanceDate: recordDate + ' 00:00:00',
+            maintenanceDue: nextDue + ' 00:00:00',
+            updatedAt: new Date().toISOString()
           })
           .eq('id', itemId);
         
