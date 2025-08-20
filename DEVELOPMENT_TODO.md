@@ -18,7 +18,11 @@
 - **Issue**: Button moves when scrolling
 - **Solution**: Fix button position to prevent movement during scroll
 - **Priority**: MEDIUM
-- **Status**: ✅ COMPLETED (BATCH 1.1)
+- **Status**: 🔴 PENDING
+- **Notes**: 
+  - Attempted sticky positioning but button still moves during scroll
+  - Need to also lock "Inventory" text position along with the button
+  - Both elements should be fixed in place relative to the table container
 
 ## 📝 **Phase 2: Form Functionality & Data Management**
 
@@ -27,7 +31,10 @@
 - **Error**: `StorageApiError: new row violates row-level security policy`
 - **Solution**: Fix Supabase storage permissions and RLS policies
 - **Priority**: CRITICAL
-- **Status**: ✅ COMPLETED (BATCH 1.1)
+- **Status**: 🔴 PENDING
+- **Notes**: 
+  - Attempted fixes but storage errors still occurring
+  - Need to investigate RLS policies and bucket creation further
 
 ### 5. ✏️ Enhance "Edit Item" Form
 - **Issue 1**: Calibration Type not auto-selected with existing value
@@ -38,7 +45,10 @@
   - Implement file replacement logic (delete old, upload new)
   - Ensure changes only apply to Edit form, not Add form
 - **Priority**: HIGH
-- **Status**: ✅ COMPLETED (BATCH 1.1)
+- **Status**: 🔴 PENDING
+- **Notes**: 
+  - Calibration Type auto-selection implemented but needs testing
+  - File detection enhanced but may need further refinement
 
 ## 🚫 **Phase 3: Out-of-Service Functionality**
 
@@ -109,11 +119,12 @@
 Starting with **Phase 1** - fixing the UI/UX issues to ensure a solid foundation before building new features.
 
 ## 📊 **Progress Tracking**
-- **Total Tasks**: 13
-- **Completed**: 3
+- **Total Tasks**: 14
+- **Completed**: 0
 - **In Progress**: 0
-- **Pending**: 10
-- **Completion**: 23%
+- **Pending**: 13
+- **Aborted**: 1
+- **Completion**: 0%
 
 ---
 
@@ -133,6 +144,12 @@ Starting with **Phase 1** - fixing the UI/UX issues to ensure a solid foundation
 - **Solution**: Maintain button state and prevent duplicate item creation
 - **Priority**: HIGH
 - **Status**: 🔴 PENDING
+
+### 14. 🟠 Orange Outsourced Tab Positioning (ABORTED)
+- **Issue**: Orange tab on outsourced items should be fixed during scroll
+- **Status**: ❌ ABORTED
+- **Reason**: Unnecessary complexity - current border-left styling is sufficient
+- **Notes**: User decided to keep simple border-left approach instead of complex positioning
 
 ---
 
