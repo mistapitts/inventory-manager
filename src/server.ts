@@ -72,7 +72,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // SPA fallback for non-API routes (supports deep links like /item/:id)
-app.get(/^\/(?!api|uploads).*/, (req, res) => {
+app.get(/^\/(?!api|uploads).*/, (_req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
@@ -83,7 +83,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (_req: Request, res: Response) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 

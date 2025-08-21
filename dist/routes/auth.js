@@ -103,6 +103,9 @@ router.post('/register', async (req, res) => {
 // Get current user profile
 router.get('/profile', auth_1.authenticateToken, async (req, res) => {
     try {
+        if (!req.user?.id) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
         const user = await database_1.database.get('SELECT id, email, firstName, lastName, role, companyId, regionId, isActive, createdAt FROM users WHERE id = ?', [req.user.id]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -134,6 +137,9 @@ router.put('/change-password', auth_1.authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Current and new passwords are required' });
         }
         // Get current user
+        if (!req.user?.id) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
         const user = await database_1.database.get('SELECT password FROM users WHERE id = ?', [req.user.id]);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });

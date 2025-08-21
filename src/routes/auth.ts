@@ -131,8 +131,11 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
 });
 
 // Get current user profile
-router.get('/profile', authenticateToken, async (req: any, res: Response) => {
+router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const user = await database.get(
       'SELECT id, email, firstName, lastName, role, companyId, regionId, isActive, createdAt FROM users WHERE id = ?',
       [req.user.id]
@@ -167,7 +170,7 @@ router.get('/profile', authenticateToken, async (req: any, res: Response) => {
 });
 
 // Change password
-router.put('/change-password', authenticateToken, async (req: any, res: Response) => {
+router.put('/change-password', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -176,6 +179,9 @@ router.put('/change-password', authenticateToken, async (req: any, res: Response
     }
 
     // Get current user
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const user = await database.get('SELECT password FROM users WHERE id = ?', [req.user.id]);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

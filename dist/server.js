@@ -66,7 +66,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 // SPA fallback for non-API routes (supports deep links like /item/:id)
-app.get(/^\/(?!api|uploads).*/, (req, res) => {
+app.get(/^\/(?!api|uploads).*/, (_req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../public/index.html'));
 });
 // Error handling middleware
@@ -75,7 +75,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (_req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
 });
 // For Vercel serverless deployment, export the app
