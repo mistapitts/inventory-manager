@@ -1,15 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const database_1 = require("../models/database");
 const auth_1 = require("../middleware/auth");
+const database_1 = require("../models/database");
 const types_1 = require("../types");
 const router = (0, express_1.Router)();
 // Create a simple company for demo purposes
 router.post('/setup-demo', auth_1.authenticateToken, async (req, res) => {
     try {
         // Check if demo company already exists
-        const existingCompany = await database_1.database.get('SELECT id FROM companies WHERE name = ?', ['Randy\'s Company']);
+        const existingCompany = await database_1.database.get('SELECT id FROM companies WHERE name = ?', [
+            "Randy's Company",
+        ]);
         if (existingCompany) {
             return res.status(400).json({ error: 'Demo company already exists' });
         }
@@ -19,7 +21,7 @@ router.post('/setup-demo', auth_1.authenticateToken, async (req, res) => {
             INSERT INTO companies (
                 id, name, isActive, createdAt, updatedAt
             ) VALUES (?, ?, 1, datetime('now'), datetime('now'))
-        `, [companyId, 'Randy\'s Company']);
+        `, [companyId, "Randy's Company"]);
         // Create demo location
         const locationId = generateId();
         await database_1.database.run(`
@@ -36,7 +38,7 @@ router.post('/setup-demo', auth_1.authenticateToken, async (req, res) => {
         res.json({
             message: 'Demo company setup successfully',
             companyId,
-            locationId
+            locationId,
         });
     }
     catch (error) {
@@ -68,9 +70,9 @@ router.get('/info', auth_1.authenticateToken, async (req, res) => {
             user,
             company: {
                 id: user.companyId,
-                name: user.company_name
+                name: user.company_name,
             },
-            locations
+            locations,
         });
     }
     catch (error) {
@@ -83,4 +85,3 @@ function generateId() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 exports.default = router;
-//# sourceMappingURL=company.js.map

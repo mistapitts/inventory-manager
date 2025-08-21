@@ -4,13 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.database = exports.Database = void 0;
-const sqlite3_1 = __importDefault(require("sqlite3"));
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const sqlite3_1 = __importDefault(require("sqlite3"));
+const config_1 = __importDefault(require("../config"));
 const types_1 = require("../types");
-const config_1 = require("../config");
-const dbPath = config_1.config.dbPath;
-(0, config_1.ensureDirSync)(path_1.default.dirname(dbPath));
+const dbPath = path_1.default.join(process.cwd(), config_1.default.paths.dataDir, config_1.default.dbFile);
+fs_1.default.mkdirSync(path_1.default.dirname(dbPath), { recursive: true });
 class Database {
     constructor() {
         this.db = new sqlite3_1.default.Database(dbPath);
@@ -188,7 +189,7 @@ class Database {
         FOREIGN KEY (companyId) REFERENCES companies (id),
         FOREIGN KEY (locationId) REFERENCES locations (id),
         FOREIGN KEY (regionId) REFERENCES locations (id)
-      )`
+      )`,
         ];
         for (const table of tables) {
             await this.run(table);
@@ -205,7 +206,7 @@ class Database {
             'CREATE INDEX IF NOT EXISTS idx_changelog_item ON changelog(itemId)',
             'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)',
             'CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON invite_codes(code)',
-            'CREATE INDEX IF NOT EXISTS idx_lists_company ON lists(companyId)'
+            'CREATE INDEX IF NOT EXISTS idx_lists_company ON lists(companyId)',
         ];
         for (const index of indexes) {
             await this.run(index);
@@ -220,7 +221,7 @@ class Database {
                 return;
             }
             // Get all existing columns
-            const columns = await this.all("PRAGMA table_info(inventory_items)");
+            const columns = await this.all('PRAGMA table_info(inventory_items)');
             const columnNames = columns.map((col) => col.name);
             console.log('Existing columns in inventory_items:', columnNames);
             // Define all required columns with their types and defaults
@@ -239,7 +240,7 @@ class Database {
                 { name: 'image', type: 'TEXT' },
                 { name: 'createdAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
                 { name: 'updatedAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
-                { name: 'listId', type: 'TEXT' }
+                { name: 'listId', type: 'TEXT' },
             ];
             // Add missing columns
             for (const column of requiredColumns) {
@@ -257,7 +258,7 @@ class Database {
                 }
             }
             // Final column check
-            const finalColumns = await this.all("PRAGMA table_info(inventory_items)");
+            const finalColumns = await this.all('PRAGMA table_info(inventory_items)');
             const finalColumnNames = finalColumns.map((col) => col.name);
             console.log('Final columns in inventory_items:', finalColumnNames);
             // Also ensure record tables are compatible with uploads
@@ -278,13 +279,13 @@ class Database {
                 return;
             }
             // Get all existing columns
-            const columns = await this.all("PRAGMA table_info(lists)");
+            const columns = await this.all('PRAGMA table_info(lists)');
             const columnNames = columns.map((col) => col.name);
             console.log('Existing columns in lists:', columnNames);
             // Define required columns for lists
             const requiredListColumns = [
                 { name: 'color', type: 'TEXT DEFAULT "#6b7280"' },
-                { name: 'textColor', type: 'TEXT DEFAULT "#ffffff"' }
+                { name: 'textColor', type: 'TEXT DEFAULT "#ffffff"' },
             ];
             // Add missing columns
             for (const column of requiredListColumns) {
@@ -309,13 +310,15 @@ class Database {
     async migrateRecordTablesIfNeeded() {
         // Calibration records: add filePath column and relax NOT NULL on dates/method
         try {
-            const calCols = await this.all("PRAGMA table_info(calibration_records)");
+            const calCols = await this.all('PRAGMA table_info(calibration_records)');
             if (calCols && calCols.length > 0) {
                 const hasFilePath = calCols.some((c) => c.name === 'filePath');
                 const calDate = calCols.find((c) => c.name === 'calibrationDate');
                 const nextDue = calCols.find((c) => c.name === 'nextCalibrationDue');
                 const methodCol = calCols.find((c) => c.name === 'method');
-                const needsRelax = (calDate && calDate.notnull === 1) || (nextDue && nextDue.notnull === 1) || (methodCol && methodCol.notnull === 1);
+                const needsRelax = (calDate && calDate.notnull === 1) ||
+                    (nextDue && nextDue.notnull === 1) ||
+                    (methodCol && methodCol.notnull === 1);
                 if (!hasFilePath || needsRelax) {
                     console.log('🔧 Migrating calibration_records schema...');
                     await this.run('BEGIN TRANSACTION');
@@ -355,14 +358,17 @@ class Database {
         }
         // Maintenance records: add filePath column and relax NOT NULL on dates/type
         try {
-            const mCols = await this.all("PRAGMA table_info(maintenance_records)");
+            const mCols = await this.all('PRAGMA table_info(maintenance_records)');
             if (mCols && mCols.length > 0) {
                 const hasFilePath = mCols.some((c) => c.name === 'filePath');
                 const hasNotes = mCols.some((c) => c.name === 'notes');
                 const mDate = mCols.find((c) => c.name === 'maintenanceDate');
                 const mNext = mCols.find((c) => c.name === 'nextMaintenanceDue');
                 const typeCol = mCols.find((c) => c.name === 'type');
-                const needsRelax = (mDate && mDate.notnull === 1) || (mNext && mNext.notnull === 1) || (typeCol && typeCol.notnull === 1) || !hasNotes;
+                const needsRelax = (mDate && mDate.notnull === 1) ||
+                    (mNext && mNext.notnull === 1) ||
+                    (typeCol && typeCol.notnull === 1) ||
+                    !hasNotes;
                 if (!hasFilePath || needsRelax) {
                     console.log('🔧 Migrating maintenance_records schema...');
                     await this.run('BEGIN TRANSACTION');
@@ -454,4 +460,3 @@ class Database {
 }
 exports.Database = Database;
 exports.database = new Database();
-//# sourceMappingURL=database.js.map

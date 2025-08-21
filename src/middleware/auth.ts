@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken';
 
 import { database } from '../models/database';
 import { UserRole } from '../types';
+import config from '../config';
 
 
 export const authenticateToken = async (
@@ -19,7 +20,7 @@ export const authenticateToken = async (
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+    const secret = config.jwtSecret;
     const decoded = jwt.verify(token, secret) as any;
     // Debug: successful decode
     // console.log('Auth OK for userId:', decoded?.userId);
@@ -110,6 +111,5 @@ export const requireLocationAccess = (
 };
 
 export const generateToken = (userId: string): string => {
-  const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-  return jwt.sign({ userId }, secret, { expiresIn: '7d' });
+  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '7d' });
 };

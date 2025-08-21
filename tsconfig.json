@@ -8,6 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": "src",
 
     // Keep ONLY node here so TS auto-discovers everything else
     "types": ["node"],
@@ -15,5 +17,5 @@
     // Allow both our ambient types and DefinitelyTyped
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src", "src/types/**/*.d.ts"]
+  "include": ["src/**/*.ts", "src/types/**/*.d.ts"]
 }

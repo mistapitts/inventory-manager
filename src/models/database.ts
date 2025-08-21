@@ -1,13 +1,14 @@
 import path from 'path';
+import fs from 'fs';
 
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 
-import { config, ensureDirSync } from '../config';
+import config from '../config';
 import { UserRole } from '../types';
 
-const dbPath = config.dbPath;
-ensureDirSync(path.dirname(dbPath));
+const dbPath = path.join(process.cwd(), config.paths.dataDir, config.dbFile);
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export class Database {
   public db: sqlite3.Database;
