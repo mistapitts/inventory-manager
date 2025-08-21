@@ -1,8 +1,8 @@
 import path from 'path';
 
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express, { type Request, type Response, type NextFunction } from 'express';
 
 import { config, validateRequiredEnv, ensureDirSync } from './config';
 import { database } from './models/database';

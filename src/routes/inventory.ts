@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Router, type Request, type Response } from 'express';
+import express, { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import QRCode from 'qrcode';
 

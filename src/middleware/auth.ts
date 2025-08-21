@@ -1,9 +1,8 @@
+import express, { type Request, type Response, type NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 import { database } from '../models/database';
 import { UserRole } from '../types';
-
-import type { Request, Response, NextFunction } from 'express';
 
 
 export const authenticateToken = async (
