@@ -116,7 +116,8 @@ The `package.json` now includes:
 - **Result**: TypeScript auto-discovers @types packages and avoids explicit resolution errors
 
 ### **Custom Type Definitions**
-- `src/types/express.d.ts` - Extends Express Request with `user`, `file`, `files`
+- `src/types/express.d.ts` - **Pure augmentation file** that extends Express.Request with `user` property
+- **No express shadowing** - TypeScript uses real express package for Router, Response, etc.
 - All route handlers use `AuthRequest` instead of `Request`
 - Proper typing for multer callbacks and server handlers
 
