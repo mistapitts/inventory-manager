@@ -2,11 +2,13 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '../types';
+import { config, ensureDirSync } from '../config';
 
-const dbPath = path.join(__dirname, '../../data/inventory.db');
+const dbPath = config.dbPath;
+ensureDirSync(path.dirname(dbPath));
 
 export class Database {
-  private db: sqlite3.Database;
+  public db: sqlite3.Database;
 
   constructor() {
     this.db = new sqlite3.Database(dbPath);

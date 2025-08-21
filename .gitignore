@@ -4,8 +4,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build outputs (keep dist in repo for Vercel)
-# build/
+# Build outputs
+dist/
+build/
 
 # Environment variables
 .env
@@ -67,6 +68,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+data/
 
 # Upload directories
 uploads/
