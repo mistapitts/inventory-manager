@@ -8,7 +8,11 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node", "express", "cors", "jsonwebtoken", "bcryptjs", "multer", "qrcode"],
+
+    // Keep ONLY node here so TS auto-discovers everything else
+    "types": ["node"],
+
+    // Allow both our ambient types and DefinitelyTyped
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src", "src/types/**/*.d.ts"]
