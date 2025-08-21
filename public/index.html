@@ -282,93 +282,94 @@
                         
                         <div class="inventory-main-content">
                             <div class="inventory-table-container">
-                                <!-- Scrollable wrapper containing both header and table -->
-                                <div class="inventory-scroll-container">
-                                    <!-- Unified header with title and controls - now inside the scroll container -->
-                                    <div class="inventory-table-header">
-                                        <h3 class="inventory-table-title">Inventory</h3>
-                                        <div class="table-header-controls">
-                                    <div class="column-customizer">
-                                        <button class="column-customizer-btn" id="columnCustomizerBtn" title="Edit Lists and Columns">
-                                            <i class="fas fa-columns"></i> Edit Lists and Columns
-                                        </button>
-                                        <div class="column-customizer-menu" id="columnCustomizerMenu">
-                                            <!-- Lists Section -->
-                                            <div class="column-customizer-header">
-                                                <h4>Lists</h4>
-                                                <button class="reset-columns-btn" id="listsShowAllBtn">Show All</button>
-                                            </div>
-                                            <div class="list-options" id="listOptions"></div>
-                                            <div class="menu-footer">
-                                                <button class="reset-columns-btn" id="addListInlineBtn">+ Add List</button>
-                                            </div>
-                                            
-                                            <!-- Columns Section -->
-                                            <div class="column-customizer-header">
-                                                <h4>Visible Columns</h4>
-                                                <button class="reset-columns-btn" onclick="resetColumnVisibility()">Reset All</button>
-                                            </div>
-                                            <div class="column-options">
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="itemType" checked> Item Type
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="nickname" checked> Nickname
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="labId" checked> Lab ID
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="make" checked> Make
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="model" checked> Model
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="serialNumber" checked> Serial #
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="condition" checked> Condition
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="dateReceived" checked> Date Received
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="datePlacedInService" checked> In Service
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="location" checked> Location
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="calibrationType" checked> Cal Type
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="calibrationDate" checked> Last Cal
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="nextCalibrationDue" checked> Next Cal Due
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="calibrationInterval" checked> Cal Interval
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="calibrationMethod" checked> Cal Method/Company
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="maintenanceDate" checked> Last Maintenance
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="maintenanceDue" checked> Maintenance Due
-                                                </label>
-                                                <label class="column-option">
-                                                    <input type="checkbox" data-column="notes" checked> Notes
-                                                </label>
-                                            </div>
+                                <!-- Fixed toolbar (never scrolls) -->
+                                <div class="inventory-table-header">
+                                    <h3 class="inventory-table-title">Inventory</h3>
+                                    <div class="table-header-controls">
+                                <div class="column-customizer">
+                                    <button class="column-customizer-btn" id="columnCustomizerBtn" title="Edit Lists and Columns">
+                                        <i class="fas fa-columns"></i> Edit Lists and Columns
+                                    </button>
+                                    <div class="column-customizer-menu" id="columnCustomizerMenu">
+                                        <!-- Lists Section -->
+                                        <div class="column-customizer-header">
+                                            <h4>Lists</h4>
+                                            <button class="reset-columns-btn" id="listsShowAllBtn">Show All</button>
+                                        </div>
+                                        <div class="list-options" id="listOptions"></div>
+                                        <div class="menu-footer">
+                                            <button class="reset-columns-btn" id="addListInlineBtn">+ Add List</button>
+                                        </div>
+                                        
+                                        <!-- Columns Section -->
+                                        <div class="column-customizer-header">
+                                            <h4>Visible Columns</h4>
+                                            <button class="reset-columns-btn" onclick="resetColumnVisibility()">Reset All</button>
+                                        </div>
+                                        <div class="column-options">
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="itemType" checked> Item Type
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="nickname" checked> Nickname
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="labId" checked> Lab ID
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="make" checked> Make
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="model" checked> Model
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="serialNumber" checked> Serial #
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="condition" checked> Condition
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="dateReceived" checked> Date Received
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="datePlacedInService" checked> In Service
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="location" checked> Location
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="calibrationType" checked> Cal Type
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="calibrationDate" checked> Last Cal
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="nextCalibrationDue" checked> Next Cal Due
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="calibrationInterval" checked> Cal Interval
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="calibrationMethod" checked> Cal Method/Company
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="maintenanceDate" checked> Last Maintenance
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="maintenanceDue" checked> Maintenance Due
+                                            </label>
+                                            <label class="column-option">
+                                                <input type="checkbox" data-column="notes" checked> Notes
+                                            </label>
                                         </div>
                                     </div>
-                                        </div>
+                                </div>
                                     </div>
-                                <table class="inventory-table" id="inventoryTable">
+                                </div>
+
+                                <!-- Only this part scrolls -->
+                                <div class="inventory-table-scroll-wrapper">
+                                    <table class="inventory-table" id="inventoryTable">
                                 <thead>
                                     <tr>
                                         <th class="sortable" data-sort="itemType">
@@ -432,7 +433,7 @@
                                     <!-- Inventory items will be populated here -->
                                 </tbody>
                             </table>
-                                </div> <!-- Close inventory-scroll-container -->
+                                </div> <!-- Close inventory-table-scroll-wrapper -->
                             </div>
                         </div>
                     </div> <!-- Close inventory-main-content -->
