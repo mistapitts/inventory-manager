@@ -5,16 +5,14 @@ import express, { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import QRCode from 'qrcode';
 
-import { config, ensureDirSync } from '../config';
+import { config, ensureDirSync, ABS_PATHS } from '../config';
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
-
-
 
 const router = Router();
 
 // Ensure upload directories exist
-const uploadRoot = config.uploadPath;
+const uploadRoot = ABS_PATHS.UPLOADS;
 ensureDirSync(uploadRoot);
 ensureDirSync(path.join(uploadRoot, 'docs'));
 ensureDirSync(path.join(uploadRoot, 'qr-codes'));

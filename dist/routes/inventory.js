@@ -13,7 +13,7 @@ const auth_1 = require("../middleware/auth");
 const database_1 = require("../models/database");
 const router = (0, express_1.Router)();
 // Ensure upload directories exist
-const uploadRoot = config_1.config.uploadPath;
+const uploadRoot = config_1.ABS_PATHS.UPLOADS;
 (0, config_1.ensureDirSync)(uploadRoot);
 (0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'docs'));
 (0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'qr-codes'));
