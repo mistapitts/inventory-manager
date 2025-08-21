@@ -3597,18 +3597,38 @@ function positionColumnCustomizerMenu() {
   menu.style.bottom = 'auto';
 }
 
-// Function to download files from Supabase Storage
+// Function to download files from storage
 async function downloadFile(fileName, fileType) {
   try {
-    // Get the file from Supabase Storage
-    const response = await fetch(`/api/storage/download/${fileName}`, {
+    // Use query parameter approach for better handling of filenames with spaces and special characters
+    // URL encode the filename to handle spaces, #, +, and other special characters safely
+    const encodedFileName = encodeURIComponent(fileName);
+    const downloadUrl = `/api/storage/download?file=${encodedFileName}`;
+
+    console.log('Downloading file:', { fileName, encodedFileName, downloadUrl });
+
+    // Get the file from storage
+    const response = await fetch(downloadUrl, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to download file');
+      const errorText = await response.text();
+      console.error('Download response not ok:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+      });
+
+      if (response.status === 404) {
+        throw new Error('File not found on server');
+      } else if (response.status === 400) {
+        throw new Error('Invalid file path');
+      } else {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
     }
 
     // Create blob and download
@@ -3616,7 +3636,7 @@ async function downloadFile(fileName, fileType) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = fileName; // Use original filename for download
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -3625,6 +3645,6 @@ async function downloadFile(fileName, fileType) {
     showToast('File downloaded successfully', 'success');
   } catch (error) {
     console.error('Error downloading file:', error);
-    showToast('Failed to download file', 'error');
+    showToast(`Failed to download file: ${error.message}`, 'error');
   }
 }

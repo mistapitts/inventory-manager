@@ -1,9 +1,9 @@
+import fs from 'fs';
 import path from 'path';
 
-import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import fs from 'fs';
+import express, { type Request, type Response, type NextFunction } from 'express';
 
 import config from './config';
 import { database } from './models/database';
@@ -12,6 +12,7 @@ import { database } from './models/database';
 import authRoutes from './routes/auth';
 import companyRoutes from './routes/company';
 import inventoryRoutes from './routes/inventory';
+import storageRoutes from './routes/storage';
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,7 @@ app.use(express.static(PUBLIC_DIR)); // also serve at root
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/company', companyRoutes);
+app.use('/api/storage', storageRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
