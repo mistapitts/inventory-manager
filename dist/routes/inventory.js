@@ -19,10 +19,10 @@ const uploadRoot = config_1.config.uploadPath;
 (0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'qr-codes'));
 (0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'images'));
 const storage = multer_1.default.diskStorage({
-    destination: (req, file, cb) => {
+    destination(_req, _file, cb) {
         cb(null, path_1.default.join(uploadRoot, 'docs'));
     },
-    filename: (req, file, cb) => {
+    filename(_req, file, cb) {
         const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
         const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, `${uniquePrefix}-${safeName}`);

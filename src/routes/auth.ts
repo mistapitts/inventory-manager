@@ -3,11 +3,12 @@ import bcrypt from 'bcryptjs';
 import { database } from '../models/database';
 import { generateToken, authenticateToken, requireRole } from '../middleware/auth';
 import { UserRole } from '../types';
+import type { AuthRequest } from '../types/express';
 
 const router = Router();
 
 // Login route
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -67,7 +68,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Register route (for new users with invite codes)
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, firstName, lastName, inviteCode } = req.body;
 
@@ -203,7 +204,7 @@ router.put('/change-password', authenticateToken, async (req: any, res: Response
 });
 
 // Admin: Create new user
-router.post('/admin/create-user', authenticateToken, requireRole([UserRole.ADMIN]), async (req: Request, res: Response) => {
+router.post('/admin/create-user', authenticateToken, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, firstName, lastName, role, companyId, locationId, regionId } = req.body;
 
@@ -238,7 +239,7 @@ router.post('/admin/create-user', authenticateToken, requireRole([UserRole.ADMIN
 });
 
 // Admin: Get all users
-router.get('/admin/users', authenticateToken, requireRole([UserRole.ADMIN]), async (req: Request, res: Response) => {
+router.get('/admin/users', authenticateToken, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
   try {
     const users = await database.all(
       'SELECT id, email, firstName, lastName, role, companyId, locationId, regionId, isActive, createdAt FROM users ORDER BY createdAt DESC'

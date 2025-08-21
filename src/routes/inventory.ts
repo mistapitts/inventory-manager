@@ -19,10 +19,10 @@ ensureDirSync(path.join(uploadRoot, 'qr-codes'));
 ensureDirSync(path.join(uploadRoot, 'images'));
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination(_req: Request, _file: Express.Multer.File, cb: (error: any, destination: string) => void) {
     cb(null, path.join(uploadRoot, 'docs'));
   },
-  filename: (req, file, cb) => {
+  filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, `${uniquePrefix}-${safeName}`);
