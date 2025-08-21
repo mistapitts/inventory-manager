@@ -32,6 +32,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 
     req.user = {
       id: user.id,
+      companyId: user.companyId,
       role: user.role as UserRole
     };
 
