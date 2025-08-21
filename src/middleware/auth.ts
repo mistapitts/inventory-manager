@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 
 import { database } from '../models/database';
 import { UserRole } from '../types';

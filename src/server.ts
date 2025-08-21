@@ -2,7 +2,7 @@ import path from 'path';
 
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 
 import { config, validateRequiredEnv, ensureDirSync } from './config';
 import { database } from './models/database';
@@ -12,7 +12,7 @@ import authRoutes from './routes/auth';
 import companyRoutes from './routes/company';
 import inventoryRoutes from './routes/inventory';
 
-import type { Request, Response, NextFunction } from 'express';
+
 
 // Load environment variables
 dotenv.config();

@@ -1,4 +1,5 @@
-// DO NOT import this file anywhere. It is picked up automatically by tsconfig `typeRoots`.
+// DO NOT import this file anywhere.
+// It's picked up via tsconfig `typeRoots` and augments the real express types.
 import 'express';
 
 declare global {
@@ -8,11 +9,10 @@ declare global {
       companyId: string;
       role?: string;
     }
-
     interface Request {
       user?: UserPayload;
     }
   }
 }
 
-export {}; // keep this so the file is treated as a module while we augment `global`
+export {}; // keeps the file a module but doesn't create a module named "express"
