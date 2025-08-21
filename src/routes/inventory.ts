@@ -7,11 +7,20 @@ import { UserRole } from '../types';
 import QRCode from 'qrcode';
 import path from 'path';
 import fs from 'fs';
+import { config, ensureDirSync } from '../config';
 
 const router = Router();
+
+// Ensure upload directories exist
+const uploadRoot = config.uploadPath;
+ensureDirSync(uploadRoot);
+ensureDirSync(path.join(uploadRoot, 'docs'));
+ensureDirSync(path.join(uploadRoot, 'qr-codes'));
+ensureDirSync(path.join(uploadRoot, 'images'));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads/docs'));
+    cb(null, path.join(uploadRoot, 'docs'));
   },
   filename: (req, file, cb) => {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -137,7 +146,7 @@ router.delete('/lists/:id', authenticateToken, async (req: AuthRequest, res: Res
                         
                         // Delete QR code file if exists
                         try {
-                            const qrPath = path.join(__dirname, '../../uploads/qr-codes', `${it.id}.png`);
+                            const qrPath = path.join(uploadRoot, 'qr-codes', `${it.id}.png`);
                             if (fs.existsSync(qrPath)) {
                                 fs.unlinkSync(qrPath);
                             }
@@ -505,14 +514,14 @@ router.post('/', upload.fields([
         
         console.log('📝 Changelog entry created');
         
-        // Generate QR code
+                // Generate QR code
         const qrCodeData = `${req.protocol}://${req.get('host')}/item/${itemId}`;
-        const qrCodePath = path.join(__dirname, '../../uploads/qr-codes', `${itemId}.png`);
+        const qrCodePath = path.join(uploadRoot, 'qr-codes', `${itemId}.png`);
         
         // Ensure directory exists
         const qrDir = path.dirname(qrCodePath);
         if (!fs.existsSync(qrDir)) {
-            fs.mkdirSync(qrDir, { recursive: true });
+          fs.mkdirSync(qrDir, { recursive: true });
         }
         
         await QRCode.toFile(qrCodePath, qrCodeData, {
@@ -1145,7 +1154,7 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
 
         // Delete QR code file if exists
         try {
-            const qrPath = path.join(__dirname, '../../uploads/qr-codes', `${itemId}.png`);
+            const qrPath = path.join(uploadRoot, 'qr-codes', `${itemId}.png`);
             if (fs.existsSync(qrPath)) {
                 fs.unlinkSync(qrPath);
             }

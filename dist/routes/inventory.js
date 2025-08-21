@@ -10,10 +10,17 @@ const auth_1 = require("../middleware/auth");
 const qrcode_1 = __importDefault(require("qrcode"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const config_1 = require("../config");
 const router = (0, express_1.Router)();
+// Ensure upload directories exist
+const uploadRoot = config_1.config.uploadPath;
+(0, config_1.ensureDirSync)(uploadRoot);
+(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'docs'));
+(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'qr-codes'));
+(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'images'));
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path_1.default.join(__dirname, '../../uploads/docs'));
+        cb(null, path_1.default.join(uploadRoot, 'docs'));
     },
     filename: (req, file, cb) => {
         const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -133,7 +140,7 @@ router.delete('/lists/:id', auth_1.authenticateToken, async (req, res) => {
                         }
                         // Delete QR code file if exists
                         try {
-                            const qrPath = path_1.default.join(__dirname, '../../uploads/qr-codes', `${it.id}.png`);
+                            const qrPath = path_1.default.join(uploadRoot, 'qr-codes', `${it.id}.png`);
                             if (fs_1.default.existsSync(qrPath)) {
                                 fs_1.default.unlinkSync(qrPath);
                             }
@@ -433,7 +440,7 @@ router.post('/', upload.fields([
         console.log('📝 Changelog entry created');
         // Generate QR code
         const qrCodeData = `${req.protocol}://${req.get('host')}/item/${itemId}`;
-        const qrCodePath = path_1.default.join(__dirname, '../../uploads/qr-codes', `${itemId}.png`);
+        const qrCodePath = path_1.default.join(uploadRoot, 'qr-codes', `${itemId}.png`);
         // Ensure directory exists
         const qrDir = path_1.default.dirname(qrCodePath);
         if (!fs_1.default.existsSync(qrDir)) {
@@ -947,7 +954,7 @@ router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
         }
         // Delete QR code file if exists
         try {
-            const qrPath = path_1.default.join(__dirname, '../../uploads/qr-codes', `${itemId}.png`);
+            const qrPath = path_1.default.join(uploadRoot, 'qr-codes', `${itemId}.png`);
             if (fs_1.default.existsSync(qrPath)) {
                 fs_1.default.unlinkSync(qrPath);
             }

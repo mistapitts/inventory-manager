@@ -17,6 +17,8 @@ const company_1 = __importDefault(require("./routes/company"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
+/** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
+app.set('trust proxy', true);
 // Validate required environment variables
 (0, config_1.validateRequiredEnv)();
 // CORS: restrict if ALLOWED_ORIGINS is set, else permissive (dev)

@@ -16,6 +16,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
+app.set('trust proxy', true);
+
 // Validate required environment variables
 validateRequiredEnv();
 
