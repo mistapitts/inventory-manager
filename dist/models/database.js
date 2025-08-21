@@ -8,7 +8,9 @@ const sqlite3_1 = __importDefault(require("sqlite3"));
 const path_1 = __importDefault(require("path"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const types_1 = require("../types");
-const dbPath = path_1.default.join(__dirname, '../../data/inventory.db');
+const config_1 = require("../config");
+const dbPath = config_1.config.dbPath;
+(0, config_1.ensureDirSync)(path_1.default.dirname(dbPath));
 class Database {
     constructor() {
         this.db = new sqlite3_1.default.Database(dbPath);

@@ -1,5 +1,6 @@
+import sqlite3 from 'sqlite3';
 export declare class Database {
-    private db;
+    db: sqlite3.Database;
     constructor();
     private init;
     private createTables;

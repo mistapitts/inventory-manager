@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -46,7 +46,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/company', companyRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => {
   // Test database connection
   database.db.get('SELECT 1 as ok', [], (err: any, row: any) => {
     if (err) {
