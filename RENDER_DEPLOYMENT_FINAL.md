@@ -99,7 +99,11 @@ The `package.json` now includes:
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node", "express", "cors", "jsonwebtoken", "bcryptjs", "multer", "qrcode"],
+
+    // Keep ONLY node here so TS auto-discovers everything else
+    "types": ["node"],
+
+    // Allow both our ambient types and DefinitelyTyped
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src", "src/types/**/*.d.ts"]
@@ -107,9 +111,9 @@ The `package.json` now includes:
 ```
 
 **Key changes:**
-- **`types`**: Explicitly includes all required @types packages
+- **`types`**: Only includes `["node"]` for auto-discovery (prevents TS2688 errors)
 - **`typeRoots`**: Forces TypeScript to search both `node_modules/@types` and `src/types`
-- **Result**: TypeScript can now "see" all @types packages during compilation
+- **Result**: TypeScript auto-discovers @types packages and avoids explicit resolution errors
 
 ### **Custom Type Definitions**
 - `src/types/express.d.ts` - Extends Express Request with `user`, `file`, `files`
