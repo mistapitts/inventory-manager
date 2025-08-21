@@ -19,6 +19,8 @@ Change the build command in Render → Settings → Build & Deploy to:
 npm ci --include=dev && npm run build
 ```
 
+> **This ensures devDependencies (including @types/*) are installed during build**
+
 ### **Start Command**
 Keep the existing start command:
 ```bash
@@ -40,10 +42,13 @@ The `package.json` now includes:
   "scripts": {
     "ensure-types": "npm i --no-save @types/node @types/express @types/cors @types/jsonwebtoken @types/bcryptjs @types/multer @types/qrcode",
     "build": "npm run ensure-types && tsc",
+    "postinstall": "npm run ensure-types || true",
     "start": "node dist/server.js"
   }
 }
 ```
+
+**The `postinstall` script provides an additional safety net** - it runs during `npm ci` and ensures types are installed even if the build command regresses.
 
 **This ensures:**
 1. **Types are always available** during build, even if `NODE_ENV=production`
@@ -62,6 +67,7 @@ The `package.json` now includes:
 ### **Current Solution**
 - **Belt**: `npm ci --include=dev` ensures devDeps are installed
 - **Suspenders**: `ensure-types` script installs types explicitly during build
+- **Safety Net**: `postinstall` script runs during `npm ci` as additional protection
 - **Result**: Types are always available, TypeScript compilation succeeds
 
 ## 🚀 Deployment Steps
@@ -100,8 +106,9 @@ The `package.json` now includes:
 ### **Build Process**
 1. `npm ci --include=dev` - Install all dependencies including devDeps
 2. `npm run ensure-types` - Install types explicitly (backup)
-3. `tsc` - TypeScript compilation with full type information
-4. Build succeeds with complete type safety
+3. `postinstall` - Additional safety net during npm ci
+4. `tsc` - TypeScript compilation with full type information
+5. Build succeeds with complete type safety
 
 ## 🎉 Expected Result
 
