@@ -1,17 +1,19 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
+import { type Response } from 'express';
 
 import { generateToken, authenticateToken, requireRole } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
 
-import type { AuthRequest } from '../types/express';
-import type { Response } from 'express';
+import type express from 'express';
+
+
 
 const router = Router();
 
 // Login route
-router.post('/login', async (req: AuthRequest, res: Response) => {
+router.post('/login', async (req: express.Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -69,7 +71,7 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
 });
 
 // Register route (for new users with invite codes)
-router.post('/register', async (req: AuthRequest, res: Response) => {
+router.post('/register', async (req: express.Request, res: Response) => {
   try {
     const { email, password, firstName, lastName, inviteCode } = req.body;
 
@@ -140,7 +142,7 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
 });
 
 // Get current user profile
-router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/profile', authenticateToken, async (req: express.Request, res: Response) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -178,7 +180,7 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
 });
 
 // Change password
-router.put('/change-password', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.put('/change-password', authenticateToken, async (req: express.Request, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -222,7 +224,7 @@ router.post(
   '/admin/create-user',
   authenticateToken,
   requireRole([UserRole.ADMIN]),
-  async (req: AuthRequest, res: Response) => {
+  async (req: express.Request, res: Response) => {
     try {
       const { email, password, firstName, lastName, role, companyId, locationId, regionId } =
         req.body;
@@ -274,7 +276,7 @@ router.get(
   '/admin/users',
   authenticateToken,
   requireRole([UserRole.ADMIN]),
-  async (req: AuthRequest, res: Response) => {
+  async (req: express.Request, res: Response) => {
     try {
       const users = await database.all(
         'SELECT id, email, firstName, lastName, role, companyId, locationId, regionId, isActive, createdAt FROM users ORDER BY createdAt DESC',

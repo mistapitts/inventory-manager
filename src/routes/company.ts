@@ -1,16 +1,18 @@
 import { Router } from 'express';
+import { type Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
 
-import type { AuthRequest } from '../types/express';
-import type { Response } from 'express';
+import type express from 'express';
+
+
 
 const router = Router();
 
 // Create a simple company for demo purposes
-router.post('/setup-demo', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/setup-demo', authenticateToken, async (req: express.Request, res: Response) => {
   try {
     // Check if demo company already exists
     const existingCompany = await database.get('SELECT id FROM companies WHERE name = ?', [
@@ -65,7 +67,7 @@ router.post('/setup-demo', authenticateToken, async (req: AuthRequest, res: Resp
 });
 
 // Get company info for current user
-router.get('/info', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get('/info', authenticateToken, async (req: express.Request, res: Response) => {
   try {
     const userId = req.user!.id;
 

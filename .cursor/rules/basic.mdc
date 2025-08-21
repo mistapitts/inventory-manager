@@ -1,5 +1,65 @@
+description: Unified project rules for code quality, deployment, and security
+alwaysApply: true
 ---
-description:
-globs:
-alwaysApply: false
+
+# 🔧 Project Rules: Inventory Manager
+
+## ✅ Code Quality & Workflow
+- Batch all edits per task into **one commit** with a clear, conventional commit message.  
+- Before committing, always run:
+  ```bash
+  npm run lint:fix && npm run format:fix && npm run build
+````
+
+* Never change `tsconfig.json` beyond these options:
+
+  * `"types": ["node"]`
+  * `"typeRoots": ["./node_modules/@types","./src/types"]`
+  * `"moduleResolution": "node"`
+  * `"skipLibCheck": true`
+* Treat `src/types/express.d.ts` as **ambient augmentation**:
+
+  * Do not import it.
+  * Do not shadow the `express` package.
+* Runtime Express imports must always be:
+
+  ```ts
+  import express, { Router, Request, Response, NextFunction } from 'express';
+  ```
+* Do not add new runtime dependencies or change Node engine without explicit instruction.
+* Do not commit doc-only changes (e.g., `.md`, `docs/`) as deploy-triggering commits. Group them with code changes if needed.
+
 ---
+
+## 🚀 Deployment Rules
+
+* Do not trigger deployment twice.
+* Only deploy after `render_deployment_final` has been updated.
+* Never run `git push && deploy` in separate steps — always consolidate into one sequence.
+* Deployment steps must follow this order:
+
+  1. Run linting & formatting
+  2. Run build
+  3. Update `render_deployment_final`
+  4. Commit & push **once**
+* If docs or comments are changed without code, skip deployment.
+
+---
+
+## 🔒 Security & Stability
+
+* Do not introduce new dependencies without approval.
+* Keep environment variables (`.env`) untouched unless explicitly instructed.
+* Never log sensitive data (passwords, tokens, keys).
+* Always sanitize inputs and handle async promises safely.
+* Use TypeScript’s strict mode for type safety.
+* Treat warnings as issues unless explicitly suppressed.
+
+```
+
+---
+
+💡 Recommendation: save this file as `.cursor/rules/project-rules.mdc`. That way, Cursor will always apply it across the repo.  
+
+Do you want me to also include a **short commit message style guide** inside this same rule (so Cursor keeps your Git history clean automatically)?
+```
