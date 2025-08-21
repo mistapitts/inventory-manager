@@ -91,12 +91,25 @@ The `package.json` now includes:
 ```json
 {
   "compilerOptions": {
-    "types": ["node"],
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
     "skipLibCheck": true,
-    "include": ["src", "src/types/**/*.d.ts"]
-  }
+    "resolveJsonModule": true,
+    "types": ["node", "express", "cors", "jsonwebtoken", "bcryptjs", "multer", "qrcode"],
+    "typeRoots": ["./node_modules/@types", "./src/types"]
+  },
+  "include": ["src", "src/types/**/*.d.ts"]
 }
 ```
+
+**Key changes:**
+- **`types`**: Explicitly includes all required @types packages
+- **`typeRoots`**: Forces TypeScript to search both `node_modules/@types` and `src/types`
+- **Result**: TypeScript can now "see" all @types packages during compilation
 
 ### **Custom Type Definitions**
 - `src/types/express.d.ts` - Extends Express Request with `user`, `file`, `files`
