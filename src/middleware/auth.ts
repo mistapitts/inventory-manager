@@ -1,15 +1,13 @@
-import { type Response   } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { database } from '../models/database';
 import { UserRole } from '../types';
-import type { NextFunction } from 'express';
 
-import type express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 
 export const authenticateToken = async (
-  req: express.Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
@@ -57,8 +55,8 @@ export const authenticateToken = async (
 
 export const requireRole = (
   roles: UserRole[],
-): ((req: express.Request, res: Response, next: NextFunction) => void) => {
-  return (req: express.Request, res: Response, next: NextFunction): void => {
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
@@ -73,7 +71,7 @@ export const requireRole = (
   };
 };
 
-export const requireCompanyAccess = (req: express.Request, res: Response, next: NextFunction): void => {
+export const requireCompanyAccess = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
     res.status(401).json({ error: 'Authentication required' });
     return;
@@ -90,8 +88,8 @@ export const requireCompanyAccess = (req: express.Request, res: Response, next: 
 
 export const requireLocationAccess = (
   locationId: string,
-): ((req: express.Request, res: Response, next: NextFunction) => void) => {
-  return (req: express.Request, res: Response, next: NextFunction): void => {
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;

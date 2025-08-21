@@ -1,16 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Router } from 'express';
-import { type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import QRCode from 'qrcode';
 
 import { config, ensureDirSync } from '../config';
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
-
-import type express from 'express';
 
 
 
@@ -25,13 +22,13 @@ ensureDirSync(path.join(uploadRoot, 'images'));
 
 const storage = multer.diskStorage({
   destination(
-    _req: express.Request,
+    _req: Request,
     _file: Express.Multer.File,
     cb: (error: any, destination: string) => void,
   ) {
     cb(null, path.join(uploadRoot, 'docs'));
   },
-  filename(_req: express.Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
+  filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, `${uniquePrefix}-${safeName}`);
@@ -41,7 +38,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Lists: get all lists for current user's company
-router.get('/lists', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/lists', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
@@ -59,7 +56,7 @@ router.get('/lists', authenticateToken, async (req: express.Request, res: Respon
 });
 
 // Lists: create a new list for company
-router.post('/lists', authenticateToken, async (req: express.Request, res: Response) => {
+router.post('/lists', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const { name, color, textColor } = req.body as {
@@ -90,7 +87,7 @@ router.post('/lists', authenticateToken, async (req: express.Request, res: Respo
 });
 
 // Lists: update a list's colors
-router.put('/lists/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.put('/lists/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const listId = req.params.id;
@@ -146,7 +143,7 @@ router.put('/lists/:id', authenticateToken, async (req: express.Request, res: Re
 });
 
 // Lists: delete a list (and optionally reassign items to null)
-router.delete('/lists/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.delete('/lists/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const listId = req.params.id;
@@ -241,7 +238,7 @@ router.delete('/lists/:id', authenticateToken, async (req: express.Request, res:
 router.post(
   '/lists/migrate-to-field',
   authenticateToken,
-  async (req: express.Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id;
       const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
@@ -280,7 +277,7 @@ router.post(
 );
 
 // Get all inventory items for the user's company
-router.get('/', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const { listId } = req.query as { listId?: string };
@@ -317,7 +314,7 @@ router.get('/', authenticateToken, async (req: express.Request, res: Response) =
 });
 
 // Get out-of-service items
-router.get('/out-of-service', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/out-of-service', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
 
@@ -345,7 +342,7 @@ router.get('/out-of-service', authenticateToken, async (req: express.Request, re
 });
 
 // Get single inventory item
-router.get('/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -436,7 +433,7 @@ router.post(
     { name: 'maintenanceInstructions', maxCount: 1 },
   ]),
   authenticateToken,
-  async (req: express.Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id;
       console.log('🔍 Creating item for user:', userId);
@@ -690,7 +687,7 @@ router.post(
   '/upload-record',
   authenticateToken,
   upload.single('recordFile'),
-  async (req: express.Request, res: Response) => {
+  async (req: Request, res: Response) => {
     console.log('🚀 POST /upload-record endpoint called');
     console.log('📝 Request body:', req.body);
     console.log('📁 File:', req.file);
@@ -1007,7 +1004,7 @@ router.post(
 );
 
 // Update inventory item
-router.put('/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -1109,7 +1106,7 @@ router.put('/:id', authenticateToken, async (req: express.Request, res: Response
 });
 
 // Mark item as out of service
-router.patch('/:id/out-of-service', authenticateToken, async (req: express.Request, res: Response) => {
+router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -1161,7 +1158,7 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: express.Reque
 });
 
 // Add calibration record
-router.post('/:id/calibration', authenticateToken, async (req: express.Request, res: Response) => {
+router.post('/:id/calibration', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -1241,7 +1238,7 @@ router.post(
     { name: 'maintenanceTemplate', maxCount: 1 },
     { name: 'maintenanceInstructions', maxCount: 1 },
   ]),
-  async (req: express.Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const itemId = req.params.id;
       const files = req.files as Record<string, Express.Multer.File[]>;
@@ -1282,7 +1279,7 @@ router.post(
 );
 
 // Add maintenance record
-router.post('/:id/maintenance', authenticateToken, async (req: express.Request, res: Response) => {
+router.post('/:id/maintenance', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -1390,7 +1387,7 @@ async function resolveItemIdColumn(tableName: string): Promise<string | null> {
 }
 
 // Delete inventory item (and associated records/files)
-router.delete('/:id', authenticateToken, async (req: express.Request, res: Response) => {
+router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
@@ -1444,7 +1441,7 @@ router.delete('/:id', authenticateToken, async (req: express.Request, res: Respo
 router.delete(
   '/:itemId/records/:recordId',
   authenticateToken,
-  async (req: express.Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { itemId, recordId } = req.params;
       const { type } = req.query; // 'calibration' | 'maintenance'
@@ -1475,7 +1472,7 @@ router.delete(
 );
 
 // Get inventory statistics
-router.get('/stats/overview', authenticateToken, async (req: express.Request, res: Response) => {
+router.get('/stats/overview', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
 

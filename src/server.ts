@@ -12,7 +12,7 @@ import authRoutes from './routes/auth';
 import companyRoutes from './routes/company';
 import inventoryRoutes from './routes/inventory';
 
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 // Load environment variables
 dotenv.config();
@@ -81,7 +81,7 @@ app.get(/^\/(?!api|uploads).*/, (_req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });

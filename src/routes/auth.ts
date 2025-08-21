@@ -1,6 +1,5 @@
-import bcrypt from 'bcryptjs';
-import { Router } from 'express';
-import { type Response } from 'express';
+import * as bcrypt from 'bcryptjs';
+import { Router, type Response } from 'express';
 
 import { generateToken, authenticateToken, requireRole } from '../middleware/auth';
 import { database } from '../models/database';

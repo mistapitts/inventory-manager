@@ -1,5 +1,4 @@
-import { Router } from 'express';
-import { type Response } from 'express';
+import { Router, type Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
