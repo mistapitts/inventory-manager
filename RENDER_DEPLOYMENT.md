@@ -1,9 +1,11 @@
 # 🚀 Render Deployment Guide
 
 ## Overview
+
 This guide will help you deploy your Inventory Manager application on Render as a Web Service with persistent storage and automated backups.
 
 ## Prerequisites
+
 - Render account (free tier works)
 - GitHub repository with your code
 - Basic understanding of environment variables
@@ -22,13 +24,15 @@ This guide will help you deploy your Inventory Manager application on Render as 
 ## Step 2: Configure the Web Service
 
 ### Basic Settings
+
 - **Name**: `inventory-manager` (or your preferred name)
-- **Root Directory**: *(leave blank)*
+- **Root Directory**: _(leave blank)_
 - **Environment**: `Node`
 - **Build Command**: `npm install && npm run build`
 - **Start Command**: `node dist/server.js`
 
 ### Instance Type
+
 - **Instance Type**: Starter ($7/month) - **Required for Disks**
 - **Plan**: Free tier won't work (no persistent disks)
 
@@ -60,7 +64,9 @@ ALLOWED_ORIGINS=https://your-app-name.onrender.com
 ```
 
 ### JWT_SECRET Generation
+
 Generate a secure JWT secret:
+
 ```bash
 # Option 1: Use openssl
 openssl rand -base64 64
@@ -86,12 +92,14 @@ node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
 ## Step 6: Set Up Automated Backups
 
 ### Create Cron Job
+
 1. **New → Cron Job**
 2. **Environment**: Same repo/branch as your web service
 3. **Schedule**: `0 9 * * *` (daily at 9:00 UTC)
 4. **Command**: `npm run backup:db`
 
 ### Cron Job Environment Variables
+
 ```bash
 DB_PATH=/opt/data/inventory.db
 BACKUP_PATH=/opt/data/backups
@@ -100,16 +108,19 @@ BACKUP_PATH=/opt/data/backups
 ## Step 7: Verify Everything Works
 
 ### Test File Uploads
+
 1. Add an inventory item with file uploads
 2. Verify files are stored in `/opt/data/uploads`
 3. Check that files persist after service restart
 
 ### Test Database Persistence
+
 1. Add some test data
 2. Restart the service
 3. Verify data is still there
 
 ### Test Backups
+
 1. Run backup manually: `npm run backup:db`
 2. Check `/opt/data/backups` for timestamped files
 
@@ -118,20 +129,24 @@ BACKUP_PATH=/opt/data/backups
 ### Common Issues
 
 **Build Fails**
+
 - Check that `package.json` has correct scripts
 - Verify TypeScript compilation works locally
 
 **Service Won't Start**
+
 - Check environment variables are set correctly
 - Verify JWT_SECRET is provided in production
 - Check logs for specific error messages
 
 **Database Not Persisting**
+
 - Verify disk is mounted at `/opt/data`
 - Check `DB_PATH` environment variable
 - Ensure disk size is sufficient
 
 **File Uploads Not Working**
+
 - Check `UPLOAD_PATH` environment variable
 - Verify disk permissions
 - Check service logs for errors
@@ -139,16 +154,19 @@ BACKUP_PATH=/opt/data/backups
 ### Useful Commands
 
 **Check Disk Usage**
+
 ```bash
 df -h /opt/data
 ```
 
 **List Backup Files**
+
 ```bash
 ls -la /opt/data/backups/
 ```
 
 **Check Service Logs**
+
 - Use Render dashboard logs
 - Or SSH into the service if available
 
@@ -168,6 +186,7 @@ ls -la /opt/data/backups/
 ## Next Steps
 
 After successful deployment:
+
 1. Set up custom domain (optional)
 2. Configure monitoring and alerts
 3. Set up CI/CD pipeline

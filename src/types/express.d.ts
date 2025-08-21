@@ -17,7 +17,7 @@ export type AuthRequest<
   P extends ParamsDictionary = ParamsDictionary,
   ResBody = any,
   ReqBody = any,
-  ReqQuery extends ParsedQs = ParsedQs
+  ReqQuery extends ParsedQs = ParsedQs,
 > = Request<P, ResBody, ReqBody, ReqQuery> & {
   user?: { id: string; companyId: string; role?: string };
 };

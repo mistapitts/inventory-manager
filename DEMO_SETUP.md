@@ -17,6 +17,7 @@ npm start
 ```
 
 You should see:
+
 ```
 🚀 Inventory Manager API running on port 3000
 📊 Database initialized successfully
@@ -68,6 +69,7 @@ You should see:
 6. **Access from any computer** on your network at `http://[SERVER-IP]:3000`
 
 ### Benefits of Company Server:
+
 - 🏢 **No monthly cloud costs**
 - 🔒 **Data stays on your network**
 - ⚡ **Faster access for your team**
@@ -77,6 +79,7 @@ You should see:
 ## PowerShell Launcher
 
 Use the included `launch-app.ps1` script to:
+
 - Check if server is running
 - Start server if needed
 - Open app in browser automatically
@@ -94,6 +97,7 @@ Use the included `launch-app.ps1` script to:
 ## Demo for Company Owner
 
 **Perfect for showing:**
+
 - Professional, modern interface
 - Complete database structure
 - Multi-user ready
@@ -104,6 +108,7 @@ Use the included `launch-app.ps1` script to:
 ## Support
 
 If you encounter any issues:
+
 1. Check the server console for error messages
 2. Verify all dependencies are installed
 3. Ensure the database file has write permissions

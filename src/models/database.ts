@@ -1,8 +1,10 @@
-import sqlite3 from 'sqlite3';
 import path from 'path';
+
 import bcrypt from 'bcryptjs';
-import { UserRole } from '../types';
+import sqlite3 from 'sqlite3';
+
 import { config, ensureDirSync } from '../config';
+import { UserRole } from '../types';
 
 const dbPath = config.dbPath;
 ensureDirSync(path.dirname(dbPath));
@@ -198,27 +200,27 @@ export class Database {
         FOREIGN KEY (companyId) REFERENCES companies (id),
         FOREIGN KEY (locationId) REFERENCES locations (id),
         FOREIGN KEY (regionId) REFERENCES locations (id)
-      )`
+      )`,
     ];
 
     for (const table of tables) {
       await this.run(table);
     }
 
-         // Create indexes for better performance
-     const indexes = [
-       'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)',
-       'CREATE INDEX IF NOT EXISTS idx_users_company ON users(companyId)',
-       'CREATE INDEX IF NOT EXISTS idx_inventory_company ON inventory_items(companyId)',
-       'CREATE INDEX IF NOT EXISTS idx_inventory_calibration ON inventory_items(nextCalibrationDue)',
-       'CREATE INDEX IF NOT EXISTS idx_inventory_maintenance ON inventory_items(maintenanceDue)',
-       'CREATE INDEX IF NOT EXISTS idx_calibration_item ON calibration_records(itemId)',
-       'CREATE INDEX IF NOT EXISTS idx_maintenance_item ON maintenance_records(itemId)',
-       'CREATE INDEX IF NOT EXISTS idx_changelog_item ON changelog(itemId)',
-       'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)',
-       'CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON invite_codes(code)',
-       'CREATE INDEX IF NOT EXISTS idx_lists_company ON lists(companyId)'
-     ];
+    // Create indexes for better performance
+    const indexes = [
+      'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)',
+      'CREATE INDEX IF NOT EXISTS idx_users_company ON users(companyId)',
+      'CREATE INDEX IF NOT EXISTS idx_inventory_company ON inventory_items(companyId)',
+      'CREATE INDEX IF NOT EXISTS idx_inventory_calibration ON inventory_items(nextCalibrationDue)',
+      'CREATE INDEX IF NOT EXISTS idx_inventory_maintenance ON inventory_items(maintenanceDue)',
+      'CREATE INDEX IF NOT EXISTS idx_calibration_item ON calibration_records(itemId)',
+      'CREATE INDEX IF NOT EXISTS idx_maintenance_item ON maintenance_records(itemId)',
+      'CREATE INDEX IF NOT EXISTS idx_changelog_item ON changelog(itemId)',
+      'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)',
+      'CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON invite_codes(code)',
+      'CREATE INDEX IF NOT EXISTS idx_lists_company ON lists(companyId)',
+    ];
 
     for (const index of indexes) {
       await this.run(index);
@@ -228,16 +230,18 @@ export class Database {
   private async addMissingColumns(): Promise<void> {
     try {
       // Check if inventory_items table exists
-      const tableExists = await this.get("SELECT name FROM sqlite_master WHERE type='table' AND name='inventory_items'");
+      const tableExists = await this.get(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='inventory_items'",
+      );
       if (!tableExists) {
         console.log('Table inventory_items does not exist yet, will be created with full schema');
         return;
       }
 
       // Get all existing columns
-      const columns = await this.all("PRAGMA table_info(inventory_items)");
+      const columns = await this.all('PRAGMA table_info(inventory_items)');
       const columnNames = columns.map((col: any) => col.name);
-      
+
       console.log('Existing columns in inventory_items:', columnNames);
 
       // Define all required columns with their types and defaults
@@ -256,7 +260,7 @@ export class Database {
         { name: 'image', type: 'TEXT' },
         { name: 'createdAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
         { name: 'updatedAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
-        { name: 'listId', type: 'TEXT' }
+        { name: 'listId', type: 'TEXT' },
       ];
 
       // Add missing columns
@@ -274,16 +278,15 @@ export class Database {
       }
 
       // Final column check
-      const finalColumns = await this.all("PRAGMA table_info(inventory_items)");
+      const finalColumns = await this.all('PRAGMA table_info(inventory_items)');
       const finalColumnNames = finalColumns.map((col: any) => col.name);
       console.log('Final columns in inventory_items:', finalColumnNames);
 
       // Also ensure record tables are compatible with uploads
       await this.migrateRecordTablesIfNeeded();
-      
+
       // Add missing columns to lists table
       await this.addMissingListColumns();
-
     } catch (error) {
       console.error('❌ Error in addMissingColumns:', error);
     }
@@ -292,22 +295,24 @@ export class Database {
   private async addMissingListColumns(): Promise<void> {
     try {
       // Check if lists table exists
-      const tableExists = await this.get("SELECT name FROM sqlite_master WHERE type='table' AND name='lists'");
+      const tableExists = await this.get(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='lists'",
+      );
       if (!tableExists) {
         console.log('Table lists does not exist yet, will be created with full schema');
         return;
       }
 
       // Get all existing columns
-      const columns = await this.all("PRAGMA table_info(lists)");
+      const columns = await this.all('PRAGMA table_info(lists)');
       const columnNames = columns.map((col: any) => col.name);
-      
+
       console.log('Existing columns in lists:', columnNames);
 
       // Define required columns for lists
       const requiredListColumns = [
         { name: 'color', type: 'TEXT DEFAULT "#6b7280"' },
-        { name: 'textColor', type: 'TEXT DEFAULT "#ffffff"' }
+        { name: 'textColor', type: 'TEXT DEFAULT "#ffffff"' },
       ];
 
       // Add missing columns
@@ -331,13 +336,16 @@ export class Database {
   private async migrateRecordTablesIfNeeded(): Promise<void> {
     // Calibration records: add filePath column and relax NOT NULL on dates/method
     try {
-      const calCols: any[] = await this.all("PRAGMA table_info(calibration_records)");
+      const calCols: any[] = await this.all('PRAGMA table_info(calibration_records)');
       if (calCols && calCols.length > 0) {
         const hasFilePath = calCols.some((c: any) => c.name === 'filePath');
         const calDate = calCols.find((c: any) => c.name === 'calibrationDate');
         const nextDue = calCols.find((c: any) => c.name === 'nextCalibrationDue');
         const methodCol = calCols.find((c: any) => c.name === 'method');
-        const needsRelax = (calDate && calDate.notnull === 1) || (nextDue && nextDue.notnull === 1) || (methodCol && methodCol.notnull === 1);
+        const needsRelax =
+          (calDate && calDate.notnull === 1) ||
+          (nextDue && nextDue.notnull === 1) ||
+          (methodCol && methodCol.notnull === 1);
 
         if (!hasFilePath || needsRelax) {
           console.log('🔧 Migrating calibration_records schema...');
@@ -363,26 +371,34 @@ export class Database {
           `);
           await this.run('DROP TABLE calibration_records');
           await this.run('ALTER TABLE calibration_records_new RENAME TO calibration_records');
-          await this.run('CREATE INDEX IF NOT EXISTS idx_calibration_item ON calibration_records(itemId)');
+          await this.run(
+            'CREATE INDEX IF NOT EXISTS idx_calibration_item ON calibration_records(itemId)',
+          );
           await this.run('COMMIT');
           console.log('✅ calibration_records migrated');
         }
       }
     } catch (e) {
       console.warn('Calibration records migration skipped or failed:', e);
-      try { await this.run('ROLLBACK'); } catch {}
+      try {
+        await this.run('ROLLBACK');
+      } catch {}
     }
 
     // Maintenance records: add filePath column and relax NOT NULL on dates/type
     try {
-      const mCols: any[] = await this.all("PRAGMA table_info(maintenance_records)");
+      const mCols: any[] = await this.all('PRAGMA table_info(maintenance_records)');
       if (mCols && mCols.length > 0) {
         const hasFilePath = mCols.some((c: any) => c.name === 'filePath');
         const hasNotes = mCols.some((c: any) => c.name === 'notes');
         const mDate = mCols.find((c: any) => c.name === 'maintenanceDate');
         const mNext = mCols.find((c: any) => c.name === 'nextMaintenanceDue');
         const typeCol = mCols.find((c: any) => c.name === 'type');
-        const needsRelax = (mDate && mDate.notnull === 1) || (mNext && mNext.notnull === 1) || (typeCol && typeCol.notnull === 1) || !hasNotes;
+        const needsRelax =
+          (mDate && mDate.notnull === 1) ||
+          (mNext && mNext.notnull === 1) ||
+          (typeCol && typeCol.notnull === 1) ||
+          !hasNotes;
 
         if (!hasFilePath || needsRelax) {
           console.log('🔧 Migrating maintenance_records schema...');
@@ -408,33 +424,37 @@ export class Database {
           `);
           await this.run('DROP TABLE maintenance_records');
           await this.run('ALTER TABLE maintenance_records_new RENAME TO maintenance_records');
-          await this.run('CREATE INDEX IF NOT EXISTS idx_maintenance_item ON maintenance_records(itemId)');
+          await this.run(
+            'CREATE INDEX IF NOT EXISTS idx_maintenance_item ON maintenance_records(itemId)',
+          );
           await this.run('COMMIT');
           console.log('✅ maintenance_records migrated');
         }
       }
     } catch (e) {
       console.warn('Maintenance records migration skipped or failed:', e);
-      try { await this.run('ROLLBACK'); } catch {}
+      try {
+        await this.run('ROLLBACK');
+      } catch {}
     }
   }
 
   private async createAdminUser(): Promise<void> {
     const adminEmail = process.env.ADMIN_EMAIL || 'mistapitts@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
-    
+
     // Check if admin user already exists
     const existingAdmin = await this.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
-    
+
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 12);
       const adminId = this.generateId();
-      
+
       await this.run(
         'INSERT INTO users (id, email, password, firstName, lastName, role, isActive) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [adminId, adminEmail, hashedPassword, 'Mista', 'Pitts', UserRole.ADMIN, true]
+        [adminId, adminEmail, hashedPassword, 'Mista', 'Pitts', UserRole.ADMIN, true],
       );
-      
+
       console.log('Admin user created successfully');
       console.log('Email:', adminEmail);
       console.log('Password:', adminPassword);
@@ -443,7 +463,7 @@ export class Database {
 
   public async run(sql: string, params: any[] = []): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function(err) {
+      this.db.run(sql, params, function (err) {
         if (err) reject(err);
         else resolve();
       });

@@ -3,14 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const express_1 = require("express");
 const multer_1 = __importDefault(require("multer"));
-const database_1 = require("../models/database");
-const auth_1 = require("../middleware/auth");
 const qrcode_1 = __importDefault(require("qrcode"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 const config_1 = require("../config");
+const auth_1 = require("../middleware/auth");
+const database_1 = require("../models/database");
 const router = (0, express_1.Router)();
 // Ensure upload directories exist
 const uploadRoot = config_1.config.uploadPath;
@@ -26,7 +26,7 @@ const storage = multer_1.default.diskStorage({
         const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
         const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, `${uniquePrefix}-${safeName}`);
-    }
+    },
 });
 const upload = (0, multer_1.default)({ storage });
 // Lists: get all lists for current user's company
@@ -57,7 +57,7 @@ router.post('/lists', auth_1.authenticateToken, async (req, res) => {
         const id = generateId();
         const listColor = color || '#6b7280';
         const listTextColor = textColor || '#ffffff';
-        await database_1.database.run('INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\'))', [id, user.companyId, name.trim(), listColor, listTextColor]);
+        await database_1.database.run("INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))", [id, user.companyId, name.trim(), listColor, listTextColor]);
         const created = await database_1.database.get('SELECT id, name, color, textColor, createdAt, updatedAt FROM lists WHERE id = ?', [id]);
         res.status(201).json(created);
     }
@@ -75,7 +75,10 @@ router.put('/lists/:id', auth_1.authenticateToken, async (req, res) => {
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId)
             return res.status(400).json({ error: 'User not associated with a company' });
-        const list = await database_1.database.get('SELECT id FROM lists WHERE id = ? AND companyId = ?', [listId, user.companyId]);
+        const list = await database_1.database.get('SELECT id FROM lists WHERE id = ? AND companyId = ?', [
+            listId,
+            user.companyId,
+        ]);
         if (!list)
             return res.status(404).json({ error: 'List not found' });
         const updates = [];
@@ -95,7 +98,7 @@ router.put('/lists/:id', auth_1.authenticateToken, async (req, res) => {
         if (updates.length === 0) {
             return res.status(400).json({ error: 'No fields to update' });
         }
-        updates.push('updatedAt = datetime(\'now\')');
+        updates.push("updatedAt = datetime('now')");
         params.push(listId);
         await database_1.database.run(`UPDATE lists SET ${updates.join(', ')} WHERE id = ?`, params);
         const updated = await database_1.database.get('SELECT id, name, color, textColor, createdAt, updatedAt FROM lists WHERE id = ?', [listId]);
@@ -115,7 +118,10 @@ router.delete('/lists/:id', auth_1.authenticateToken, async (req, res) => {
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId)
             return res.status(400).json({ error: 'User not associated with a company' });
-        const list = await database_1.database.get('SELECT id FROM lists WHERE id = ? AND companyId = ?', [listId, user.companyId]);
+        const list = await database_1.database.get('SELECT id FROM lists WHERE id = ? AND companyId = ?', [
+            listId,
+            user.companyId,
+        ]);
         if (!list)
             return res.status(404).json({ error: 'List not found' });
         // Optionally delete all items in the list (with their records/files)
@@ -165,7 +171,7 @@ router.delete('/lists/:id', auth_1.authenticateToken, async (req, res) => {
         else {
             // Unassign items from this list
             try {
-                await database_1.database.run('UPDATE inventory_items SET listId = NULL, updatedAt = datetime(\'now\') WHERE companyId = ? AND listId = ?', [user.companyId, listId]);
+                await database_1.database.run("UPDATE inventory_items SET listId = NULL, updatedAt = datetime('now') WHERE companyId = ? AND listId = ?", [user.companyId, listId]);
             }
             catch (updateError) {
                 console.warn('Failed to unassign items from list:', updateError);
@@ -173,11 +179,14 @@ router.delete('/lists/:id', auth_1.authenticateToken, async (req, res) => {
             }
         }
         // Delete the list itself
-        await database_1.database.run('DELETE FROM lists WHERE id = ? AND companyId = ?', [listId, user.companyId]);
+        await database_1.database.run('DELETE FROM lists WHERE id = ? AND companyId = ?', [
+            listId,
+            user.companyId,
+        ]);
         res.json({
             message: 'List deleted successfully',
             deletedItems: deleteItems === 'true',
-            listId: listId
+            listId: listId,
         });
     }
     catch (error) {
@@ -193,17 +202,20 @@ router.post('/lists/migrate-to-field', auth_1.authenticateToken, async (req, res
         if (!user || !user.companyId)
             return res.status(400).json({ error: 'User not associated with a company' });
         // Check if field list exists, create if not
-        let fieldList = await database_1.database.get('SELECT id FROM lists WHERE companyId = ? AND name = ?', [user.companyId, 'Field']);
+        let fieldList = await database_1.database.get('SELECT id FROM lists WHERE companyId = ? AND name = ?', [
+            user.companyId,
+            'Field',
+        ]);
         if (!fieldList) {
             const fieldId = generateId();
-            await database_1.database.run('INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\'))', [fieldId, user.companyId, 'Field', '#10b981', '#ffffff']);
+            await database_1.database.run("INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))", [fieldId, user.companyId, 'Field', '#10b981', '#ffffff']);
             fieldList = { id: fieldId };
         }
         // Move all items without a list to the field list
         await database_1.database.run('UPDATE inventory_items SET listId = ?, updatedAt = datetime(\'now\') WHERE companyId = ? AND (listId IS NULL OR listId = "")', [fieldList.id, user.companyId]);
         res.json({
             message: 'Items migrated to Field list successfully',
-            fieldListId: fieldList.id
+            fieldListId: fieldList.id,
         });
     }
     catch (error) {
@@ -285,11 +297,11 @@ router.get('/:id', auth_1.authenticateToken, async (req, res) => {
             WHERE itemId = ? 
             ORDER BY calibrationDate DESC
         `, [itemId]);
-        console.log('📊 Retrieved calibration records:', calibrationRecords.map(r => ({
+        console.log('📊 Retrieved calibration records:', calibrationRecords.map((r) => ({
             id: r.id,
             calibrationDate: r.calibrationDate,
             method: r.method,
-            createdAt: r.createdAt
+            createdAt: r.createdAt,
         })));
         // Get maintenance records
         const maintenanceRecords = await database_1.database.all(`
@@ -312,7 +324,7 @@ router.get('/:id', auth_1.authenticateToken, async (req, res) => {
             item,
             calibrationRecords,
             maintenanceRecords,
-            changelog
+            changelog,
         });
     }
     catch (error) {
@@ -325,13 +337,13 @@ router.post('/', upload.fields([
     { name: 'calibrationTemplate', maxCount: 1 },
     { name: 'calibrationInstructions', maxCount: 1 },
     { name: 'maintenanceTemplate', maxCount: 1 },
-    { name: 'maintenanceInstructions', maxCount: 1 }
+    { name: 'maintenanceInstructions', maxCount: 1 },
 ]), auth_1.authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         console.log('🔍 Creating item for user:', userId);
         const { itemType, nickname, labId, make, model, serialNumber, condition, dateReceived, datePlacedInService, location, calibrationDate, nextCalibrationDue, calibrationInterval, calibrationIntervalType, calibrationMethod, maintenanceDate, maintenanceDue, maintenanceInterval, maintenanceIntervalType, notes, calibrationType, // 'in_house' or 'outsourced'
-        listId } = req.body;
+        listId, } = req.body;
         if (!itemType) {
             console.error('❌ Missing itemType in request body');
         }
@@ -358,7 +370,7 @@ router.post('/', upload.fields([
             maintenanceIntervalType: maintenanceIntervalType || null,
             notes: notes || null,
             isOutsourced: calibrationType === 'outsourced' ? 1 : 0,
-            listId: listId || null
+            listId: listId || null,
         };
         console.log('📝 Item data received:', {
             itemType,
@@ -379,7 +391,7 @@ router.post('/', upload.fields([
             maintenanceInterval,
             maintenanceIntervalType,
             notes,
-            calibrationType
+            calibrationType,
         });
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId) {
@@ -410,22 +422,71 @@ router.post('/', upload.fields([
         }
         // Build the INSERT query dynamically to handle missing columns
         const columns = [
-            'id', 'companyId', 'itemType', 'nickname', 'labId', 'make', 'model',
-            'serialNumber', 'condition', 'dateReceived', 'datePlacedInService', 'location',
-            'calibrationDate', 'nextCalibrationDue', 'calibrationInterval',
-            'calibrationIntervalType', 'calibrationMethod', 'maintenanceDate', 'maintenanceDue',
-            'maintenanceInterval', 'maintenanceIntervalType', 'notes', 'calibrationTemplate', 'calibrationInstructions', 'maintenanceTemplate', 'maintenanceInstructions', 'isOutsourced', 'listId', 'createdAt', 'updatedAt'
+            'id',
+            'companyId',
+            'itemType',
+            'nickname',
+            'labId',
+            'make',
+            'model',
+            'serialNumber',
+            'condition',
+            'dateReceived',
+            'datePlacedInService',
+            'location',
+            'calibrationDate',
+            'nextCalibrationDue',
+            'calibrationInterval',
+            'calibrationIntervalType',
+            'calibrationMethod',
+            'maintenanceDate',
+            'maintenanceDue',
+            'maintenanceInterval',
+            'maintenanceIntervalType',
+            'notes',
+            'calibrationTemplate',
+            'calibrationInstructions',
+            'maintenanceTemplate',
+            'maintenanceInstructions',
+            'isOutsourced',
+            'listId',
+            'createdAt',
+            'updatedAt',
         ];
         const placeholders = columns.map(() => '?').join(', ');
         const query = `INSERT INTO inventory_items (${columns.join(', ')}) VALUES (${placeholders})`;
         console.log('🔧 SQL Query:', query);
         const values = [
-            itemId, user.companyId, normalized.itemType, normalized.nickname, normalized.labId, make, model,
-            serialNumber, normalized.condition, dateReceived, datePlacedInService, normalized.location,
-            calibrationDate, nextCalibrationDue, normalized.calibrationInterval,
-            normalized.calibrationIntervalType, calibrationMethod, maintenanceDate, maintenanceDue,
-            normalized.maintenanceInterval, normalized.maintenanceIntervalType, normalized.notes, calibrationTemplate, calibrationInstructions, maintenanceTemplate, maintenanceInstructions, normalized.isOutsourced, normalized.listId,
-            new Date().toISOString(), new Date().toISOString()
+            itemId,
+            user.companyId,
+            normalized.itemType,
+            normalized.nickname,
+            normalized.labId,
+            make,
+            model,
+            serialNumber,
+            normalized.condition,
+            dateReceived,
+            datePlacedInService,
+            normalized.location,
+            calibrationDate,
+            nextCalibrationDue,
+            normalized.calibrationInterval,
+            normalized.calibrationIntervalType,
+            calibrationMethod,
+            maintenanceDate,
+            maintenanceDue,
+            normalized.maintenanceInterval,
+            normalized.maintenanceIntervalType,
+            normalized.notes,
+            calibrationTemplate,
+            calibrationInstructions,
+            maintenanceTemplate,
+            maintenanceInstructions,
+            normalized.isOutsourced,
+            normalized.listId,
+            new Date().toISOString(),
+            new Date().toISOString(),
         ];
         console.log('📊 Values to insert:', values);
         // Insert item
@@ -449,15 +510,15 @@ router.post('/', upload.fields([
         await qrcode_1.default.toFile(qrCodePath, qrCodeData, {
             color: {
                 dark: '#000000',
-                light: '#FFFFFF'
+                light: '#FFFFFF',
             },
-            width: 300
+            width: 300,
         });
         console.log('📱 QR code generated:', qrCodePath);
         res.status(201).json({
             message: 'Item created successfully',
             itemId,
-            qrCodePath: `/uploads/qr-codes/${itemId}.png`
+            qrCodePath: `/uploads/qr-codes/${itemId}.png`,
         });
         console.log('🎉 Item creation completed successfully!');
     }
@@ -467,12 +528,12 @@ router.post('/', upload.fields([
             message: error.message,
             stack: error.stack,
             code: error.code,
-            errno: error.errno
+            errno: error.errno,
         });
         res.status(500).json({
             error: 'Failed to create item',
             details: error.message,
-            code: error.code
+            code: error.code,
         });
     }
 });
@@ -495,7 +556,7 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
             nextDue,
             method,
             notes,
-            hasFile: !!file
+            hasFile: !!file,
         });
         if (!type || !itemId || !recordType) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -514,7 +575,7 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
             console.log('📅 Existing document date values:', {
                 existingRecordDate,
                 recordDate: existingRecordDate && existingRecordDate.trim() !== '' ? existingRecordDate : null,
-                fallbackDate: new Date().toISOString().split('T')[0]
+                fallbackDate: new Date().toISOString().split('T')[0],
             });
             // For existing documents, store the file and create a record entry
             // but don't update item dates since this is an existing record
@@ -533,14 +594,23 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
                     INSERT INTO calibration_records (
                         id, itemId, userId, calibrationDate, nextCalibrationDue, method, notes, filePath, createdAt
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-                `, [recordId, itemId, userId, formattedRecordDate, null, 'Existing Document Upload', notes || null, req.file.filename]);
+                `, [
+                    recordId,
+                    itemId,
+                    userId,
+                    formattedRecordDate,
+                    null,
+                    'Existing Document Upload',
+                    notes || null,
+                    req.file.filename,
+                ]);
                 console.log('✅ Existing calibration document uploaded and record created');
                 console.log('📊 Calibration record details:', {
                     recordId,
                     calibrationDate: formattedRecordDate,
                     method: 'Existing Document Upload',
                     notes: notes || null,
-                    filePath: req.file.filename
+                    filePath: req.file.filename,
                 });
             }
             else if (type === 'maintenance') {
@@ -549,7 +619,16 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
                     INSERT INTO maintenance_records (
                         id, itemId, userId, maintenanceDate, nextMaintenanceDue, type, notes, filePath, createdAt
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-                `, [recordId, itemId, userId, formattedRecordDate, null, 'Existing Document Upload', notes || null, req.file.filename]);
+                `, [
+                    recordId,
+                    itemId,
+                    userId,
+                    formattedRecordDate,
+                    null,
+                    'Existing Document Upload',
+                    notes || null,
+                    req.file.filename,
+                ]);
                 console.log('✅ Existing maintenance document uploaded and record created');
             }
             // Create changelog entry for document upload
@@ -561,14 +640,18 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
             res.status(201).json({
                 message: `${type} document uploaded successfully`,
                 filename: req.file.filename,
-                recordId: recordId
+                recordId: recordId,
             });
         }
         else if (recordType === 'new') {
             console.log('🆕 Processing new record creation');
             // For new records, require all fields and update item dates
             if (!recordDate || !nextDue || !method) {
-                console.log('❌ Missing required fields for new record:', { recordDate, nextDue, method });
+                console.log('❌ Missing required fields for new record:', {
+                    recordDate,
+                    nextDue,
+                    method,
+                });
                 return res.status(400).json({ error: 'Missing required fields for new record' });
             }
             if (!req.file) {
@@ -578,13 +661,18 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
             const recordId = generateId();
             if (type === 'calibration') {
                 console.log('🔧 Creating new calibration record and updating item dates');
-                console.log('📅 Date values:', { recordDate, nextDue, formattedRecordDate: recordDate + ' 00:00:00', formattedNextDue: nextDue + ' 00:00:00' });
+                console.log('📅 Date values:', {
+                    recordDate,
+                    nextDue,
+                    formattedRecordDate: recordDate + ' 00:00:00',
+                    formattedNextDue: nextDue + ' 00:00:00',
+                });
                 // First, let's check the current state of the inventory item
                 const currentItem = await database_1.database.get('SELECT id, calibrationDate, nextCalibrationDue FROM inventory_items WHERE id = ?', [itemId]);
                 console.log('🔍 Current inventory item state:', currentItem);
                 // Let's also check the table schema to see what constraints exist
                 try {
-                    const tableInfo = await database_1.database.all("PRAGMA table_info(inventory_items)");
+                    const tableInfo = await database_1.database.all('PRAGMA table_info(inventory_items)');
                     console.log('📋 Table schema for inventory_items:', tableInfo);
                 }
                 catch (schemaError) {
@@ -595,13 +683,22 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
                     INSERT INTO calibration_records (
                         id, itemId, userId, calibrationDate, nextCalibrationDue, method, notes, filePath, createdAt
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-                `, [recordId, itemId, userId, recordDate + ' 00:00:00', nextDue + ' 00:00:00', method, notes || null, req.file.filename]);
+                `, [
+                    recordId,
+                    itemId,
+                    userId,
+                    recordDate + ' 00:00:00',
+                    nextDue + ' 00:00:00',
+                    method,
+                    notes || null,
+                    req.file.filename,
+                ]);
                 console.log('✅ Calibration record inserted successfully');
                 // Update item's calibration date and next calibration due date
                 console.log('🔧 Updating inventory item dates:', {
                     itemId,
                     calibrationDate: recordDate + ' 00:00:00',
-                    nextCalibrationDue: nextDue + ' 00:00:00'
+                    nextCalibrationDue: nextDue + ' 00:00:00',
                 });
                 try {
                     const updateResult = await database_1.database.run(`
@@ -627,13 +724,22 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
                     INSERT INTO maintenance_records (
                         id, itemId, userId, maintenanceDate, nextMaintenanceDue, type, notes, filePath, createdAt
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-                `, [recordId, itemId, userId, recordDate + ' 00:00:00', nextDue + ' 00:00:00', method, notes || null, req.file.filename]);
+                `, [
+                    recordId,
+                    itemId,
+                    userId,
+                    recordDate + ' 00:00:00',
+                    nextDue + ' 00:00:00',
+                    method,
+                    notes || null,
+                    req.file.filename,
+                ]);
                 console.log('✅ Maintenance record inserted successfully');
                 // Update item's maintenance date and next maintenance due date
                 console.log('🔧 Updating inventory item maintenance dates:', {
                     itemId,
                     maintenanceDate: recordDate + ' 00:00:00',
-                    nextMaintenanceDue: nextDue + ' 00:00:00'
+                    nextMaintenanceDue: nextDue + ' 00:00:00',
                 });
                 try {
                     const updateResult = await database_1.database.run(`
@@ -660,10 +766,16 @@ router.post('/upload-record', auth_1.authenticateToken, upload.single('recordFil
                 INSERT INTO changelog (
                     id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
                 ) VALUES (?, ?, ?, 'record_added', ?, NULL, ?, datetime('now'))
-            `, [generateId(), itemId, userId, `${type}_record`, `${type} record added with due date ${nextDue}`]);
+            `, [
+                generateId(),
+                itemId,
+                userId,
+                `${type}_record`,
+                `${type} record added with due date ${nextDue}`,
+            ]);
             res.status(201).json({
                 message: `${type} record added successfully`,
-                recordId
+                recordId,
             });
         }
         else {
@@ -694,16 +806,33 @@ router.put('/:id', auth_1.authenticateToken, async (req, res) => {
         if (updateData.calibrationType !== undefined) {
             // Map UI field to schema boolean
             const val = String(updateData.calibrationType).toLowerCase();
-            updateData.isOutsourced = (val === 'outsourced' || val === 'out');
+            updateData.isOutsourced = val === 'outsourced' || val === 'out';
             delete updateData.calibrationType;
         }
         // Whitelist of updatable columns
         const allowedColumns = new Set([
-            'itemType', 'nickname', 'labId', 'make', 'model', 'serialNumber', 'condition',
-            'dateReceived', 'datePlacedInService', 'location',
-            'calibrationDate', 'nextCalibrationDue', 'calibrationInterval', 'calibrationIntervalType', 'calibrationMethod',
-            'maintenanceDate', 'maintenanceDue', 'maintenanceInterval', 'maintenanceIntervalType',
-            'notes', 'isOutsourced', 'image'
+            'itemType',
+            'nickname',
+            'labId',
+            'make',
+            'model',
+            'serialNumber',
+            'condition',
+            'dateReceived',
+            'datePlacedInService',
+            'location',
+            'calibrationDate',
+            'nextCalibrationDue',
+            'calibrationInterval',
+            'calibrationIntervalType',
+            'calibrationMethod',
+            'maintenanceDate',
+            'maintenanceDue',
+            'maintenanceInterval',
+            'maintenanceIntervalType',
+            'notes',
+            'isOutsourced',
+            'image',
         ]);
         // Coerce numeric fields
         if (updateData.calibrationInterval !== undefined) {
@@ -713,12 +842,12 @@ router.put('/:id', auth_1.authenticateToken, async (req, res) => {
             updateData.maintenanceInterval = Number(updateData.maintenanceInterval) || 0;
         }
         // Build update query dynamically from whitelist
-        const fields = Object.keys(updateData).filter(key => allowedColumns.has(key));
+        const fields = Object.keys(updateData).filter((key) => allowedColumns.has(key));
         if (fields.length === 0) {
             return res.status(400).json({ error: 'No valid fields to update' });
         }
-        const setClause = fields.map(field => `${field} = ?`).join(', ');
-        const values = [...fields.map(field => updateData[field]), itemId];
+        const setClause = fields.map((field) => `${field} = ?`).join(', ');
+        const values = [...fields.map((field) => updateData[field]), itemId];
         await database_1.database.run(`
             UPDATE inventory_items 
             SET ${setClause}, updatedAt = datetime('now')
@@ -796,7 +925,15 @@ router.post('/:id/calibration', auth_1.authenticateToken, async (req, res) => {
                 id, itemId, userId, calibrationDate, nextCalibrationDue,
                 method, notes, createdAt
             ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-        `, [recordId, itemId, userId, calibrationDate + ' 00:00:00', nextCalibrationDue + ' 00:00:00', method, notes]);
+        `, [
+            recordId,
+            itemId,
+            userId,
+            calibrationDate + ' 00:00:00',
+            nextCalibrationDue + ' 00:00:00',
+            method,
+            notes,
+        ]);
         // Update item's calibration dates
         await database_1.database.run(`
             UPDATE inventory_items 
@@ -834,9 +971,9 @@ router.post('/:id/files', auth_1.authenticateToken, upload.fields([
             calibrationTemplate: 'calibrationTemplate',
             calibrationInstructions: 'calibrationInstructions',
             maintenanceTemplate: 'maintenanceTemplate',
-            maintenanceInstructions: 'maintenanceInstructions'
+            maintenanceInstructions: 'maintenanceInstructions',
         };
-        Object.keys(map).forEach(key => {
+        Object.keys(map).forEach((key) => {
             if (files && files[key] && files[key][0]) {
                 updates.push(`${map[key]} = ?`);
                 // Store only filename; public URLs are built in the UI
@@ -877,13 +1014,21 @@ router.post('/:id/maintenance', auth_1.authenticateToken, async (req, res) => {
                 id, itemId, userId, maintenanceDate, nextMaintenanceDue,
                 type, notes, createdAt
             ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-        `, [recordId, itemId, userId, maintenanceDate + ' 00:00:00', nextMaintenanceDue + ' 00:00:00', type, notes]);
+        `, [
+            recordId,
+            itemId,
+            userId,
+            maintenanceDate + ' 00:00:00',
+            nextMaintenanceDue + ' 00:00:00',
+            type,
+            notes,
+        ]);
         console.log('✅ Maintenance record inserted successfully');
         // Update item's maintenance dates
         console.log('🔧 Updating inventory item maintenance dates:', {
             itemId,
             maintenanceDate: maintenanceDate + ' 00:00:00',
-            nextMaintenanceDue: nextMaintenanceDue + ' 00:00:00'
+            nextMaintenanceDue: nextMaintenanceDue + ' 00:00:00',
         });
         try {
             const updateResult = await database_1.database.run(`
@@ -1025,7 +1170,7 @@ router.get('/stats/overview', auth_1.authenticateToken, async (req, res) => {
             totalItems: totalItems.count,
             dueThisMonth: dueThisMonth.count,
             maintenanceDue: maintenanceDue.count,
-            outOfService: outOfService.count
+            outOfService: outOfService.count,
         });
     }
     catch (error) {

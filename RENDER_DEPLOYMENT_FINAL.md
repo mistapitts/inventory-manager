@@ -13,22 +13,27 @@
 ## 🔧 Render Service Configuration
 
 ### **Build Command**
+
 Change the build command in Render → Settings → Build & Deploy to:
 
 ```bash
 npm ci --include=dev && npm run build
 ```
 
-> **This ensures devDependencies (including @types/*) are installed during build**
+> **This ensures devDependencies (including @types/\*) are installed during build**
 
 ### **Start Command**
+
 Keep the existing start command:
+
 ```bash
 node dist/server.js
 ```
 
 ### **Environment Variables**
+
 Add this environment variable in Render → Environment:
+
 ```bash
 NPM_CONFIG_PRODUCTION=false
 ```
@@ -51,6 +56,7 @@ The `package.json` now includes:
 **The `postinstall` script provides an additional safety net** - it runs during `npm ci` and ensures types are installed even if the build command regresses.
 
 **This ensures:**
+
 1. **Types are always available** during build, even if `NODE_ENV=production`
 2. **Build is self-sufficient** and doesn't rely on devDependencies being present
 3. **TypeScript compilation succeeds** with full type information
@@ -58,6 +64,7 @@ The `package.json` now includes:
 ## 🎯 Why This Fixes Render Builds
 
 ### **Previous Problem**
+
 - Render builds with `NODE_ENV=production`
 - `npm install` skips devDependencies
 - TypeScript can't find `@types/*` packages
@@ -65,6 +72,7 @@ The `package.json` now includes:
 - Build fails with TypeScript compilation errors
 
 ### **Current Solution**
+
 - **Belt**: `npm ci --include=dev` ensures devDeps are installed
 - **Suspenders**: `ensure-types` script installs types explicitly during build
 - **Safety Net**: `postinstall` script runs during `npm ci` as additional protection
@@ -88,6 +96,7 @@ The `package.json` now includes:
 ## 🔍 Technical Details
 
 ### **TypeScript Configuration**
+
 ```json
 {
   "compilerOptions": {
@@ -111,17 +120,20 @@ The `package.json` now includes:
 ```
 
 **Key changes:**
+
 - **`types`**: Only includes `["node"]` for auto-discovery (prevents TS2688 errors)
 - **`typeRoots`**: Forces TypeScript to search both `node_modules/@types` and `src/types`
 - **Result**: TypeScript auto-discovers @types packages and avoids explicit resolution errors
 
 ### **Custom Type Definitions**
+
 - `src/types/express.d.ts` - **Pure augmentation file** that extends Express.Request with `user` property
 - **No express shadowing** - TypeScript uses real express package for Router, Response, etc.
 - All route handlers use `AuthRequest` instead of `Request`
 - Proper typing for multer callbacks and server handlers
 
 ### **Build Process**
+
 1. `npm ci --include=dev` - Install all dependencies including devDeps
 2. `npm run ensure-types` - Install types explicitly (backup)
 3. `postinstall` - Additional safety net during npm ci
@@ -131,6 +143,7 @@ The `package.json` now includes:
 ## 🎉 Expected Result
 
 **Render builds will now succeed** because:
+
 - Types are guaranteed to be available during build
 - All TypeScript compilation errors are resolved
 - Application is fully hardened for production deployment

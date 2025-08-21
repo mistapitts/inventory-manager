@@ -26,16 +26,19 @@ This application has been specifically optimized for iPad use:
 ## Local Development
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Build the project**:
+
    ```bash
    npm run build
    ```
 
 3. **Start the development server**:
+
    ```bash
    npm run dev
    ```
@@ -54,6 +57,7 @@ This application has been specifically optimized for iPad use:
 ### Step-by-Step Deployment
 
 1. **Initialize Git Repository** (if not already done):
+
    ```bash
    git init
    git add .
@@ -68,6 +72,7 @@ This application has been specifically optimized for iPad use:
    - Click "Create repository"
 
 3. **Push to GitHub**:
+
    ```bash
    git remote add origin https://github.com/YOUR_USERNAME/inventory-manager.git
    git branch -M main
@@ -90,6 +95,7 @@ This application has been specifically optimized for iPad use:
 ### Vercel Configuration
 
 The project includes a `vercel.json` file that:
+
 - Routes all API requests to the Node.js server
 - Serves static files from the `public` directory
 - Handles both API and frontend routes properly
@@ -135,6 +141,7 @@ PORT=3000
 ## Support
 
 For issues or questions:
+
 - Check the terminal logs for error messages
 - Ensure all dependencies are installed
 - Verify your Vercel deployment settings

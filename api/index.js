@@ -34,31 +34,35 @@ const demoUser = {
   lastName: 'Pitts',
   role: 'admin',
   companyId: 'demo-company-456',
-  regionId: 'demo-region-789'
+  regionId: 'demo-region-789',
 };
 
 const demoCompany = {
   id: 'demo-company-456',
   name: 'Demo Company',
   logo: null,
-  theme: 'default'
+  theme: 'default',
 };
 
 // Helper functions
-function generateToken(userId) { 
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'demo-secret-key', { expiresIn: '24h' }); 
+function generateToken(userId) {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'demo-secret-key', { expiresIn: '24h' });
 }
 
-function generateId() { 
-  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36); 
+function generateId() {
+  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
-function generateQRCodeUrl(itemId) { 
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`; 
+function generateQRCodeUrl(itemId) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`item-${itemId}`)}`;
 }
 
-function formatDate(date) { 
-  return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }); 
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 }
 
 // Ensure storage bucket exists for file uploads
@@ -66,36 +70,50 @@ async function ensureStorageBucket() {
   try {
     // First, try to list buckets to see if inventory-docs already exists
     const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    
+
     if (listError) {
       console.error('Error listing storage buckets:', listError);
       // If we can't list buckets, assume the bucket might exist and continue
       return;
     }
-    
-    const bucketExists = buckets && buckets.some(bucket => bucket.name === 'inventory-docs');
-    
+
+    const bucketExists = buckets && buckets.some((bucket) => bucket.name === 'inventory-docs');
+
     if (bucketExists) {
       console.log('Storage bucket already exists');
       return;
     }
-    
+
     // Try to create the bucket with minimal configuration
     console.log('Attempting to create inventory-docs storage bucket...');
-    
+
     const { error: createError } = await supabase.storage.createBucket('inventory-docs', {
       public: true,
-      allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'],
-      fileSizeLimit: 52428800 // 50MB
+      allowedMimeTypes: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'image/bmp',
+        'image/tiff',
+      ],
+      fileSizeLimit: 52428800, // 50MB
     });
-    
+
     if (createError) {
       console.error('Failed to create storage bucket:', createError);
-      
+
       // If bucket creation fails due to RLS policies, we'll need to handle file uploads differently
       // For now, log the error and continue - the bucket might be created manually in Supabase dashboard
       if (createError.message && createError.message.includes('row-level security policy')) {
-        console.log('Storage bucket creation blocked by RLS policies. Please create the bucket manually in Supabase dashboard.');
+        console.log(
+          'Storage bucket creation blocked by RLS policies. Please create the bucket manually in Supabase dashboard.',
+        );
         console.log('Bucket name: inventory-docs');
         console.log('Required settings: public: true');
         console.log('Required MIME types: image/png, image/jpeg, application/pdf, etc.');
@@ -113,14 +131,14 @@ async function ensureStorageBucket() {
 ensureStorageBucket();
 
 // Health check endpoint
-app.get('/api/health', (req, res) => { 
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(), 
-    message: 'Inventory Manager API is running', 
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    message: 'Inventory Manager API is running',
     environment: process.env.NODE_ENV || 'production',
-    database: 'Supabase'
-  }); 
+    database: 'Supabase',
+  });
 });
 
 // Temporary endpoint to check and fix database schema
@@ -131,13 +149,13 @@ app.get('/api/fix-schema', async (req, res) => {
       .from('inventory_items')
       .select('*')
       .limit(1);
-    
+
     if (columnsError) throw columnsError;
-    
+
     // Check if we need to add file columns
     const sampleItem = columns[0];
     const missingColumns = [];
-    
+
     if (!sampleItem.hasOwnProperty('calibrationtemplate')) {
       missingColumns.push('calibrationtemplate');
     }
@@ -150,7 +168,7 @@ app.get('/api/fix-schema', async (req, res) => {
     if (!sampleItem.hasOwnProperty('maintenanceinstructions')) {
       missingColumns.push('maintenanceinstructions');
     }
-    
+
     if (missingColumns.length > 0) {
       // Provide SQL commands for manual execution
       const sqlCommands = `
@@ -170,31 +188,36 @@ ADD COLUMN IF NOT EXISTS maintenanceinstructions TEXT;
 
 -- After running these commands, refresh this page to verify the columns were added.
       `;
-      
-      res.json({ 
-        status: 'manual_action_required', 
+
+      res.json({
+        status: 'manual_action_required',
         message: 'Please run the SQL commands below in your Supabase SQL Editor',
         missingColumns,
         sqlCommands: sqlCommands.trim(),
-        instructions: '1. Go to your Supabase dashboard > SQL Editor 2. Copy and paste the SQL commands above 3. Click "Run" 4. Refresh this page to verify'
+        instructions:
+          '1. Go to your Supabase dashboard > SQL Editor 2. Copy and paste the SQL commands above 3. Click "Run" 4. Refresh this page to verify',
       });
     } else {
-      res.json({ 
-        status: 'success', 
+      res.json({
+        status: 'success',
         message: 'All file columns already exist',
-        existingColumns: ['calibrationtemplate', 'calibrationinstructions', 'maintenancetemplate', 'maintenanceinstructions']
+        existingColumns: [
+          'calibrationtemplate',
+          'calibrationinstructions',
+          'maintenancetemplate',
+          'maintenanceinstructions',
+        ],
       });
     }
   } catch (error) {
     console.error('Error checking schema:', error);
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       message: 'Failed to check schema',
-      error: error.message 
+      error: error.message,
     });
   }
 });
-
 
 // Clean up test/placeholder items
 app.get('/api/cleanup-test-items', async (req, res) => {
@@ -204,28 +227,28 @@ app.get('/api/cleanup-test-items', async (req, res) => {
       .from('inventory_items')
       .select('id')
       .or('id.like.test-%,id.like.schema-test-%');
-    
+
     if (selectError) throw selectError;
-    
+
     if (testItems && testItems.length > 0) {
-      const testIds = testItems.map(item => item.id);
-      
+      const testIds = testItems.map((item) => item.id);
+
       const { error: deleteError } = await supabase
         .from('inventory_items')
         .delete()
         .in('id', testIds);
-      
+
       if (deleteError) throw deleteError;
-      
-      res.json({ 
+
+      res.json({
         message: 'Test items cleaned up successfully',
         removed_count: testIds.length,
-        removed_ids: testIds
+        removed_ids: testIds,
       });
     } else {
-      res.json({ 
+      res.json({
         message: 'No test items found to clean up',
-        removed_count: 0
+        removed_count: 0,
       });
     }
   } catch (error) {
@@ -234,28 +257,29 @@ app.get('/api/cleanup-test-items', async (req, res) => {
   }
 });
 
-
 // Demo login endpoint
 app.post('/api/auth/login', (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password)
+      return res.status(400).json({ error: 'Email and password are required' });
     if (email === 'mistapitts@gmail.com' && password === 'demo123') {
       const token = generateToken(demoUser.id);
       res.json({ token, user: demoUser, company: demoCompany, location: null });
-    } else { 
-      res.status(401).json({ error: 'Invalid credentials. Use: mistapitts@gmail.com / demo123' }); 
+    } else {
+      res.status(401).json({ error: 'Invalid credentials. Use: mistapitts@gmail.com / demo123' });
     }
-  } catch (error) { 
-    res.status(500).json({ error: 'Internal server error' }); 
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Company: setup demo company
 app.post('/api/company/setup-demo', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     // Ensure demo company exists in database
     const { data: existingCompany } = await supabase
@@ -278,8 +302,9 @@ app.post('/api/company/setup-demo', async (req, res) => {
 // Lists
 app.get('/api/inventory/lists', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { data: lists, error } = await supabase
       .from('lists')
@@ -299,11 +324,12 @@ app.get('/api/inventory/lists', async (req, res) => {
 // Create new list
 app.post('/api/inventory/lists', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { name, color = '#6b7280', textColor = '#ffffff' } = req.body;
-    
+
     if (!name) {
       return res.status(400).json({ error: 'List name is required' });
     }
@@ -315,14 +341,10 @@ app.post('/api/inventory/lists', async (req, res) => {
       color,
       textcolor: textColor,
       createdat: new Date().toISOString(),
-      updatedat: new Date().toISOString()
+      updatedat: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from('lists')
-      .insert(newList)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('lists').insert(newList).select().single();
 
     if (error) throw error;
     res.status(201).json(data);
@@ -334,12 +356,13 @@ app.post('/api/inventory/lists', async (req, res) => {
 
 app.put('/api/inventory/lists/:id', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const listId = req.params.id;
     const { name, color, textColor } = req.body;
-    
+
     const { data, error } = await supabase
       .from('lists')
       .update({ name, color, textColor, updatedAt: new Date().toISOString() })
@@ -359,11 +382,12 @@ app.put('/api/inventory/lists/:id', async (req, res) => {
 // Delete list
 app.delete('/api/inventory/lists/:id', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const listId = req.params.id;
-    
+
     // Check if list has any items
     const { data: items, error: itemsError } = await supabase
       .from('inventory_items')
@@ -374,8 +398,8 @@ app.delete('/api/inventory/lists/:id', async (req, res) => {
     if (itemsError) throw itemsError;
 
     if (items && items.length > 0) {
-      return res.status(400).json({ 
-        error: 'Cannot delete list that contains items. Move or delete items first.' 
+      return res.status(400).json({
+        error: 'Cannot delete list that contains items. Move or delete items first.',
       });
     }
 
@@ -430,15 +454,16 @@ function convertDbItemToFrontend(dbItem) {
     maintenanceTemplate: dbItem.maintenancetemplate,
     maintenanceInstructions: dbItem.maintenanceinstructions,
     createdAt: dbItem.createdat,
-    updatedAt: dbItem.updatedat
+    updatedAt: dbItem.updatedat,
   };
 }
 
 // Inventory: list
 app.get('/api/inventory', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { data: items, error } = await supabase
       .from('inventory_items')
@@ -446,10 +471,10 @@ app.get('/api/inventory', async (req, res) => {
       .eq('companyid', demoCompany.id);
 
     if (error) throw error;
-    
+
     // Convert database format to frontend format
     const convertedItems = (items || []).map(convertDbItemToFrontend);
-    
+
     res.json({ items: convertedItems });
   } catch (error) {
     console.error('Error fetching inventory:', error);
@@ -460,11 +485,12 @@ app.get('/api/inventory', async (req, res) => {
 // Inventory: details
 app.get('/api/inventory/:id', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const itemId = req.params.id;
-    
+
     // Fetch the item
     const { data: item, error: itemError } = await supabase
       .from('inventory_items')
@@ -504,7 +530,7 @@ app.get('/api/inventory/:id', async (req, res) => {
     const convertedItem = convertDbItemToFrontend(item);
 
     // Convert calibration records to frontend format (camelCase)
-    const convertedCalibrationRecords = (calibrationRecords || []).map(record => ({
+    const convertedCalibrationRecords = (calibrationRecords || []).map((record) => ({
       id: record.id,
       itemId: record.itemid,
       userId: record.userid,
@@ -513,11 +539,11 @@ app.get('/api/inventory/:id', async (req, res) => {
       method: record.method,
       notes: record.notes,
       filePath: record.filepath,
-      createdAt: record.createdat
+      createdAt: record.createdat,
     }));
 
     // Convert maintenance records to frontend format (camelCase)
-    const convertedMaintenanceRecords = (maintenanceRecords || []).map(record => ({
+    const convertedMaintenanceRecords = (maintenanceRecords || []).map((record) => ({
       id: record.id,
       itemId: record.itemid,
       userId: record.userid,
@@ -526,14 +552,14 @@ app.get('/api/inventory/:id', async (req, res) => {
       type: record.type,
       notes: record.notes,
       filePath: record.filepath,
-      createdAt: record.createdat
+      createdAt: record.createdat,
     }));
 
-    res.json({ 
-      item: convertedItem, 
-      calibrationRecords: convertedCalibrationRecords, 
-      maintenanceRecords: convertedMaintenanceRecords, 
-      changelog: [{ id: generateId(), action: 'viewed', timestamp: new Date().toISOString() }] 
+    res.json({
+      item: convertedItem,
+      calibrationRecords: convertedCalibrationRecords,
+      maintenanceRecords: convertedMaintenanceRecords,
+      changelog: [{ id: generateId(), action: 'viewed', timestamp: new Date().toISOString() }],
     });
   } catch (error) {
     console.error('Error fetching item:', error);
@@ -544,65 +570,72 @@ app.get('/api/inventory/:id', async (req, res) => {
 // Inventory: create
 app.post('/api/inventory', upload.any(), async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const itemId = generateId();
     const now = new Date();
-    const nextCal = new Date(now.getTime() + 365*24*60*60*1000);
-    const nextMaint = new Date(now.getTime() + 180*24*60*60*1000);
+    const nextCal = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const nextMaint = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
 
     // Handle multipart form data and convert empty strings to null
     const fields = {};
-    
-    Object.keys(req.body || {}).forEach(key => {
+
+    Object.keys(req.body || {}).forEach((key) => {
       const value = req.body[key];
       // Convert empty strings to null for cleaner database storage
       fields[key] = value === '' ? null : value;
     });
-    
+
     // Handle file uploads
     const uploadedFiles = req.files || [];
     const filePaths = {};
-    
+
     console.log('Uploaded files count:', uploadedFiles.length);
-    console.log('Uploaded files:', uploadedFiles.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, size: f.size })));
-    
+    console.log(
+      'Uploaded files:',
+      uploadedFiles.map((f) => ({
+        fieldname: f.fieldname,
+        originalname: f.originalname,
+        size: f.size,
+      })),
+    );
+
     // Process uploaded files using Supabase Storage (Vercel compatible)
     for (const file of uploadedFiles) {
       console.log('Processing file:', file.fieldname, file.originalname);
-      
-      if (file.fieldname === 'calibrationTemplate' || 
-          file.fieldname === 'calibrationInstructions' || 
-          file.fieldname === 'maintenanceTemplate' || 
-          file.fieldname === 'maintenanceInstructions') {
-        
+
+      if (
+        file.fieldname === 'calibrationTemplate' ||
+        file.fieldname === 'calibrationInstructions' ||
+        file.fieldname === 'maintenanceTemplate' ||
+        file.fieldname === 'maintenanceInstructions'
+      ) {
         try {
           // Generate unique filename while preserving original name
           const fileExtension = file.originalname.split('.').pop();
           const fileName = `${file.fieldname}_${itemId}_${file.originalname}`;
-          
+
           // Upload to Supabase Storage
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('inventory-docs')
             .upload(fileName, file.buffer, {
               contentType: file.mimetype,
-              cacheControl: '3600'
+              cacheControl: '3600',
             });
-          
+
           if (uploadError) {
             console.error(`Error uploading ${file.fieldname}:`, uploadError);
             continue; // Skip this file but continue with others
           }
-          
+
           // Get public URL for the file
-          const { data: urlData } = supabase.storage
-            .from('inventory-docs')
-            .getPublicUrl(fileName);
-          
+          const { data: urlData } = supabase.storage.from('inventory-docs').getPublicUrl(fileName);
+
           // Store file path for database
           filePaths[file.fieldname] = fileName;
-          
+
           console.log(`Successfully uploaded ${file.fieldname}:`, fileName);
         } catch (fileError) {
           console.error(`Error processing ${file.fieldname}:`, fileError);
@@ -612,19 +645,18 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
         console.log('Skipping non-file field:', file.fieldname);
       }
     }
-    
+
     console.log('Final filePaths object:', filePaths);
 
-    
     const item = {
       id: itemId,
       companyid: demoCompany.id,
       itemtype: fields.itemType || 'Equipment',
       nickname: fields.nickname || '',
-      labid: fields.labId || `LAB-${itemId.substring(0,4).toUpperCase()}`,
+      labid: fields.labId || `LAB-${itemId.substring(0, 4).toUpperCase()}`,
       make: fields.make || '',
       model: fields.model || '',
-      serialnumber: fields.serialNumber || `SN-${itemId.substring(0,6).toUpperCase()}`,
+      serialnumber: fields.serialNumber || `SN-${itemId.substring(0, 6).toUpperCase()}`,
       condition: fields.condition || 'Good',
       datereceived: fields.dateReceived || formatDate(now),
       dateplacedinservice: fields.datePlacedInService || fields.dateReceived || formatDate(now),
@@ -651,23 +683,19 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
       maintenancetemplate: filePaths.maintenanceTemplate || null,
       maintenanceinstructions: filePaths.maintenanceInstructions || null,
       createdat: now.toISOString(),
-      updatedat: now.toISOString()
+      updatedat: now.toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from('inventory_items')
-      .insert(item)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('inventory_items').insert(item).select().single();
 
     if (error) throw error;
 
     const qrCodeUrl = generateQRCodeUrl(itemId);
-    res.status(201).json({ 
-      item: convertDbItemToFrontend(data), 
-      qrCodeUrl, 
-      qrCodePath: qrCodeUrl, 
-      message: 'Item created successfully' 
+    res.status(201).json({
+      item: convertDbItemToFrontend(data),
+      qrCodeUrl,
+      qrCodePath: qrCodeUrl,
+      message: 'Item created successfully',
     });
   } catch (error) {
     console.error('Error creating item:', error);
@@ -678,14 +706,15 @@ app.post('/api/inventory', upload.any(), async (req, res) => {
 // Inventory: update
 app.put('/api/inventory/:id', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     console.log('Update item request body:', req.body);
-    
+
     // Clean the request body - remove undefined values and convert empty strings to null
     const updateData = {};
-    Object.keys(req.body).forEach(key => {
+    Object.keys(req.body).forEach((key) => {
       const value = req.body[key];
       if (value !== undefined && value !== '') {
         // Convert frontend camelCase to database lowercase
@@ -696,17 +725,17 @@ app.put('/api/inventory/:id', async (req, res) => {
         updateData[dbKey] = null;
       }
     });
-    
+
     // Handle special case for calibrationType
     if (updateData.calibrationtype) {
       updateData.isoutsourced = updateData.calibrationtype === 'outsourced';
       delete updateData.calibrationtype;
     }
-    
+
     updateData.updatedat = new Date().toISOString();
-    
+
     console.log('Cleaned update data (converted to DB format):', updateData);
-    
+
     const { data, error } = await supabase
       .from('inventory_items')
       .update(updateData)
@@ -729,8 +758,9 @@ app.put('/api/inventory/:id', async (req, res) => {
 // Inventory: delete
 app.delete('/api/inventory/:id', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { error } = await supabase
       .from('inventory_items')
@@ -749,8 +779,9 @@ app.delete('/api/inventory/:id', async (req, res) => {
 // Inventory stats
 app.get('/api/inventory/stats/overview', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { data: items, error } = await supabase
       .from('inventory_items')
@@ -761,12 +792,14 @@ app.get('/api/inventory/stats/overview', async (req, res) => {
 
     const totalItems = items.length;
     const now = new Date();
-    const dueThisMonth = items.filter(i => { 
-      const d = new Date(i.nextcalibrationdue); 
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); 
+    const dueThisMonth = items.filter((i) => {
+      const d = new Date(i.nextcalibrationdue);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
-    const maintenanceDue = items.filter(i => i.maintenancedue && new Date(i.maintenancedue) <= now).length;
-    
+    const maintenanceDue = items.filter(
+      (i) => i.maintenancedue && new Date(i.maintenancedue) <= now,
+    ).length;
+
     res.json({ totalItems, dueThisMonth, maintenanceDue });
   } catch (error) {
     console.error('Error fetching stats:', error);
@@ -778,10 +811,15 @@ app.get('/api/inventory/stats/overview', async (req, res) => {
 app.get('/uploads/qr-codes/:itemId.png', async (req, res) => {
   try {
     const { itemId } = req.params;
-    const proto = (req.headers['x-forwarded-proto'] || 'https');
+    const proto = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
     const itemUrl = `${proto}://${host}/item/${itemId}`;
-    const png = await QRCode.toBuffer(itemUrl, { errorCorrectionLevel: 'M', type: 'png', margin: 1, scale: 6 });
+    const png = await QRCode.toBuffer(itemUrl, {
+      errorCorrectionLevel: 'M',
+      type: 'png',
+      margin: 1,
+      scale: 6,
+    });
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.send(png);
@@ -793,18 +831,17 @@ app.get('/uploads/qr-codes/:itemId.png', async (req, res) => {
 // File download endpoint for Supabase Storage
 app.get('/api/storage/download/:fileName', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { fileName } = req.params;
-    
+
     // Download file from Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('inventory-docs')
-      .download(fileName);
-    
+    const { data, error } = await supabase.storage.from('inventory-docs').download(fileName);
+
     if (error) throw error;
-    
+
     // Get original filename from the generated filename
     // Format: calibrationTemplate_itemId.ext -> extract original name
     let displayName = fileName;
@@ -815,11 +852,11 @@ app.get('/api/storage/download/:fileName', async (req, res) => {
         displayName = parts.slice(2).join('_');
       }
     }
-    
+
     // Determine content type based on file extension
     const extension = fileName.split('.').pop().toLowerCase();
     let contentType = 'application/octet-stream';
-    
+
     switch (extension) {
       case 'pdf':
         contentType = 'application/pdf';
@@ -837,12 +874,12 @@ app.get('/api/storage/download/:fileName', async (req, res) => {
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         break;
     }
-    
+
     // Set appropriate headers
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${displayName}"`);
     res.setHeader('Cache-Control', 'no-cache');
-    
+
     // Convert blob to buffer and send
     const buffer = Buffer.from(await data.arrayBuffer());
     res.send(buffer);
@@ -857,12 +894,12 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
   console.log('🚀 POST /upload-record endpoint called');
   console.log('📝 Request body:', req.body);
   console.log('📁 File:', req.file);
-  
+
   try {
     const { type, itemId, recordType } = req.body; // 'calibration' or 'maintenance'
     const { recordDate, nextDue, method, notes, existingRecordDate } = req.body;
     const file = req.file;
-    
+
     console.log('📝 Upload record request received:', {
       type,
       itemId,
@@ -871,37 +908,37 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
       nextDue,
       method,
       notes,
-      hasFile: !!file
+      hasFile: !!file,
     });
-    
+
     if (!type || !itemId || !recordType) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     // Check if we have a file to upload
     if (!req.file) {
       return res.status(400).json({ error: 'File is required for record upload' });
     }
-    
+
     // Try to upload file to Supabase Storage first
     let filePath = null;
     try {
       console.log('📤 Attempting to upload file to Supabase Storage...');
-      
+
       // Generate unique filename
       const fileExtension = req.file.originalname.split('.').pop();
       const fileName = `${type}_${itemId}_${Date.now()}.${fileExtension}`;
-      
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('inventory-docs')
         .upload(fileName, req.file.buffer, {
           contentType: req.file.mimetype,
-          cacheControl: '3600'
+          cacheControl: '3600',
         });
-      
+
       if (uploadError) {
         console.error('❌ File upload to Supabase failed:', uploadError);
-        
+
         // If storage bucket doesn't exist or RLS blocks it, we'll store just the filename
         // This allows the record to be created even if file storage fails
         if (uploadError.message && uploadError.message.includes('row-level security policy')) {
@@ -919,65 +956,60 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
       // Continue with filename only - this allows the record to be created
       filePath = req.file.originalname;
     }
-    
+
     if (recordType === 'existing') {
       console.log('📄 Processing existing document upload');
-      
+
       // Generate record ID for the existing document
       const recordId = generateId();
-      
+
       // Use the optional existingRecordDate if provided, otherwise leave blank
       // Handle empty string case - convert to null
-      const recordDate = existingRecordDate && existingRecordDate.trim() !== '' ? existingRecordDate : null;
+      const recordDate =
+        existingRecordDate && existingRecordDate.trim() !== '' ? existingRecordDate : null;
       const formattedRecordDate = recordDate ? recordDate + ' 00:00:00' : null;
-      
+
       if (type === 'calibration') {
         // Insert calibration record for existing document
-        const { error: calError } = await supabase
-          .from('calibration_records')
-          .insert({
-            id: recordId,
-            itemid: itemId,
-            userid: demoUser.id,
-            calibrationdate: formattedRecordDate,
-            nextcalibrationdue: null,
-            method: 'Existing Document Upload',
-            notes: notes || null,
-            filepath: filePath,
-            createdat: new Date().toISOString()
-          });
-        
+        const { error: calError } = await supabase.from('calibration_records').insert({
+          id: recordId,
+          itemid: itemId,
+          userid: demoUser.id,
+          calibrationdate: formattedRecordDate,
+          nextcalibrationdue: null,
+          method: 'Existing Document Upload',
+          notes: notes || null,
+          filepath: filePath,
+          createdat: new Date().toISOString(),
+        });
+
         if (calError) throw calError;
-        
+
         console.log('✅ Existing calibration document uploaded and record created');
-        
       } else if (type === 'maintenance') {
         // Insert maintenance record for existing document
-        const { error: maintError } = await supabase
-          .from('maintenance_records')
-          .insert({
-            id: recordId,
-            itemid: itemId,
-            userid: demoUser.id,
-            maintenancedate: formattedRecordDate,
-            nextmaintenancedue: null,
-            type: 'Existing Document Upload',
-            notes: notes || null,
-            filepath: filePath,
-            createdat: new Date().toISOString()
-          });
-        
+        const { error: maintError } = await supabase.from('maintenance_records').insert({
+          id: recordId,
+          itemid: itemId,
+          userid: demoUser.id,
+          maintenancedate: formattedRecordDate,
+          nextmaintenancedue: null,
+          type: 'Existing Document Upload',
+          notes: notes || null,
+          filepath: filePath,
+          createdat: new Date().toISOString(),
+        });
+
         if (maintError) throw maintError;
-        
+
         console.log('✅ Existing maintenance document uploaded and record created');
       }
-      
-      res.status(201).json({ 
+
+      res.status(201).json({
         message: `${type} document uploaded successfully`,
         filename: filePath,
-        recordId: recordId
+        recordId: recordId,
       });
-      
     } else if (recordType === 'new') {
       console.log('🆕 Processing new record creation');
       // For new records, require all fields and update item dates
@@ -985,95 +1017,87 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
         console.log('❌ Missing required fields for new record:', { recordDate, nextDue, method });
         return res.status(400).json({ error: 'Missing required fields for new record' });
       }
-      
+
       // Generate record ID
       const recordId = generateId();
-      
+
       if (type === 'calibration') {
         console.log('🔧 Creating new calibration record and updating item dates');
-        
+
         // Insert calibration record
-        const { error: calError } = await supabase
-          .from('calibration_records')
-          .insert({
-            id: recordId,
-            itemid: itemId,
-            userid: demoUser.id,
-            calibrationdate: recordDate + ' 00:00:00',
-            nextcalibrationdue: nextDue + ' 00:00:00',
-            method: method,
-            notes: notes || null,
-            filepath: filePath,
-            createdat: new Date().toISOString()
-          });
-        
+        const { error: calError } = await supabase.from('calibration_records').insert({
+          id: recordId,
+          itemid: itemId,
+          userid: demoUser.id,
+          calibrationdate: recordDate + ' 00:00:00',
+          nextcalibrationdue: nextDue + ' 00:00:00',
+          method: method,
+          notes: notes || null,
+          filepath: filePath,
+          createdat: new Date().toISOString(),
+        });
+
         if (calError) throw calError;
-        
+
         console.log('✅ Calibration record inserted successfully');
-        
+
         // Update item's calibration date and next calibration due date
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
             calibrationdate: recordDate + ' 00:00:00',
             nextcalibrationdue: nextDue + ' 00:00:00',
-            updatedat: new Date().toISOString()
+            updatedat: new Date().toISOString(),
           })
           .eq('id', itemId);
-        
+
         if (updateError) throw updateError;
-        
+
         console.log('✅ Calibration record created and item dates updated');
-        
       } else if (type === 'maintenance') {
         console.log('🔧 Creating new maintenance record and updating item dates');
-        
+
         // Insert maintenance record
-        const { error: maintError } = await supabase
-          .from('maintenance_records')
-          .insert({
-            id: recordId,
-            itemid: itemId,
-            userid: demoUser.id,
-            maintenancedate: recordDate + ' 00:00:00',
-            nextmaintenancedue: nextDue + ' 00:00:00',
-            type: method,
-            notes: notes || null,
-            filepath: filePath,
-            createdat: new Date().toISOString()
-          });
-        
+        const { error: maintError } = await supabase.from('maintenance_records').insert({
+          id: recordId,
+          itemid: itemId,
+          userid: demoUser.id,
+          maintenancedate: recordDate + ' 00:00:00',
+          nextmaintenancedue: nextDue + ' 00:00:00',
+          type: method,
+          notes: notes || null,
+          filepath: filePath,
+          createdat: new Date().toISOString(),
+        });
+
         if (maintError) throw maintError;
-        
+
         console.log('✅ Maintenance record inserted successfully');
-        
+
         // Update item's maintenance date and next maintenance due date
         const { error: updateError } = await supabase
           .from('inventory_items')
           .update({
             maintenancedate: recordDate + ' 00:00:00',
             maintenancedue: nextDue + ' 00:00:00',
-            updatedat: new Date().toISOString()
+            updatedat: new Date().toISOString(),
           })
           .eq('id', itemId);
-        
+
         if (updateError) throw updateError;
-        
+
         console.log('✅ Maintenance record created and item dates updated');
-        
       } else {
         return res.status(400).json({ error: 'Invalid record type' });
       }
-      
-      res.status(201).json({ 
+
+      res.status(201).json({
         message: `${type} record added successfully`,
-        recordId
+        recordId,
       });
-      
     } else {
       return res.status(400).json({ error: 'Invalid record type' });
     }
-    
   } catch (error) {
     console.error('Error uploading record:', error);
     res.status(500).json({ error: 'Failed to upload record' });
@@ -1083,20 +1107,23 @@ app.post('/api/inventory/upload-record', upload.single('recordFile'), async (req
 // Delete calibration or maintenance record
 app.delete('/api/inventory/:itemId/records/:recordId', async (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Access token required' });
-  
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Access token required' });
+
   try {
     const { itemId, recordId } = req.params;
     const { type } = req.query; // 'calibration' or 'maintenance'
-    
+
     if (!type || !['calibration', 'maintenance'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid record type. Must be "calibration" or "maintenance"' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid record type. Must be "calibration" or "maintenance"' });
     }
-    
+
     console.log(`🗑️ Deleting ${type} record ${recordId} for item ${itemId}`);
-    
+
     let deleteError;
-    
+
     if (type === 'calibration') {
       // Delete calibration record
       const { error } = await supabase
@@ -1104,7 +1131,7 @@ app.delete('/api/inventory/:itemId/records/:recordId', async (req, res) => {
         .delete()
         .eq('id', recordId)
         .eq('itemid', itemId);
-      
+
       deleteError = error;
     } else if (type === 'maintenance') {
       // Delete maintenance record
@@ -1113,19 +1140,18 @@ app.delete('/api/inventory/:itemId/records/:recordId', async (req, res) => {
         .delete()
         .eq('id', recordId)
         .eq('itemid', itemId);
-      
+
       deleteError = error;
     }
-    
+
     if (deleteError) {
       console.error(`❌ Error deleting ${type} record:`, deleteError);
       throw deleteError;
     }
-    
+
     console.log(`✅ ${type} record ${recordId} deleted successfully`);
-    
+
     res.json({ message: `${type} record deleted successfully` });
-    
   } catch (error) {
     console.error('Error deleting record:', error);
     res.status(500).json({ error: 'Failed to delete record' });
@@ -1133,8 +1159,8 @@ app.delete('/api/inventory/:itemId/records/:recordId', async (req, res) => {
 });
 
 // SPA fallback
-app.get(/^\/(?!api).*/, (req, res) => { 
-  res.sendFile(path.join(__dirname, '../public/index.html')); 
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 module.exports = app;

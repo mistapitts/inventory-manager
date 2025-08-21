@@ -27,7 +27,8 @@ const authenticateToken = async (req, res, next) => {
         }
         req.user = {
             id: user.id,
-            role: user.role
+            companyId: user.companyId,
+            role: user.role,
         };
         next();
     }
@@ -35,7 +36,7 @@ const authenticateToken = async (req, res, next) => {
         console.error('JWT verification failed:', {
             message: error?.message,
             name: error?.name,
-            stack: error?.stack?.split('\n')[0]
+            stack: error?.stack?.split('\n')[0],
         });
         res.status(403).json({ error: 'Invalid or expired token' });
     }

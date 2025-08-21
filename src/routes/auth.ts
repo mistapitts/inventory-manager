@@ -1,9 +1,12 @@
-import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { database } from '../models/database';
+import { Router } from 'express';
+
 import { generateToken, authenticateToken, requireRole } from '../middleware/auth';
+import { database } from '../models/database';
 import { UserRole } from '../types';
+
 import type { AuthRequest } from '../types/express';
+import type { Response } from 'express';
 
 const router = Router();
 
@@ -17,10 +20,9 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
     }
 
     // Get user from database
-    const user = await database.get(
-      'SELECT * FROM users WHERE email = ? AND isActive = 1',
-      [email]
-    );
+    const user = await database.get('SELECT * FROM users WHERE email = ? AND isActive = 1', [
+      email,
+    ]);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -38,10 +40,9 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
     // Get company info if user has one
     let company = null;
     if (user.companyId) {
-      company = await database.get(
-        'SELECT id, name, logo, theme FROM companies WHERE id = ?',
-        [user.companyId]
-      );
+      company = await database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [
+        user.companyId,
+      ]);
     }
 
     // Location is not used in this simplified flow
@@ -56,10 +57,10 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
         lastName: user.lastName,
         role: user.role,
         companyId: user.companyId,
-        regionId: user.regionId
+        regionId: user.regionId,
       },
       company,
-      location
+      location,
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -85,7 +86,7 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     // Validate invite code
     const invite = await database.get(
       'SELECT * FROM invite_codes WHERE code = ? AND isUsed = 0 AND expiresAt > datetime("now")',
-      [inviteCode]
+      [inviteCode],
     );
 
     if (!invite) {
@@ -99,14 +100,22 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     const userId = generateId();
     await database.run(
       'INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, email, hashedPassword, firstName, lastName, invite.role, invite.companyId, invite.locationId, invite.regionId, true]
+      [
+        userId,
+        email,
+        hashedPassword,
+        firstName,
+        lastName,
+        invite.role,
+        invite.companyId,
+        invite.locationId,
+        invite.regionId,
+        true,
+      ],
     );
 
     // Mark invite code as used
-    await database.run(
-      'UPDATE invite_codes SET isUsed = 1 WHERE id = ?',
-      [invite.id]
-    );
+    await database.run('UPDATE invite_codes SET isUsed = 1 WHERE id = ?', [invite.id]);
 
     // Generate token
     const token = generateToken(userId);
@@ -121,8 +130,8 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
         role: invite.role,
         companyId: invite.companyId,
         locationId: invite.locationId,
-        regionId: invite.regionId
-      }
+        regionId: invite.regionId,
+      },
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -138,7 +147,7 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
     }
     const user = await database.get(
       'SELECT id, email, firstName, lastName, role, companyId, regionId, isActive, createdAt FROM users WHERE id = ?',
-      [req.user.id]
+      [req.user.id],
     );
 
     if (!user) {
@@ -148,10 +157,9 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
     // Get company info
     let company = null;
     if (user.companyId) {
-      company = await database.get(
-        'SELECT id, name, logo, theme FROM companies WHERE id = ?',
-        [user.companyId]
-      );
+      company = await database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [
+        user.companyId,
+      ]);
     }
 
     const location = null;
@@ -160,8 +168,8 @@ router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response
       user: {
         ...user,
         company,
-        location
-      }
+        location,
+      },
     });
   } catch (error) {
     console.error('Profile error:', error);
@@ -197,10 +205,10 @@ router.put('/change-password', authenticateToken, async (req: AuthRequest, res: 
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update password
-    await database.run(
-      'UPDATE users SET password = ?, updatedAt = datetime("now") WHERE id = ?',
-      [hashedPassword, req.user.id]
-    );
+    await database.run('UPDATE users SET password = ?, updatedAt = datetime("now") WHERE id = ?', [
+      hashedPassword,
+      req.user.id,
+    ]);
 
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
@@ -210,53 +218,75 @@ router.put('/change-password', authenticateToken, async (req: AuthRequest, res: 
 });
 
 // Admin: Create new user
-router.post('/admin/create-user', authenticateToken, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
-  try {
-    const { email, password, firstName, lastName, role, companyId, locationId, regionId } = req.body;
+router.post(
+  '/admin/create-user',
+  authenticateToken,
+  requireRole([UserRole.ADMIN]),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { email, password, firstName, lastName, role, companyId, locationId, regionId } =
+        req.body;
 
-    if (!email || !password || !firstName || !lastName || !role) {
-      return res.status(400).json({ error: 'Required fields missing' });
+      if (!email || !password || !firstName || !lastName || !role) {
+        return res.status(400).json({ error: 'Required fields missing' });
+      }
+
+      // Check if user already exists
+      const existingUser = await database.get('SELECT id FROM users WHERE email = ?', [email]);
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists' });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create user
+      const userId = generateId();
+      await database.run(
+        'INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          userId,
+          email,
+          hashedPassword,
+          firstName,
+          lastName,
+          role,
+          companyId || null,
+          locationId || null,
+          regionId || null,
+          true,
+        ],
+      );
+
+      res.status(201).json({
+        message: 'User created successfully',
+        userId,
+      });
+    } catch (error) {
+      console.error('Create user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Check if user already exists
-    const existingUser = await database.get('SELECT id FROM users WHERE email = ?', [email]);
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user
-    const userId = generateId();
-    await database.run(
-      'INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, email, hashedPassword, firstName, lastName, role, companyId || null, locationId || null, regionId || null, true]
-    );
-
-    res.status(201).json({
-      message: 'User created successfully',
-      userId
-    });
-  } catch (error) {
-    console.error('Create user error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+  },
+);
 
 // Admin: Get all users
-router.get('/admin/users', authenticateToken, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
-  try {
-    const users = await database.all(
-      'SELECT id, email, firstName, lastName, role, companyId, locationId, regionId, isActive, createdAt FROM users ORDER BY createdAt DESC'
-    );
+router.get(
+  '/admin/users',
+  authenticateToken,
+  requireRole([UserRole.ADMIN]),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const users = await database.all(
+        'SELECT id, email, firstName, lastName, role, companyId, locationId, regionId, isActive, createdAt FROM users ORDER BY createdAt DESC',
+      );
 
-    res.json({ users });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      res.json({ users });
+    } catch (error) {
+      console.error('Get users error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 function generateId(): string {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);

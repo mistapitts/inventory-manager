@@ -81,15 +81,18 @@ This guide will walk you through setting up Supabase as your persistent database
 ## Troubleshooting
 
 ### "Database connection failed"
+
 - Check your environment variables in Vercel
 - Verify your Supabase URL and key are correct
 - Make sure you copied the "anon public" key, not the service role key
 
 ### "Table doesn't exist"
+
 - Go back to Step 4 and run the SQL setup again
 - Check the SQL Editor for any error messages
 
 ### "Authentication failed"
+
 - Verify your demo user was created in the database
 - Check the SQL setup completed successfully
 
@@ -99,7 +102,7 @@ This guide will walk you through setting up Supabase as your persistent database
 ✅ **Access from any device** - Your boss can see items from anywhere  
 ✅ **QR codes work perfectly** - No more lost data between sessions  
 ✅ **Professional demo** - Show off the full system capabilities  
-✅ **Scalable foundation** - Easy to add more features later  
+✅ **Scalable foundation** - Easy to add more features later
 
 ## Next Steps After Setup
 
@@ -111,6 +114,7 @@ This guide will walk you through setting up Supabase as your persistent database
 ## Support
 
 If you run into any issues:
+
 - Check the Supabase logs in your project dashboard
 - Verify all environment variables are set correctly
 - Make sure the SQL setup completed without errors

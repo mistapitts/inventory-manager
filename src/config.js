@@ -17,7 +17,7 @@ exports.config = {
     uploadPath: process.env.UPLOAD_PATH || path_1.default.resolve('./uploads'),
     allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
         .split(',')
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean),
     isProd,
 };

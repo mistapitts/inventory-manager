@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const database_1 = require("../models/database");
+const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
+const database_1 = require("../models/database");
 const types_1 = require("../types");
 const router = (0, express_1.Router)();
 // Login route
@@ -17,7 +17,9 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
         // Get user from database
-        const user = await database_1.database.get('SELECT * FROM users WHERE email = ? AND isActive = 1', [email]);
+        const user = await database_1.database.get('SELECT * FROM users WHERE email = ? AND isActive = 1', [
+            email,
+        ]);
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -31,7 +33,9 @@ router.post('/login', async (req, res) => {
         // Get company info if user has one
         let company = null;
         if (user.companyId) {
-            company = await database_1.database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [user.companyId]);
+            company = await database_1.database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [
+                user.companyId,
+            ]);
         }
         // Location is not used in this simplified flow
         const location = null;
@@ -44,10 +48,10 @@ router.post('/login', async (req, res) => {
                 lastName: user.lastName,
                 role: user.role,
                 companyId: user.companyId,
-                regionId: user.regionId
+                regionId: user.regionId,
             },
             company,
-            location
+            location,
         });
     }
     catch (error) {
@@ -76,7 +80,18 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcryptjs_1.default.hash(password, 12);
         // Create user
         const userId = generateId();
-        await database_1.database.run('INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [userId, email, hashedPassword, firstName, lastName, invite.role, invite.companyId, invite.locationId, invite.regionId, true]);
+        await database_1.database.run('INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            userId,
+            email,
+            hashedPassword,
+            firstName,
+            lastName,
+            invite.role,
+            invite.companyId,
+            invite.locationId,
+            invite.regionId,
+            true,
+        ]);
         // Mark invite code as used
         await database_1.database.run('UPDATE invite_codes SET isUsed = 1 WHERE id = ?', [invite.id]);
         // Generate token
@@ -91,8 +106,8 @@ router.post('/register', async (req, res) => {
                 role: invite.role,
                 companyId: invite.companyId,
                 locationId: invite.locationId,
-                regionId: invite.regionId
-            }
+                regionId: invite.regionId,
+            },
         });
     }
     catch (error) {
@@ -113,15 +128,17 @@ router.get('/profile', auth_1.authenticateToken, async (req, res) => {
         // Get company info
         let company = null;
         if (user.companyId) {
-            company = await database_1.database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [user.companyId]);
+            company = await database_1.database.get('SELECT id, name, logo, theme FROM companies WHERE id = ?', [
+                user.companyId,
+            ]);
         }
         const location = null;
         res.json({
             user: {
                 ...user,
                 company,
-                location
-            }
+                location,
+            },
         });
     }
     catch (error) {
@@ -152,7 +169,10 @@ router.put('/change-password', auth_1.authenticateToken, async (req, res) => {
         // Hash new password
         const hashedPassword = await bcryptjs_1.default.hash(newPassword, 12);
         // Update password
-        await database_1.database.run('UPDATE users SET password = ?, updatedAt = datetime("now") WHERE id = ?', [hashedPassword, req.user.id]);
+        await database_1.database.run('UPDATE users SET password = ?, updatedAt = datetime("now") WHERE id = ?', [
+            hashedPassword,
+            req.user.id,
+        ]);
         res.json({ message: 'Password updated successfully' });
     }
     catch (error) {
@@ -176,10 +196,21 @@ router.post('/admin/create-user', auth_1.authenticateToken, (0, auth_1.requireRo
         const hashedPassword = await bcryptjs_1.default.hash(password, 12);
         // Create user
         const userId = generateId();
-        await database_1.database.run('INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [userId, email, hashedPassword, firstName, lastName, role, companyId || null, locationId || null, regionId || null, true]);
+        await database_1.database.run('INSERT INTO users (id, email, password, firstName, lastName, role, companyId, locationId, regionId, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            userId,
+            email,
+            hashedPassword,
+            firstName,
+            lastName,
+            role,
+            companyId || null,
+            locationId || null,
+            regionId || null,
+            true,
+        ]);
         res.status(201).json({
             message: 'User created successfully',
-            userId
+            userId,
         });
     }
     catch (error) {

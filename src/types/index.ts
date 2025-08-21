@@ -20,7 +20,7 @@ export enum UserRole {
   REGION_MANAGER = 'region_manager',
   LAB_MANAGER = 'lab_manager',
   USER = 'user',
-  VIEWER = 'viewer'
+  VIEWER = 'viewer',
 }
 
 export interface Company {

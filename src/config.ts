@@ -11,7 +11,7 @@ export const config = {
   uploadPath: process.env.UPLOAD_PATH || path.resolve('./uploads'),
   allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
     .split(',')
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean),
   isProd,
 };

@@ -1,10 +1,16 @@
-import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+
 import { database } from '../models/database';
 import { UserRole } from '../types';
-import type { AuthRequest } from '../types/express';
 
-export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+import type { AuthRequest } from '../types/express';
+import type { Response, NextFunction } from 'express';
+
+export const authenticateToken = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && typeof authHeader === 'string' ? authHeader.split(' ')[1] : undefined;
 
@@ -18,11 +24,11 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     const decoded = jwt.verify(token, secret) as any;
     // Debug: successful decode
     // console.log('Auth OK for userId:', decoded?.userId);
-    
+
     // Get user from database to ensure they still exist and are active
     const user = await database.get(
       'SELECT id, email, role, companyId, regionId FROM users WHERE id = ? AND isActive = 1',
-      [decoded.userId]
+      [decoded.userId],
     );
 
     if (!user) {
@@ -33,7 +39,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     req.user = {
       id: user.id,
       companyId: user.companyId,
-      role: user.role as UserRole
+      role: user.role as UserRole,
     };
 
     next();
@@ -41,13 +47,15 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     console.error('JWT verification failed:', {
       message: error?.message,
       name: error?.name,
-      stack: error?.stack?.split('\n')[0]
+      stack: error?.stack?.split('\n')[0],
     });
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
 
-export const requireRole = (roles: UserRole[]): ((req: AuthRequest, res: Response, next: NextFunction) => void) => {
+export const requireRole = (
+  roles: UserRole[],
+): ((req: AuthRequest, res: Response, next: NextFunction) => void) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
@@ -78,7 +86,9 @@ export const requireCompanyAccess = (req: AuthRequest, res: Response, next: Next
   next();
 };
 
-export const requireLocationAccess = (locationId: string): ((req: AuthRequest, res: Response, next: NextFunction) => void) => {
+export const requireLocationAccess = (
+  locationId: string,
+): ((req: AuthRequest, res: Response, next: NextFunction) => void) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });

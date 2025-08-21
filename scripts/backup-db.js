@@ -7,8 +7,8 @@ const fs = require('fs');
 const path = require('path');
 
 const dbPath = process.env.DB_PATH || path.resolve('./data/inventory.db');
-const backupsRoot = 
-  process.env.BACKUP_PATH || 
+const backupsRoot =
+  process.env.BACKUP_PATH ||
   (process.env.DB_PATH?.startsWith('/opt/data') ? '/opt/data/backups' : path.resolve('./backups'));
 
 if (!fs.existsSync(backupsRoot)) fs.mkdirSync(backupsRoot, { recursive: true });

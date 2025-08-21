@@ -1,14 +1,18 @@
-import express, { Request, Response } from 'express';
+import path from 'path';
+
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
-import { database } from './models/database';
+import express from 'express';
+
 import { config, validateRequiredEnv, ensureDirSync } from './config';
+import { database } from './models/database';
 
 // Import routes
 import authRoutes from './routes/auth';
-import inventoryRoutes from './routes/inventory';
 import companyRoutes from './routes/company';
+import inventoryRoutes from './routes/inventory';
+
+import type { Request, Response } from 'express';
 
 // Load environment variables
 dotenv.config();
@@ -53,20 +57,20 @@ app.get('/api/health', (req: Request, res: Response) => {
   // Test database connection
   database.db.get('SELECT 1 as ok', [], (err: any, row: any) => {
     if (err) {
-      return res.status(500).json({ 
-        status: 'ERR', 
+      return res.status(500).json({
+        status: 'ERR',
         db: false,
         timestamp: new Date().toISOString(),
         message: 'Database connection failed',
-        environment: config.nodeEnv
+        environment: config.nodeEnv,
       });
     }
-    return res.json({ 
-      status: 'OK', 
+    return res.json({
+      status: 'OK',
       db: !!row?.ok,
       timestamp: new Date().toISOString(),
       message: 'Inventory Manager API is running',
-      environment: config.nodeEnv
+      environment: config.nodeEnv,
     });
   });
 });
