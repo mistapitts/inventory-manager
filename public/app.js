@@ -866,12 +866,26 @@ async function loadInventoryItems() {
       const allItems = Array.isArray(data.items) ? data.items : [];
       const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
       console.log('Hidden lists:', hiddenLists);
-      console.log('All items with listIds:', allItems.map(item => ({ id: item.id, nickname: item.nickname, listId: item.listId })));
+      console.log('All items with listIds:', allItems.map(item => ({ id: item.id, nickname: item.nickname, listId: item.listId, isOutOfService: item.isOutOfService })));
       
-      // Filter items for display (only show items from visible lists)
-      const visibleItems = allItems.filter(
-        (item) => !item.listId || !hiddenLists.includes(item.listId),
-      );
+      // Check if out-of-service filter is enabled
+      const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
+      console.log('Out-of-service filter enabled:', showOutOfService);
+      
+      // Filter items for display
+      let visibleItems;
+      if (showOutOfService) {
+        // If showing out-of-service items, include them regardless of list visibility
+        visibleItems = allItems;
+        console.log('Showing all items (including out-of-service) regardless of list visibility');
+      } else {
+        // If hiding out-of-service items, only show visible lists and non-out-of-service items
+        visibleItems = allItems.filter(
+          (item) => (!item.listId || !hiddenLists.includes(item.listId)) && !(item.isOutOfService === 1 || item.isOutOfService === true)
+        );
+        console.log('Hiding out-of-service items and filtering by list visibility');
+      }
+      
       console.log('Visible items:', visibleItems.length, 'of', allItems.length);
       
       // Display the filtered items (but stats will show total count)
@@ -909,11 +923,6 @@ function displayInventoryItems(items) {
       const row = createInventoryRow(item);
       if (tableBody) tableBody.appendChild(row);
     });
-    
-    // After adding items, apply the out-of-service filter
-    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
-    console.log('Applying out-of-service filter, showOutOfService:', showOutOfService);
-    applyOutOfServiceFilter(showOutOfService);
   } else {
     console.log('Showing welcome message - no items');
     // Show welcome message, hide inventory
@@ -1478,8 +1487,8 @@ function handleOutOfServiceFilterChange() {
   // Store the preference in localStorage
   localStorage.setItem('showOutOfService', showOutOfService);
 
-  // Apply the filter to the current table
-  applyOutOfServiceFilter(showOutOfService);
+  // Reload inventory items with new filter settings
+  loadInventoryItems();
 }
 
 function applyOutOfServiceFilter(showOutOfService) {
