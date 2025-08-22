@@ -339,19 +339,7 @@
                   </div>
                 </div>
 
-                <!-- Legend positioned on the right side -->
-                <div class="inventory-legend" id="inventoryLegend">
-                  <div class="legend-outsourced-section">
-                    <div class="legend-item">
-                      <div class="legend-color outsourced"></div>
-                      <span>Outsourced Items</span>
-                    </div>
-                  </div>
-                  <div class="legend-lists-section">
-                    <h4>List Colors</h4>
-                    <div class="legend-lists" id="legendLists"></div>
-                  </div>
-                </div>
+
               </div>
 
               <div class="inventory-main-content">
@@ -370,14 +358,22 @@
                         </button>
                       </div>
                       
+                      <div class="toolbar-sep"></div>
+                      
+                      <!-- Show Out of Service checkbox -->
+                      <label class="checkbox">
+                        <input id="chkShowOOS" type="checkbox" />
+                        <span>Show Out of Service</span>
+                      </label>
+                      
+                      <div class="toolbar-spacer"></div>
+                      
                       <!-- Compact legend on the right -->
-                      <div class="legend-bar compact" id="legendBar">
+                      <div class="legend-inline" id="legend-inline">
                         <span class="legend-label">Legend:</span>
-                        <span class="chip chip-oos">OOS</span>
+                        <span class="badge badge-oos">OOS</span>
                         <span class="chip chip-outsourced">Outsourced</span>
-                        <span class="chip">
-                          <span class="legend-swatch lab" style="--c:#3b82f6"></span> Lab
-                        </span>
+                        <span id="legend-lab" class="chip chip-lab">Lab</span>
                       </div>
 
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
@@ -472,9 +468,10 @@
                           </div>
                           <div class="visibility-options">
                             <label class="visibility-option">
-                              <input type="checkbox" id="modalShowOOS" checked />
-                              <span>Show Out of Service items</span>
+                              <input type="checkbox" id="drawerShowOOS" checked />
+                              <span>Show Out of Service</span>
                             </label>
+                            <small class="muted">This mirrors the toolbar setting.</small>
                           </div>
                         </div>
                       </div>
@@ -1154,6 +1151,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=4"></script>
+    <script src="/app.js?v=5"></script>
   </body>
 </html>

@@ -705,18 +705,100 @@ tr.row-oos * {
 }
 
 /* ---------- Toolbar and table seam: make them kiss ---------- */
-.inventory-toolbar {
+.inventory-table-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card-bg, #121829);
   position: relative;
-  top: 2px;
-  z-index: 2;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  z-index: 3;
+  margin-bottom: -6px; /* pull toolbar down into the table to overlap a smidge */
 }
 
-.inventory-table-wrapper {
-  margin-top: -4px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+/* tiny separator after Edit button */
+.toolbar-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.08);
+  display: inline-block;
+  margin: 0 6px;
+}
+
+/* push legend to the right */
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+/* Compact legend */
+.legend-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.legend-inline .legend-label {
+  opacity: .7;
+  font-size: 12px;
+}
+
+/* chips & badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.badge-oos {
+  background: #ff5151;
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.chip-outsourced {
+  background: rgba(255,165,0,0.16);
+  border: 1px solid rgba(255,165,0,0.45);
+  color: #f7b357;
+}
+
+.chip-lab {
+  background: var(--lab-bg, rgba(80,120,255,.15));
+  border: 1px solid var(--lab-border, rgba(80,120,255,.35));
+  color: var(--lab-fg, #a7b9ff);
+}
+
+/* Table wrapper should allow menu to float above and corners to merge visually */
+.inventory-table-container {
+  position: relative;
+  z-index: 2;
+  overflow: visible; /* prevent clipping of dropdowns */
+}
+
+/* Fix the "gap" at the upper-left by merging radii */
+.inventory-table-header {
+  border-bottom-left-radius: 0; /* header radius handled by toolbar above */
+}
+
+/* Action menu stacking */
+.action-menu,
+.dropdown-menu {
+  position: absolute;
+  z-index: 10; /* above rows/toolbar */
+}
+
+/* Ensure OOS rows do NOT dim interactive elements anymore */
+tr.row-oos .btn,
+tr.row-oos .action-menu,
+tr.row-oos .dropdown-menu {
+  opacity: 1 !important;
 }
 
 /* The small visual gap came from margins around the header/table shell */
@@ -870,6 +952,33 @@ tr.row-oos * {
 .visibility-option span {
   color: var(--text-primary, #ffffff);
   font-size: 14px;
+}
+
+/* ---------- Toolbar checkbox styling ---------- */
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox span {
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
+}
+
+/* ---------- Muted text styling ---------- */
+.muted {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
 }
 
 /* Make "Total Items" look tappable */

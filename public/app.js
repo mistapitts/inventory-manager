@@ -851,11 +851,11 @@ function updateDashboardStats(stats) {
       // Set "Show Out of Service" to checked/true
       localStorage.setItem('showOutOfService', 'true');
       
-      // Update modal checkbox if open
-      const modalOOSCheckbox = document.getElementById('modalShowOOS');
-      if (modalOOSCheckbox) {
-        modalOOSCheckbox.checked = true;
-      }
+      // Update both checkboxes if they exist
+      const chkToolbar = document.getElementById('chkShowOOS');
+      const chkDrawer = document.getElementById('drawerShowOOS');
+      if (chkToolbar) chkToolbar.checked = true;
+      if (chkDrawer) chkDrawer.checked = true;
       
       // Clear list filters (if any UI state)
       // Note: We don't have a list filter dropdown yet, but this prepares for it
@@ -1192,6 +1192,27 @@ function getShowOOS() {
   return v === null ? true : v === 'true';
 }
 
+// Helper to convert #rrggbb to rgba
+function hexToRgba(hex, alpha = 0.2) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Update the Lab chip color in the legend
+function updateLegendLabChip(colorHex, textColorHex) {
+  const el = document.getElementById('legend-lab');
+  if (!el) return;
+  const bg = colorHex || '#506dff';
+  const fg = textColorHex || '#a7b9ff';
+  // light border based on bg
+  el.style.setProperty('--lab-bg', hexToRgba(bg, 0.14));
+  el.style.setProperty('--lab-border', hexToRgba(bg, 0.35));
+  el.style.setProperty('--lab-fg', fg);
+}
+
 function toggleActionMenu(e) {
   e.stopPropagation();
   const menu = e.currentTarget.parentElement;
@@ -1206,58 +1227,56 @@ function toggleActionMenu(e) {
   }
 
   // Decide whether to open up or down based on viewport space
-  if (willShow) {
-    const list = menu.querySelector('.action-menu-list');
-    if (list) {
-      // Reset orientation, then measure
-      menu.classList.remove('open-up');
-      list.classList.remove('floating');
+  const list = menu.querySelector('.action-menu-list');
+  if (list) {
+    // Reset orientation, then measure
+    menu.classList.remove('open-up');
+    list.classList.remove('floating');
 
-      // Temporarily show to measure natural size
-      const prevDisplay = list.style.display;
-      const prevVisibility = list.style.visibility;
-      list.style.display = 'flex';
-      list.style.visibility = 'hidden'; // Hide while measuring to prevent flicker
+    // Temporarily show to measure natural size
+    const prevDisplay = list.style.display;
+    const prevVisibility = list.style.visibility;
+    list.style.display = 'flex';
+    list.style.visibility = 'hidden'; // Hide while measuring to prevent flicker
 
-      const btnRect = e.currentTarget.getBoundingClientRect();
-      const listRect = list.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - btnRect.bottom;
-      const spaceAbove = btnRect.top;
-      const wantHeight = Math.min(listRect.height || 200, 300);
+    const btnRect = e.currentTarget.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - btnRect.bottom;
+    const spaceAbove = btnRect.top;
+    const wantHeight = Math.min(listRect.height || 200, 300);
 
-      // Flip if not enough space below
-      const openUp = spaceBelow < wantHeight && spaceAbove > spaceBelow;
-      if (openUp) {
-        menu.classList.add('open-up');
-      }
-
-      // Always use floating positioning to avoid scrollbar and container clipping issues
-      list.classList.add('floating');
-
-      // Anchor to viewport using the button coordinates
-      const top = openUp ? btnRect.top - wantHeight - 8 : btnRect.bottom + 8;
-
-      // Ensure the menu doesn't extend beyond the right edge of the viewport
-      const menuWidth = listRect.width || 180;
-      let left = btnRect.right - menuWidth; // Align right edge of menu with right edge of button
-
-      // If menu would go off the left edge, align left edge with button's left edge
-      if (left < 8) {
-        left = btnRect.left;
-      }
-
-      // If menu would go off the right edge, move it left
-      if (left + menuWidth > window.innerWidth - 8) {
-        left = window.innerWidth - menuWidth - 8;
-      }
-
-      list.style.top = `${top}px`;
-      list.style.left = `${left}px`;
-
-      // Restore original display properties
-      list.style.display = prevDisplay || '';
-      list.style.visibility = prevVisibility || '';
+    // Flip if not enough space below
+    const openUp = spaceBelow < wantHeight && spaceAbove > spaceBelow;
+    if (openUp) {
+      menu.classList.add('open-up');
     }
+
+    // Always use floating positioning to avoid scrollbar and container clipping issues
+    list.classList.add('floating');
+
+    // Anchor to viewport using the button coordinates
+    const top = openUp ? btnRect.top - wantHeight - 8 : btnRect.bottom + 8;
+
+    // Ensure the menu doesn't extend beyond the right edge of the viewport
+    const menuWidth = listRect.width || 180;
+    let left = btnRect.right - menuWidth; // Align right edge of menu with right edge of button
+
+    // If menu would go off the left edge, align left edge with button's left edge
+    if (left < 8) {
+      left = btnRect.left;
+    }
+
+    // If menu would go off the right edge, move it left
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = window.innerWidth - menuWidth - 8;
+    }
+
+    list.style.top = `${top}px`;
+    list.style.left = `${left}px`;
+
+    // Restore original display properties
+    list.style.display = prevDisplay || '';
+    list.style.visibility = prevVisibility || '';
   }
 }
 
@@ -1934,18 +1953,26 @@ document.addEventListener('click', () => {
   closeAllRowMenus();
 });
 
-// Wire up the modal OOS checkbox
+// Wire up the OOS checkboxes (toolbar and drawer)
 document.addEventListener('DOMContentLoaded', () => {
-  const modalOOSCheckbox = document.getElementById('modalShowOOS');
-  if (modalOOSCheckbox) {
-    // Set initial state from localStorage
-    modalOOSCheckbox.checked = getShowOOS();
-    
-    // Listen for changes
-    modalOOSCheckbox.addEventListener('change', () => {
-      localStorage.setItem('showOutOfService', modalOOSCheckbox.checked ? 'true' : 'false');
-    });
+  const chkToolbar = document.getElementById('chkShowOOS');
+  const chkDrawer = document.getElementById('drawerShowOOS');
+
+  // initialize from persisted setting
+  const stored = getShowOOS();
+  if (chkToolbar) chkToolbar.checked = stored;
+  if (chkDrawer) chkDrawer.checked = stored;
+
+  // one source of truth → persist & reload
+  function setShowOOS(val) {
+    localStorage.setItem('showOutOfService', !!val);
+    if (chkToolbar && chkToolbar.checked !== !!val) chkToolbar.checked = !!val;
+    if (chkDrawer && chkDrawer.checked !== !!val) chkDrawer.checked = !!val;
+    loadInventoryItems(); // reload with new setting
   }
+
+  chkToolbar?.addEventListener('change', () => setShowOOS(chkToolbar.checked));
+  chkDrawer?.addEventListener('change', () => setShowOOS(chkDrawer.checked));
 });
 });
 
