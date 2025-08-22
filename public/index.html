@@ -359,6 +359,14 @@
                         >
                           <i class="fas fa-columns"></i> Edit Lists and Columns
                         </button>
+                      </div>
+                      
+                      <div class="oos-filter">
+                        <label class="oos-filter-label">
+                          <input type="checkbox" id="showOutOfService" />
+                          <span>Show Out of Service</span>
+                        </label>
+                      </div>
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
                           <!-- Lists Section -->
                           <div class="column-customizer-header">
@@ -1021,6 +1029,102 @@
               </button>
               <button type="submit" class="btn-primary">Update List</button>
             </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Out of Service Modal -->
+    <div id="outOfServiceModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Mark Item Out of Service</h2>
+          <button class="modal-close" onclick="hideOutOfServiceModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form id="outOfServiceForm">
+            <input type="hidden" id="outOfServiceItemId" name="itemId" />
+            
+            <div class="form-group">
+              <label for="outOfServiceDate">Out of Service Date</label>
+              <input
+                type="date"
+                id="outOfServiceDate"
+                name="outOfServiceDate"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="outOfServiceReason">Reason (Optional)</label>
+              <textarea
+                id="outOfServiceReason"
+                name="outOfServiceReason"
+                rows="3"
+                placeholder="Enter reason for taking item out of service..."
+                maxlength="500"
+              ></textarea>
+              <small class="form-help">Maximum 500 characters</small>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="hideOutOfServiceModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">Mark Out of Service</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Return to Service Verification Modal -->
+    <div id="returnToServiceModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Return Item to Service</h2>
+          <button class="modal-close" onclick="hideReturnToServiceModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form id="returnToServiceForm">
+            <input type="hidden" id="returnToServiceItemId" name="itemId" />
+            
+            <div class="form-group">
+              <label class="checkbox-wrapper verification-checkbox">
+                <input type="checkbox" id="verificationCheckbox" required />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">I performed a functional test and it passed</span>
+              </label>
+              <small class="form-help">This verification is required before returning the item to service</small>
+            </div>
+
+            <div class="form-group">
+              <label for="returnToServiceNotes">Verification Notes (Optional)</label>
+              <textarea
+                id="returnToServiceNotes"
+                name="returnToServiceNotes"
+                rows="3"
+                placeholder="Describe what was tested and any relevant details..."
+                maxlength="500"
+              ></textarea>
+              <small class="form-help">Maximum 500 characters</small>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="hideReturnToServiceModal()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" id="returnToServiceSubmitBtn" disabled>
+                <span class="btn-text">Return to Service</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
           </form>
         </div>
       </div>

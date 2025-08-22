@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
     cb(null, config.paths.uploadDocsDir);
   },
   filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
-    const safeBase = path.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
+    const safeBase = path.basename(file.originalname).replace(/[^\w.\-()+ ]/g, '_');
     const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
     cb(null, storedName);
   },
@@ -34,18 +34,18 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
   fileFilter: (_req, file, cb) => {
     const ok = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "image/png",
-      "image/jpeg"
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/png',
+      'image/jpeg',
     ].includes(file.mimetype);
     if (ok) {
       cb(null, true);
     } else {
-      cb(new Error("Unsupported file type"));
+      cb(new Error('Unsupported file type'));
     }
-  }
+  },
 });
 
 // Lists: get all lists for current user's company
@@ -1135,31 +1135,136 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
       return res.status(404).json({ error: 'Item not found' });
     }
 
+    // Validate and sanitize inputs
+    const sanitizedReason = reason ? reason.trim().substring(0, 500) : null;
+
+    // Parse and validate date
+    let serviceDate;
+    if (outOfServiceDate) {
+      const parsedDate = new Date(outOfServiceDate);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+      serviceDate = parsedDate.toISOString().slice(0, 10);
+    } else {
+      serviceDate = new Date().toISOString().slice(0, 10);
+    }
+
     await database.run(
       `
-            UPDATE inventory_items 
-            SET isOutOfService = 1, 
-                outOfServiceDate = ?, 
-                outOfServiceReason = ?,
-                updatedAt = datetime('now')
-            WHERE id = ?
-        `,
-      [outOfServiceDate, reason, itemId],
+        UPDATE inventory_items 
+        SET isOutOfService = 1, 
+            outOfServiceDate = ?, 
+            outOfServiceReason = ?,
+            returnToServiceVerified = 0,
+            returnToServiceVerifiedAt = NULL,
+            returnToServiceVerifiedBy = NULL,
+            returnToServiceNotes = NULL,
+            updatedAt = datetime('now')
+        WHERE id = ?
+      `,
+      [serviceDate, sanitizedReason, itemId],
     );
 
     // Create changelog entry
     await database.run(
       `
-            INSERT INTO changelog (
-                id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
-            ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, 'Marked as out of service: ${reason}', datetime('now'))
-        `,
-      [generateId(), itemId, userId],
+        INSERT INTO changelog (
+          id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+        ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
+      `,
+      [
+        generateId(),
+        itemId,
+        userId,
+        `Marked as out of service: ${sanitizedReason || 'No reason provided'}`,
+      ],
     );
 
-    res.json({ message: 'Item marked as out of service' });
+    // Return the updated item for UI update
+    const updatedItem = await database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
+
+    res.json({
+      message: 'Item marked as out of service',
+      item: updatedItem,
+    });
   } catch (error) {
     console.error('Error marking item out of service:', error);
+    res.status(500).json({ error: 'Failed to update item status' });
+  }
+});
+
+// Return item to service
+router.patch('/:id/return-to-service', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const itemId = req.params.id;
+    const userId = req.user!.id;
+    const { verified, notes } = req.body;
+
+    // Require verification
+    if (verified !== true) {
+      return res.status(400).json({ error: 'VERIFICATION_REQUIRED' });
+    }
+
+    const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
+
+    if (!user || !user.companyId) {
+      return res.status(400).json({ error: 'User not associated with a company' });
+    }
+
+    // Verify item belongs to user's company
+    const existingItem = await database.get(
+      'SELECT id FROM inventory_items WHERE id = ? AND companyId = ?',
+      [itemId, user.companyId],
+    );
+
+    if (!existingItem) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    // Sanitize notes
+    const sanitizedNotes = notes ? notes.trim().substring(0, 500) : null;
+
+    await database.run(
+      `
+        UPDATE inventory_items 
+        SET isOutOfService = 0, 
+            outOfServiceDate = NULL, 
+            outOfServiceReason = NULL,
+            returnToServiceVerified = 1,
+            returnToServiceVerifiedAt = datetime('now'),
+            returnToServiceVerifiedBy = ?,
+            returnToServiceNotes = ?,
+            updatedAt = datetime('now')
+        WHERE id = ?
+      `,
+      [user.email || userId, sanitizedNotes, itemId],
+    );
+
+    // Create changelog entry
+    await database.run(
+      `
+        INSERT INTO changelog (
+          id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+        ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
+      `,
+      [
+        generateId(),
+        itemId,
+        userId,
+        `Returned to service${sanitizedNotes ? ` - ${sanitizedNotes}` : ''}`,
+      ],
+    );
+
+    // Return the updated item for UI update
+    const updatedItem = await database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
+
+    res.json({
+      message: 'Item returned to service',
+      item: updatedItem,
+    });
+  } catch (error) {
+    console.error('Error returning item to service:', error);
     res.status(500).json({ error: 'Failed to update item status' });
   }
 });

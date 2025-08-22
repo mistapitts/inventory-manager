@@ -1057,6 +1057,112 @@ body {
   background: rgba(245, 158, 11, 0.05); /* Light orange background for better visibility */
 }
 
+/* Out of Service styling */
+.inventory-table tbody tr.out-of-service {
+  opacity: 0.6;
+  background: rgba(239, 68, 68, 0.1) !important; /* Light red background */
+  border-left: 6px solid var(--accent-danger) !important; /* Red border for OOS items */
+}
+
+.inventory-table tbody tr.out-of-service:hover {
+  opacity: 0.8;
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Out of Service badge */
+.oos-badge {
+  display: inline-block;
+  background: var(--accent-danger);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Out of Service filter toggle */
+.oos-filter {
+  display: flex;
+  align-items: center;
+  margin-left: 16px;
+}
+
+.oos-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.oos-filter-label input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.oos-filter-label:hover {
+  color: var(--text-primary);
+}
+
+/* Verification checkbox styling */
+.verification-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid var(--accent-success);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.verification-checkbox:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.verification-checkbox input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-success);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.checkbox-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.verification-checkbox .checkmark {
+  display: none; /* We'll use the native checkbox */
+}
+
+/* Verification badge */
+.verification-badge {
+  display: inline-block;
+  background: var(--accent-success);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: help;
+}
+
 /* Column-specific widths for better readability */
 .inventory-table th[data-sort='calibrationMethod'],
 .inventory-table td.column-calibrationMethod {

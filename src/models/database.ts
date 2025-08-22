@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 
@@ -124,6 +121,10 @@ export class Database {
         isOutOfService BOOLEAN DEFAULT 0,
         outOfServiceDate DATETIME,
         outOfServiceReason TEXT,
+        returnToServiceVerified BOOLEAN DEFAULT 0,
+        returnToServiceVerifiedAt DATETIME,
+        returnToServiceVerifiedBy TEXT,
+        returnToServiceNotes TEXT,
         notes TEXT,
         image TEXT,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,

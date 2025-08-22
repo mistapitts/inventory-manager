@@ -19,6 +19,10 @@ const rememberMeCheckbox = document.getElementById('rememberMe');
 document.addEventListener('DOMContentLoaded', function () {
   checkAuthStatus();
   setupEventListeners();
+
+  // Initialize out-of-service filter
+  initializeOutOfServiceFilter();
+
   // Handle deep links like /item/:id
   const parts = window.location.pathname.split('/').filter(Boolean);
   if (parts[0] === 'item' && parts[1]) {
@@ -54,6 +58,30 @@ function setupEventListeners() {
 
   // Registration form submission
   registerForm.addEventListener('submit', handleRegistration);
+
+  // Out of service form submission
+  const outOfServiceForm = document.getElementById('outOfServiceForm');
+  if (outOfServiceForm) {
+    outOfServiceForm.addEventListener('submit', handleOutOfServiceSubmit);
+  }
+
+  // Return to service form submission
+  const returnToServiceForm = document.getElementById('returnToServiceForm');
+  if (returnToServiceForm) {
+    returnToServiceForm.addEventListener('submit', handleReturnToServiceSubmit);
+  }
+
+  // Out of service filter toggle
+  const showOutOfServiceCheckbox = document.getElementById('showOutOfService');
+  if (showOutOfServiceCheckbox) {
+    showOutOfServiceCheckbox.addEventListener('change', handleOutOfServiceFilterChange);
+  }
+
+  // Verification checkbox toggle
+  const verificationCheckbox = document.getElementById('verificationCheckbox');
+  if (verificationCheckbox) {
+    verificationCheckbox.addEventListener('change', handleVerificationCheckboxChange);
+  }
 
   // Show registration form
   showRegisterLink.addEventListener('click', showRegistration);
@@ -493,6 +521,9 @@ async function loadDashboardData() {
 
     // Load inventory items
     await loadInventoryItems();
+
+    // Initialize out-of-service filter after inventory is loaded
+    initializeOutOfServiceFilter();
   } catch (error) {
     console.error('Error loading dashboard data:', error);
   }
@@ -857,6 +888,11 @@ function createInventoryRow(item) {
     row.classList.add('in-house');
   }
 
+  // Add out-of-service styling
+  if (item.isOutOfService === 1 || item.isOutOfService === true) {
+    row.classList.add('out-of-service');
+  }
+
   // Add list ID attribute for CSS targeting
   if (item.listId) {
     row.setAttribute('data-list-id', item.listId);
@@ -893,7 +929,15 @@ function createInventoryRow(item) {
 
   row.innerHTML = `
         <td class="column-itemType">${item.itemType || 'N/A'}</td>
-        <td class="column-nickname">${item.nickname || 'N/A'}</td>
+        <td class="column-nickname">
+          ${item.nickname || 'N/A'}
+          ${item.isOutOfService === 1 || item.isOutOfService === true ? '<span class="oos-badge">OOS</span>' : ''}
+          ${
+            item.returnToServiceVerified === 1 || item.returnToServiceVerified === true
+              ? `<span class="verification-badge" title="Verified by ${item.returnToServiceVerifiedBy || 'Unknown'} on ${item.returnToServiceVerifiedAt ? new Date(item.returnToServiceVerifiedAt).toLocaleDateString() : 'Unknown date'}">✓</span>`
+              : ''
+          }
+        </td>
         <td class="column-labId">${item.labId || 'N/A'}</td>
         <td class="column-make">${item.make || 'N/A'}</td>
         <td class="column-model">${item.model || 'N/A'}</td>
@@ -924,7 +968,11 @@ function createInventoryRow(item) {
                     </button>
                     <div class="action-menu-list">
                         <button onclick="editItem('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="markOutOfService('${item.id}')"><i class="fas fa-times"></i> Mark Out of Service</button>
+                        ${
+                          item.isOutOfService
+                            ? `<button onclick="returnToService('${item.id}')"><i class="fas fa-check"></i> Return to Service</button>`
+                            : `<button onclick="markOutOfService('${item.id}')"><i class="fas fa-times"></i> Mark Out of Service</button>`
+                        }
                         <button class="delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i> Delete</button>
                     </div>
                 </div>
@@ -1164,9 +1212,254 @@ function editItem(itemId) {
 }
 
 function markOutOfService(itemId) {
-  if (confirm('Are you sure you want to mark this item as out of service?')) {
-    showToast(`Marking item ${itemId} as out of service - Feature coming soon!`, 'info');
-    // TODO: Implement out of service functionality
+  // Set the item ID in the modal
+  document.getElementById('outOfServiceItemId').value = itemId;
+
+  // Set default date to today
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('outOfServiceDate').value = today;
+
+  // Clear any previous reason
+  document.getElementById('outOfServiceReason').value = '';
+
+  // Show the modal
+  showOutOfServiceModal();
+}
+
+function showOutOfServiceModal() {
+  const modal = document.getElementById('outOfServiceModal');
+  modal.style.display = 'flex';
+
+  // Focus on the date input
+  setTimeout(() => {
+    document.getElementById('outOfServiceDate').focus();
+  }, 100);
+}
+
+function hideOutOfServiceModal() {
+  const modal = document.getElementById('outOfServiceModal');
+  modal.style.display = 'none';
+}
+
+function showReturnToServiceModal() {
+  const modal = document.getElementById('returnToServiceModal');
+  modal.style.display = 'flex';
+
+  // Focus on the checkbox
+  setTimeout(() => {
+    document.getElementById('verificationCheckbox').focus();
+  }, 100);
+}
+
+function hideReturnToServiceModal() {
+  const modal = document.getElementById('returnToServiceModal');
+  modal.style.display = 'none';
+}
+
+function returnToService(itemId) {
+  // Set the item ID in the modal
+  document.getElementById('returnToServiceItemId').value = itemId;
+
+  // Clear any previous values
+  document.getElementById('verificationCheckbox').checked = false;
+  document.getElementById('returnToServiceNotes').value = '';
+
+  // Disable submit button initially
+  document.getElementById('returnToServiceSubmitBtn').disabled = true;
+
+  // Show the modal
+  showReturnToServiceModal();
+}
+
+async function handleOutOfServiceSubmit(e) {
+  e.preventDefault();
+
+  const itemId = document.getElementById('outOfServiceItemId').value;
+  const date = document.getElementById('outOfServiceDate').value;
+  const reason = document.getElementById('outOfServiceReason').value.trim();
+
+  if (!date) {
+    showToast('Please select a date', 'error');
+    return;
+  }
+
+  try {
+    // Show loading state
+    const submitBtn = e.target.querySelector('.btn-primary');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'block';
+    submitBtn.disabled = true;
+
+    const response = await fetch(`/api/inventory/${itemId}/out-of-service`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+      body: JSON.stringify({ outOfServiceDate: date, reason }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    // Hide modal
+    hideOutOfServiceModal();
+
+    // Show success message
+    showToast(result.message, 'success');
+
+    // Update the item in the current view
+    if (result.item) {
+      updateItemInView(result.item);
+    }
+
+    // Refresh the current page to show updated data
+    await loadInventory();
+  } catch (error) {
+    console.error('Error marking item out of service:', error);
+    showToast('Failed to mark item out of service. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    const submitBtn = e.target.querySelector('.btn-primary');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+function updateItemInView(updatedItem) {
+  // Find and update the item in the current table view
+  const row = document.querySelector(`tr[data-item-id="${updatedItem.id}"]`);
+  if (row) {
+    // Update the row data and re-render if needed
+    // This is a simplified update - in practice, you might want to re-render the entire row
+    row.dataset.itemData = JSON.stringify(updatedItem);
+  }
+}
+
+function handleOutOfServiceFilterChange() {
+  const showOutOfService = document.getElementById('showOutOfService').checked;
+
+  // Store the preference in localStorage
+  localStorage.setItem('showOutOfService', showOutOfService);
+
+  // Apply the filter to the current table
+  applyOutOfServiceFilter(showOutOfService);
+}
+
+function applyOutOfServiceFilter(showOutOfService) {
+  const table = document.querySelector('.inventory-table tbody');
+  if (!table) return;
+
+  const rows = table.querySelectorAll('tr');
+
+  rows.forEach((row) => {
+    const isOutOfService = row.classList.contains('out-of-service');
+
+    if (isOutOfService && !showOutOfService) {
+      // Hide out-of-service items when filter is off
+      row.style.display = 'none';
+    } else {
+      // Show all items when filter is on, or show non-OOS items when filter is off
+      row.style.display = '';
+    }
+  });
+}
+
+function initializeOutOfServiceFilter() {
+  const showOutOfService = localStorage.getItem('showOutOfService') === 'true';
+  const checkbox = document.getElementById('showOutOfService');
+
+  if (checkbox) {
+    checkbox.checked = showOutOfService;
+    applyOutOfServiceFilter(showOutOfService);
+  }
+}
+
+function handleVerificationCheckboxChange() {
+  const checkbox = document.getElementById('verificationCheckbox');
+  const submitBtn = document.getElementById('returnToServiceSubmitBtn');
+
+  // Enable/disable submit button based on checkbox state
+  submitBtn.disabled = !checkbox.checked;
+}
+
+async function handleReturnToServiceSubmit(e) {
+  e.preventDefault();
+
+  const itemId = document.getElementById('returnToServiceItemId').value;
+  const verified = document.getElementById('verificationCheckbox').checked;
+  const notes = document.getElementById('returnToServiceNotes').value.trim();
+
+  if (!verified) {
+    showToast('Verification is required before returning item to service', 'error');
+    return;
+  }
+
+  try {
+    // Show loading state
+    const submitBtn = e.target.querySelector('.btn-primary');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'block';
+    submitBtn.disabled = true;
+
+    const response = await fetch(`/api/inventory/${itemId}/return-to-service`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+      body: JSON.stringify({ verified: true, notes }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      if (errorData.error === 'VERIFICATION_REQUIRED') {
+        showToast('Verification is required before returning item to service', 'error');
+        return;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    // Hide modal
+    hideReturnToServiceModal();
+
+    // Show success message
+    showToast(result.message, 'success');
+
+    // Update the item in the current view
+    if (result.item) {
+      updateItemInView(result.item);
+    }
+
+    // Refresh the current page to show updated data
+    await loadInventory();
+  } catch (error) {
+    console.error('Error returning item to service:', error);
+    showToast('Failed to return item to service. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    const submitBtn = e.target.querySelector('.btn-primary');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
   }
 }
 

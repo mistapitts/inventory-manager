@@ -1,0 +1,79 @@
+# Inventory Manager Development Backlog
+# Extracted from DEVELOPMENT_TODO.md - Last Updated: 2025-01-27
+
+tasks:
+  - id: out-of-service-system
+    title: Implement Out-of-Service System
+    description: |
+      Create "Out of Service" list automatically on first out-of-service item.
+      Pop-up window for date and reason input.
+      Store info in item notes.
+      Set calibration/maintenance dates to "N/A".
+    priority: high
+    status: done
+    category: feature
+
+  - id: excel-export
+    title: Excel Export Functionality
+    description: |
+      Export entire inventory to XLSX format.
+      Option to choose which lists to include (all selected by default).
+      Bold column headers/row 1.
+      Columns auto-fit to text content.
+      Aesthetically pleasing template (if possible).
+    priority: medium
+    status: todo
+    category: feature
+
+  - id: item-duplication
+    title: Item Duplication System
+    description: |
+      Duplicate button in action column ellipsis menu.
+      Pre-fill "Add Item" form with existing item data.
+      Duplicate calibration & maintenance instructions/templates.
+      Do NOT duplicate calibration/maintenance records.
+      Include "Duplicate?" checkbox on Add Item form.
+      Chain duplication capability (duplicate from duplicate form).
+    priority: medium
+    status: todo
+    category: feature
+
+  - id: real-time-search
+    title: Implement Real-Time Search Functionality
+    description: |
+      Filter inventory items based on search input.
+      Real-time updates as user types (no need to hit enter).
+      Search across relevant fields.
+    priority: medium
+    status: todo
+    category: feature
+
+  - id: comprehensive-testing
+    title: Comprehensive Testing
+    description: |
+      Stress test all functionalities.
+      Ensure application is fully usable for laboratory operations.
+      Fix any bugs or issues discovered.
+    priority: high
+    status: todo
+    category: misc
+
+  - id: business-model
+    title: Business Model Development
+    description: |
+      Develop business model for selling the application.
+      Pricing strategy.
+      Marketing materials.
+      Sales process.
+    priority: low
+    status: todo
+    category: misc
+# Summary
+# Total Tasks: 6
+# Priority Breakdown:
+#   - High: 2
+#   - Medium: 3
+#   - Low: 1
+# Categories:
+#   - Feature: 4
+#   - Misc: 2
