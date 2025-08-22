@@ -22,16 +22,10 @@ router.get('/download', authenticateToken, (req, res) => {
       return res.status(400).json({ error: 'Missing file query parameter' });
     }
 
-    // Normalize and resolve the file path within the uploads directory
-    // Files are stored in uploads/docs/ subdirectory, so we need to handle that
-    const uploadsRoot = config.paths.uploadDir;
-    let normalizedPath = path.normalize(fileQuery);
-
-    // If the path doesn't start with 'docs/', assume it's a filename in the docs directory
-    if (!normalizedPath.startsWith('docs/') && !normalizedPath.startsWith('docs\\')) {
-      normalizedPath = path.join('docs', normalizedPath);
-    }
-
+        // Normalize and resolve the file path within the uploads directory
+    // Files are stored directly in the uploadDocsDir, so we can resolve directly
+    const uploadsRoot = config.paths.uploadDocsDir;
+    const normalizedPath = path.normalize(fileQuery);
     const absPath = path.resolve(uploadsRoot, normalizedPath);
 
     // Prevent path traversal attacks - ensure the resolved path stays within uploads
@@ -83,15 +77,9 @@ router.get('/download/*', authenticateToken, (req, res) => {
       return res.status(400).json({ error: 'Missing filename' });
     }
 
-    // Reuse the same logic as the query param version
-    const uploadsRoot = config.paths.uploadDir;
-    let normalizedPath = path.normalize(filePath);
-
-    // If the path doesn't start with 'docs/', assume it's a filename in the docs directory
-    if (!normalizedPath.startsWith('docs/') && !normalizedPath.startsWith('docs\\')) {
-      normalizedPath = path.join('docs', normalizedPath);
-    }
-
+        // Reuse the same logic as the query param version
+    const uploadsRoot = config.paths.uploadDocsDir;
+    const normalizedPath = path.normalize(filePath);
     const absPath = path.resolve(uploadsRoot, normalizedPath);
 
     // Prevent path traversal

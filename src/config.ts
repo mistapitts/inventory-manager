@@ -26,6 +26,7 @@ const PATHS = {
     process.env.DB_PATH ||
     path.join(DATA_DIR, process.env.DB_FILE || "data.sqlite"),
   uploadDir: process.env.UPLOAD_DIR || path.join(DATA_DIR, "uploads"),
+  uploadDocsDir: process.env.UPLOAD_DOCS_DIR || path.join(DATA_DIR, "uploads", "docs"),
   qrcodeDir: process.env.QRCODE_DIR || path.join(DATA_DIR, "qrcodes"),
   publicDir:
     process.env.PUBLIC_DIR || path.join(process.cwd(), "public"), // static assets
@@ -41,6 +42,7 @@ function ensureDirSync(p: string) {
 function ensureBootPaths() {
   ensureDirSync(PATHS.dataDir);
   ensureDirSync(PATHS.uploadDir);
+  ensureDirSync(PATHS.uploadDocsDir);
   ensureDirSync(PATHS.qrcodeDir);
   
   // Note: Don't create the DB file - let SQLite create it when it connects

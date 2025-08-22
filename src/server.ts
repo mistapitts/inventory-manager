@@ -15,7 +15,8 @@ import inventoryRoutes from './routes/inventory';
 import storageRoutes from './routes/storage';
 
 const app = express();
-const PORT = config.env.port;
+// Ensure we respect process.env.PORT for Render deployment
+const PORT = Number(process.env.PORT) || config.env.port;
 
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
@@ -66,6 +67,7 @@ app.get('/api/health', (req: Request, res: Response) => {
       dataDir: config.paths.dataDir,
       dbFile: config.paths.dbFile,
       uploadDir: config.paths.uploadDir,
+      uploadDocsDir: config.paths.uploadDocsDir,
       qrcodeDir: config.paths.qrcodeDir,
     });
   });
@@ -96,6 +98,7 @@ if (require.main === module) {
     console.log(`🚀 Inventory Manager API running on port ${PORT} (env=${config.env.nodeEnv})`);
     console.log(`📁 Public dir: ${PUBLIC_DIR}`);
     console.log(`📁 Upload dir: ${UPLOAD_DIR}`);
+    console.log(`📁 Upload docs dir: ${config.paths.uploadDocsDir}`);
     console.log(`📁 Data dir: ${DATA_DIR}`);
     console.log(`🗄️ DB file:   ${config.paths.dbFile}`);
   });

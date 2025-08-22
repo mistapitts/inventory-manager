@@ -14,7 +14,8 @@ const company_1 = __importDefault(require("./routes/company"));
 const inventory_1 = __importDefault(require("./routes/inventory"));
 const storage_1 = __importDefault(require("./routes/storage"));
 const app = (0, express_1.default)();
-const PORT = config_1.default.env.port;
+// Ensure we respect process.env.PORT for Render deployment
+const PORT = Number(process.env.PORT) || config_1.default.env.port;
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
 // CORS: permissive for now (can be restricted later with ALLOWED_ORIGINS)
@@ -58,6 +59,7 @@ app.get('/api/health', (req, res) => {
             dataDir: config_1.default.paths.dataDir,
             dbFile: config_1.default.paths.dbFile,
             uploadDir: config_1.default.paths.uploadDir,
+            uploadDocsDir: config_1.default.paths.uploadDocsDir,
             qrcodeDir: config_1.default.paths.qrcodeDir,
         });
     });
@@ -83,6 +85,7 @@ if (require.main === module) {
         console.log(`🚀 Inventory Manager API running on port ${PORT} (env=${config_1.default.env.nodeEnv})`);
         console.log(`📁 Public dir: ${PUBLIC_DIR}`);
         console.log(`📁 Upload dir: ${UPLOAD_DIR}`);
+        console.log(`📁 Upload docs dir: ${config_1.default.paths.uploadDocsDir}`);
         console.log(`📁 Data dir: ${DATA_DIR}`);
         console.log(`🗄️ DB file:   ${config_1.default.paths.dbFile}`);
     });

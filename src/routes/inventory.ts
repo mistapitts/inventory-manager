@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     _file: Express.Multer.File,
     cb: (error: any, destination: string) => void,
   ) {
-    cb(null, path.join(uploadRoot, 'docs'));
+    cb(null, config.paths.uploadDocsDir);
   },
   filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');

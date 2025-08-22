@@ -16,7 +16,7 @@ const router = (0, express_1.Router)();
 const uploadRoot = config_1.default.paths.uploadDir;
 const storage = multer_1.default.diskStorage({
     destination(_req, _file, cb) {
-        cb(null, path_1.default.join(uploadRoot, 'docs'));
+        cb(null, config_1.default.paths.uploadDocsDir);
     },
     filename(_req, file, cb) {
         const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
