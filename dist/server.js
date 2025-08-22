@@ -40,6 +40,7 @@ const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const helmet_1 = __importDefault(require("helmet"));
 const config_1 = __importStar(require("./config"));
 const database_1 = require("./models/database");
 // Import routes
@@ -51,7 +52,11 @@ const app = (0, express_1.default)();
 // Ensure we respect process.env.PORT for Render deployment
 const PORT = Number(process.env.PORT) || config_1.default.env.port;
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
+// Security headers
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allows file downloads
+}));
 // CORS: secure configuration with allow-list
 app.use((0, cors_1.default)({
     origin: (origin, cb) => {
@@ -124,8 +129,15 @@ app.get(/^\/(?!api|uploads).*/, (_req, res) => {
 });
 // Error handling middleware
 app.use((err, req, res, next) => {
+    // Map specific errors to clean HTTP status codes
+    if (err && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "FILE_TOO_LARGE" });
+    }
+    if (err && /Unsupported file/.test(err.message)) {
+        return res.status(415).json({ error: "UNSUPPORTED_MEDIA_TYPE" });
+    }
     console.error('Error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'SERVER_ERROR' });
 });
 // 404 handler
 app.use('*', (_req, res) => {

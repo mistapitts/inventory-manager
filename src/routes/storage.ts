@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Router } from 'express';
+import mime from 'mime';
 
 import config from '../config';
 import { authenticateToken } from '../middleware/auth';
@@ -50,7 +51,8 @@ router.get('/download', authenticateToken, (req, res) => {
     const downloadFilename = path.basename(absPath);
 
     // Set appropriate headers for file download (UX + security)
-    res.setHeader("Content-Type", "application/octet-stream");
+    const contentType = mime.getType(absPath) || "application/octet-stream";
+    res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
     res.setHeader("Cache-Control", "no-store");
 
@@ -105,7 +107,8 @@ router.get('/download/*', authenticateToken, (req, res) => {
     }
 
     const downloadFilename = path.basename(absPath);
-    res.setHeader("Content-Type", "application/octet-stream");
+    const contentType = mime.getType(absPath) || "application/octet-stream";
+    res.setHeader("Content-Type", contentType);
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
     res.setHeader("Cache-Control", "no-store");
 

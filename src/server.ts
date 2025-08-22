@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 import config, { corsAllowedOrigins } from './config';
 import { database } from './models/database';
@@ -20,7 +21,12 @@ const app = express();
 const PORT = Number(process.env.PORT) || config.env.port;
 
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
+
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // allows file downloads
+}));
 
 // CORS: secure configuration with allow-list
 app.use(cors({
@@ -102,8 +108,16 @@ app.get(/^\/(?!api|uploads).*/, (_req: Request, res: Response) => {
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  // Map specific errors to clean HTTP status codes
+  if (err && err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ error: "FILE_TOO_LARGE" });
+  }
+  if (err && /Unsupported file/.test(err.message)) {
+    return res.status(415).json({ error: "UNSUPPORTED_MEDIA_TYPE" });
+  }
+  
   console.error('Error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  return res.status(500).json({ error: 'SERVER_ERROR' });
 });
 
 // 404 handler
