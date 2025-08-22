@@ -33,8 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
 const bcrypt = __importStar(require("bcryptjs"));
+const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
 const database_1 = require("../models/database");
 const types_1 = require("../types");

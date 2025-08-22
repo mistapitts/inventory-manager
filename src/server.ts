@@ -14,11 +14,8 @@ import companyRoutes from './routes/company';
 import inventoryRoutes from './routes/inventory';
 import storageRoutes from './routes/storage';
 
-// Load environment variables
-dotenv.config();
-
 const app = express();
-const PORT = Number(process.env.PORT ?? config.port);
+const PORT = config.env.port;
 
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
@@ -26,15 +23,11 @@ app.set('trust proxy', true);
 // CORS: permissive for now (can be restricted later with ALLOWED_ORIGINS)
 app.use(cors());
 
-// Ensure required directories exist
-const PUBLIC_DIR = path.join(process.cwd(), config.paths.publicDir);
-const UPLOAD_DIR = path.join(process.cwd(), config.paths.uploadDir);
-const QRCODE_DIR = path.join(process.cwd(), config.paths.qrcodeDir);
-const DATA_DIR = path.join(process.cwd(), config.paths.dataDir);
-
-for (const dir of [UPLOAD_DIR, QRCODE_DIR, DATA_DIR]) {
-  fs.mkdirSync(dir, { recursive: true });
-}
+// Directories are now handled by config.ensureBootPaths()
+const PUBLIC_DIR = config.paths.publicDir;
+const UPLOAD_DIR = config.paths.uploadDir;
+const QRCODE_DIR = config.paths.qrcodeDir;
+const DATA_DIR = config.paths.dataDir;
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -61,7 +54,7 @@ app.get('/api/health', (req: Request, res: Response) => {
         db: false,
         timestamp: new Date().toISOString(),
         message: 'Database connection failed',
-        environment: config.nodeEnv,
+        environment: config.env.nodeEnv,
       });
     }
     return res.json({
@@ -69,7 +62,11 @@ app.get('/api/health', (req: Request, res: Response) => {
       db: !!row?.ok,
       timestamp: new Date().toISOString(),
       message: 'Inventory Manager API is running',
-      environment: config.nodeEnv,
+      environment: config.env.nodeEnv,
+      dataDir: config.paths.dataDir,
+      dbFile: config.paths.dbFile,
+      uploadDir: config.paths.uploadDir,
+      qrcodeDir: config.paths.qrcodeDir,
     });
   });
 });
@@ -96,9 +93,10 @@ export default app;
 // Only start the server if this file is run directly (development)
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Inventory Manager API running on port ${PORT} (env=${config.nodeEnv})`);
+    console.log(`🚀 Inventory Manager API running on port ${PORT} (env=${config.env.nodeEnv})`);
     console.log(`📁 Public dir: ${PUBLIC_DIR}`);
     console.log(`📁 Upload dir: ${UPLOAD_DIR}`);
     console.log(`📁 Data dir: ${DATA_DIR}`);
+    console.log(`🗄️ DB file:   ${config.paths.dbFile}`);
   });
 }

@@ -1,10 +1,9 @@
-import express, { Router, type Request, type Response } from 'express';
 import * as bcrypt from 'bcryptjs';
+import { Router, type Request, type Response } from 'express';
 
 import { generateToken, authenticateToken, requireRole } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
-
 
 const router = Router();
 

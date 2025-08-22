@@ -38,9 +38,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateToken = exports.requireLocationAccess = exports.requireCompanyAccess = exports.requireRole = exports.authenticateToken = void 0;
 const jwt = __importStar(require("jsonwebtoken"));
+const config_1 = __importDefault(require("../config"));
 const database_1 = require("../models/database");
 const types_1 = require("../types");
-const config_1 = __importDefault(require("../config"));
 const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && typeof authHeader === 'string' ? authHeader.split(' ')[1] : undefined;
@@ -49,7 +49,7 @@ const authenticateToken = async (req, res, next) => {
         return;
     }
     try {
-        const secret = config_1.default.jwtSecret;
+        const secret = config_1.default.env.jwtSecret;
         const decoded = jwt.verify(token, secret);
         // Debug: successful decode
         // console.log('Auth OK for userId:', decoded?.userId);
@@ -123,6 +123,6 @@ const requireLocationAccess = (locationId) => {
 };
 exports.requireLocationAccess = requireLocationAccess;
 const generateToken = (userId) => {
-    return jwt.sign({ userId }, config_1.default.jwtSecret, { expiresIn: '7d' });
+    return jwt.sign({ userId }, config_1.default.env.jwtSecret, { expiresIn: '7d' });
 };
 exports.generateToken = generateToken;

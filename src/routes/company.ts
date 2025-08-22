@@ -1,9 +1,8 @@
-import express, { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
-
 
 const router = Router();
 

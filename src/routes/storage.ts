@@ -3,7 +3,7 @@ import path from 'path';
 
 import { Router } from 'express';
 
-import { ABS_PATHS } from '../config';
+import config from '../config';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -24,7 +24,7 @@ router.get('/download', authenticateToken, (req, res) => {
 
     // Normalize and resolve the file path within the uploads directory
     // Files are stored in uploads/docs/ subdirectory, so we need to handle that
-    const uploadsRoot = ABS_PATHS.UPLOADS;
+    const uploadsRoot = config.paths.uploadDir;
     let normalizedPath = path.normalize(fileQuery);
 
     // If the path doesn't start with 'docs/', assume it's a filename in the docs directory
@@ -84,7 +84,7 @@ router.get('/download/*', authenticateToken, (req, res) => {
     }
 
     // Reuse the same logic as the query param version
-    const uploadsRoot = ABS_PATHS.UPLOADS;
+    const uploadsRoot = config.paths.uploadDir;
     let normalizedPath = path.normalize(filePath);
 
     // If the path doesn't start with 'docs/', assume it's a filename in the docs directory

@@ -1,5 +1,5 @@
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
@@ -7,8 +7,8 @@ import sqlite3 from 'sqlite3';
 import config from '../config';
 import { UserRole } from '../types';
 
-const dbPath = path.join(process.cwd(), config.paths.dataDir, config.dbFile);
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+const dbPath = config.paths.dbFile;
+// Directory creation is now handled by config.ensureBootPaths()
 
 export class Database {
   public db: sqlite3.Database;

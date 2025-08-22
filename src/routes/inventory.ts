@@ -1,22 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
-import express, { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import QRCode from 'qrcode';
 
-import { config, ensureDirSync, ABS_PATHS } from '../config';
+import config from '../config';
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
 
 const router = Router();
 
-// Ensure upload directories exist
-const uploadRoot = ABS_PATHS.UPLOADS;
-ensureDirSync(uploadRoot);
-ensureDirSync(path.join(uploadRoot, 'docs'));
-ensureDirSync(path.join(uploadRoot, 'qr-codes'));
-ensureDirSync(path.join(uploadRoot, 'images'));
+// Upload directories are now handled by config.ensureBootPaths()
+const uploadRoot = config.paths.uploadDir;
 
 const storage = multer.diskStorage({
   destination(
@@ -233,46 +229,42 @@ router.delete('/lists/:id', authenticateToken, async (req: Request, res: Respons
 });
 
 // Lists: migrate items to field list (for removing default list)
-router.post(
-  '/lists/migrate-to-field',
-  authenticateToken,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.user!.id;
-      const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
-      if (!user || !user.companyId)
-        return res.status(400).json({ error: 'User not associated with a company' });
+router.post('/lists/migrate-to-field', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
+    if (!user || !user.companyId)
+      return res.status(400).json({ error: 'User not associated with a company' });
 
-      // Check if field list exists, create if not
-      let fieldList = await database.get('SELECT id FROM lists WHERE companyId = ? AND name = ?', [
-        user.companyId,
-        'Field',
-      ]);
-      if (!fieldList) {
-        const fieldId = generateId();
-        await database.run(
-          "INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-          [fieldId, user.companyId, 'Field', '#10b981', '#ffffff'],
-        );
-        fieldList = { id: fieldId };
-      }
-
-      // Move all items without a list to the field list
+    // Check if field list exists, create if not
+    let fieldList = await database.get('SELECT id FROM lists WHERE companyId = ? AND name = ?', [
+      user.companyId,
+      'Field',
+    ]);
+    if (!fieldList) {
+      const fieldId = generateId();
       await database.run(
-        'UPDATE inventory_items SET listId = ?, updatedAt = datetime(\'now\') WHERE companyId = ? AND (listId IS NULL OR listId = "")',
-        [fieldList.id, user.companyId],
+        "INSERT INTO lists (id, companyId, name, color, textColor, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+        [fieldId, user.companyId, 'Field', '#10b981', '#ffffff'],
       );
-
-      res.json({
-        message: 'Items migrated to Field list successfully',
-        fieldListId: fieldList.id,
-      });
-    } catch (error) {
-      console.error('Error migrating items to field list:', error);
-      res.status(500).json({ error: 'Failed to migrate items' });
+      fieldList = { id: fieldId };
     }
-  },
-);
+
+    // Move all items without a list to the field list
+    await database.run(
+      'UPDATE inventory_items SET listId = ?, updatedAt = datetime(\'now\') WHERE companyId = ? AND (listId IS NULL OR listId = "")',
+      [fieldList.id, user.companyId],
+    );
+
+    res.json({
+      message: 'Items migrated to Field list successfully',
+      fieldListId: fieldList.id,
+    });
+  } catch (error) {
+    console.error('Error migrating items to field list:', error);
+    res.status(500).json({ error: 'Failed to migrate items' });
+  }
+});
 
 // Get all inventory items for the user's company
 router.get('/', authenticateToken, async (req: Request, res: Response) => {

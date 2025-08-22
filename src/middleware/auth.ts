@@ -1,10 +1,9 @@
-import express, { type Request, type Response, type NextFunction } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 
+import config from '../config';
 import { database } from '../models/database';
 import { UserRole } from '../types';
-import config from '../config';
-
 
 export const authenticateToken = async (
   req: Request,
@@ -20,7 +19,7 @@ export const authenticateToken = async (
   }
 
   try {
-    const secret = config.jwtSecret;
+    const secret = config.env.jwtSecret;
     const decoded = jwt.verify(token, secret) as any;
     // Debug: successful decode
     // console.log('Auth OK for userId:', decoded?.userId);
@@ -111,5 +110,5 @@ export const requireLocationAccess = (
 };
 
 export const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '7d' });
+  return jwt.sign({ userId }, config.env.jwtSecret, { expiresIn: '7d' });
 };

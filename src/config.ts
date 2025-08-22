@@ -1,50 +1,67 @@
 // src/config.ts
-import 'dotenv/config';
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
+import dotenv from "dotenv";
 
-const num = (v: string | undefined, d: number) =>
-  Number.isFinite(Number(v)) ? Number(v) : d;
+// Load .env if present (harmless in production)
+dotenv.config();
 
-const str = (v: string | undefined, d: string) => (v && v.length ? v : d);
+const isProd = process.env.NODE_ENV === "production";
 
-// Resolve from the project root regardless of running from src/ or dist/
-const ROOT = process.cwd();
+/**
+ * Root for persistent data.
+ * Default to /var/data (Render disk). Locally, default to <project>/data.
+ */
+const DATA_DIR =
+  process.env.DATA_DIR ||
+  (isProd ? "/var/data" : path.join(process.cwd(), "data"));
 
-export const paths = {
-  root: ROOT,
-  publicDir: str(process.env.PUBLIC_DIR, 'public'),
-  uploadDir: str(process.env.UPLOAD_DIR, 'uploads'),
-  qrcodeDir: str(process.env.QRCODE_DIR, 'qrcodes'),
-  dataDir: str(process.env.DATA_DIR, 'data'),
+/**
+ * Specific paths derived from DATA_DIR.
+ * Allow explicit overrides via env if provided.
+ */
+const PATHS = {
+  dataDir: DATA_DIR,
+  dbFile:
+    process.env.DB_PATH ||
+    path.join(DATA_DIR, process.env.DB_FILE || "data.sqlite"),
+  uploadDir: process.env.UPLOAD_DIR || path.join(DATA_DIR, "uploads"),
+  qrcodeDir: process.env.QRCODE_DIR || path.join(DATA_DIR, "qrcodes"),
+  publicDir:
+    process.env.PUBLIC_DIR || path.join(process.cwd(), "public"), // static assets
 };
 
-const runtimeConfig = {
-  nodeEnv: str(process.env.NODE_ENV, 'production'),
-  port: num(process.env.PORT, 3000),
-  baseUrl: str(process.env.BASE_URL, ''),
-  jwtSecret: str(process.env.JWT_SECRET, 'change-me-in-prod'),
-  dbFile: str(process.env.DB_FILE, 'data.sqlite'),
-  paths,
-};
-
-// Useful absolute paths (computed once)
-export const ABS_PATHS = {
-  PUBLIC: path.join(ROOT, paths.publicDir),
-  UPLOADS: path.join(ROOT, paths.uploadDir),
-  QRCODES: path.join(ROOT, paths.qrcodeDir),
-  DATA_DIR: path.join(ROOT, paths.dataDir),
-  DB_FILE: path.join(ROOT, paths.dataDir, runtimeConfig.dbFile),
-};
-
-// Small helper matching existing imports
-export function ensureDirSync(dirPath: string): string {
-  fs.mkdirSync(dirPath, { recursive: true });
-  return dirPath;
+/**
+ * Ensure directories exist. Safe to call at startup.
+ */
+function ensureDirSync(p: string) {
+  fs.mkdirSync(p, { recursive: true });
 }
 
-// Maintain the default export
-export default runtimeConfig;
+function ensureBootPaths() {
+  ensureDirSync(PATHS.dataDir);
+  ensureDirSync(PATHS.uploadDir);
+  ensureDirSync(PATHS.qrcodeDir);
+  
+  // Note: Don't create the DB file - let SQLite create it when it connects
+  // This prevents permission issues and ensures proper SQLite initialization
+}
 
-// Also export a named `config` to satisfy `import { config } from '../config'`
-export { runtimeConfig as config };
+// Call once on import to guarantee structure
+ensureBootPaths();
+
+export const config = {
+  env: {
+    nodeEnv: process.env.NODE_ENV || "development",
+    port: Number(process.env.PORT || 3000), // Keep default port 3000 for local dev
+    baseUrl:
+      process.env.BASE_URL ||
+      (isProd ? "https://inventory-manager-d2we.onrender.com" : "http://localhost:3000"), // Use actual domain in prod
+    jwtSecret: process.env.JWT_SECRET || "change-me-in-prod",
+  },
+  paths: PATHS,
+  ensureDirSync,
+  ensureBootPaths,
+};
+
+export default config;

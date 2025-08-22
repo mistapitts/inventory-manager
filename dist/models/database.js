@@ -4,14 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.database = exports.Database = void 0;
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const sqlite3_1 = __importDefault(require("sqlite3"));
 const config_1 = __importDefault(require("../config"));
 const types_1 = require("../types");
-const dbPath = path_1.default.join(process.cwd(), config_1.default.paths.dataDir, config_1.default.dbFile);
-fs_1.default.mkdirSync(path_1.default.dirname(dbPath), { recursive: true });
+const dbPath = config_1.default.paths.dbFile;
+// Directory creation is now handled by config.ensureBootPaths()
 class Database {
     constructor() {
         this.db = new sqlite3_1.default.Database(dbPath);

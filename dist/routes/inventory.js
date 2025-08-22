@@ -8,16 +8,12 @@ const path_1 = __importDefault(require("path"));
 const express_1 = require("express");
 const multer_1 = __importDefault(require("multer"));
 const qrcode_1 = __importDefault(require("qrcode"));
-const config_1 = require("../config");
+const config_1 = __importDefault(require("../config"));
 const auth_1 = require("../middleware/auth");
 const database_1 = require("../models/database");
 const router = (0, express_1.Router)();
-// Ensure upload directories exist
-const uploadRoot = config_1.ABS_PATHS.UPLOADS;
-(0, config_1.ensureDirSync)(uploadRoot);
-(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'docs'));
-(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'qr-codes'));
-(0, config_1.ensureDirSync)(path_1.default.join(uploadRoot, 'images'));
+// Upload directories are now handled by config.ensureBootPaths()
+const uploadRoot = config_1.default.paths.uploadDir;
 const storage = multer_1.default.diskStorage({
     destination(_req, _file, cb) {
         cb(null, path_1.default.join(uploadRoot, 'docs'));
