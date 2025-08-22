@@ -2,6 +2,16 @@
 let currentUser = null;
 let authToken = null;
 
+// ---- OOS toggle bootstrapping ----
+const SHOW_OOS_KEY = 'showOutOfService';
+
+function getShowOOS() {
+  return localStorage.getItem(SHOW_OOS_KEY) !== 'false'; // default to true
+}
+function setShowOOS(v) {
+  localStorage.setItem(SHOW_OOS_KEY, v ? 'true' : 'false');
+}
+
 // Company state management
 window.appState = window.appState || {};
 appState.company = null;
@@ -894,10 +904,77 @@ async function loadInventoryItems() {
   }
 }
 
+function renderInventoryHeader() {
+  const thead = document.getElementById('inventory-thead');
+  if (!thead) return;
+  
+  thead.innerHTML = `
+    <tr>
+      <th class="sortable" data-sort="itemType">Item Type <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="nickname">Nickname <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="labId">Lab ID <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="make">Make <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="model">Model <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="serialNumber">Serial # <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="condition">Condition <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="dateReceived">Date Received <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="datePlacedInService">In Service <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="location">Location <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="calibrationType">Cal Type <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="calibrationDate">Last Cal <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="nextCalibrationDue">Next Cal Due <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="calibrationInterval">Cal Interval <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="calibrationMethod">Cal Method/Company <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="maintenanceDate">Last Maintenance <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="maintenanceDue">Maintenance Due <i class="fas fa-sort"></i></th>
+      <th class="sortable" data-sort="notes">Notes <i class="fas fa-sort"></i></th>
+      <th>Actions</th>
+    </tr>
+  `;
+}
+
+function renderInventoryBody(items) {
+  const tbody = document.getElementById('inventory-tbody');
+  if (!tbody) return;
+
+  if (!items || items.length === 0) {
+    tbody.innerHTML = `
+      <tr class="empty-state">
+        <td colspan="19">
+          <div class="empty-box">
+            <div class="empty-title">No items yet</div>
+            <div class="empty-sub">Add your first item or toggle "Show Out of Service".</div>
+            <div class="empty-actions">
+              <button id="emptyAddItemBtn" class="btn btn-primary">+ Add Item</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+    
+    // Wire up the empty state button
+    const addBtn = document.getElementById('emptyAddItemBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        // Trigger the add item modal or form
+        const addItemBtn = document.querySelector('.btn-primary');
+        if (addItemBtn) addItemBtn.click();
+      });
+    }
+    return;
+  }
+
+  // Clear existing rows and add new ones
+  tbody.innerHTML = '';
+  items.forEach((item) => {
+    const row = createInventoryRow(item);
+    tbody.appendChild(row);
+  });
+}
+
 function displayInventoryItems(items) {
   const welcomeMessage = document.getElementById('welcomeMessage');
   const inventorySection = document.getElementById('inventorySection');
-  const tableBody = document.getElementById('inventoryTableBody');
 
   console.log('displayInventoryItems called with:', items);
   console.log('Items array length:', Array.isArray(items) ? items.length : 'not an array');
@@ -905,26 +982,15 @@ function displayInventoryItems(items) {
   // Keep a global copy so actions like Edit can find items quickly
   window.inventoryItems = Array.isArray(items) ? items : [];
 
-  if (Array.isArray(items) && items.length > 0) {
-    console.log('Showing inventory section with', items.length, 'items');
-    // Hide welcome message, show inventory
-    if (welcomeMessage) welcomeMessage.style.display = 'none';
-    if (inventorySection) inventorySection.style.display = 'block';
-
-    // Clear existing table rows
-    if (tableBody) tableBody.innerHTML = '';
-
-    // Add items to table
-    items.forEach((item) => {
-      const row = createInventoryRow(item);
-      if (tableBody) tableBody.appendChild(row);
-    });
-  } else {
-    console.log('Showing welcome message - no items');
-    // Show welcome message, hide inventory
-    if (welcomeMessage) welcomeMessage.style.display = 'block';
-    if (inventorySection) inventorySection.style.display = 'none';
+  // Always show inventory section, hide welcome message if we have items
+  if (inventorySection) inventorySection.style.display = 'block';
+  if (welcomeMessage) {
+    welcomeMessage.style.display = Array.isArray(items) && items.length > 0 ? 'none' : 'block';
   }
+
+  // Always render headers and body
+  renderInventoryHeader();
+  renderInventoryBody(items);
 }
 
 // Generate consistent colors for lists based on their ID
@@ -1508,12 +1574,16 @@ function applyOutOfServiceFilter(showOutOfService) {
 
 function initializeOutOfServiceFilter() {
   // Default to showing out-of-service items (true) - users should see all items by default
-  const showOutOfService = localStorage.getItem('showOutOfService') !== 'false';
   const checkbox = document.getElementById('showOutOfService');
 
   if (checkbox) {
-    checkbox.checked = showOutOfService;
-    // No need to call applyOutOfServiceFilter since filtering is now handled by API
+    checkbox.checked = getShowOOS();
+    
+    // Wire up the change event
+    checkbox.addEventListener('change', () => {
+      setShowOOS(checkbox.checked);
+      loadInventoryItems(); // re-fetch with new OOS setting
+    });
   }
 }
 

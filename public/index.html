@@ -321,8 +321,8 @@
               </div>
             </div>
 
-            <!-- Inventory List (shown when items exist) -->
-            <div class="inventory-section" id="inventorySection" style="display: none">
+            <!-- Inventory List (always visible) -->
+            <div class="inventory-section" id="inventorySection">
               <!-- Main content area with legend on the right -->
               <div class="inventory-content-wrapper">
                 <!-- Left side content -->
@@ -470,7 +470,7 @@
                   <!-- Only this part scrolls -->
                   <div class="inventory-table-scroll-wrapper">
                     <table class="inventory-table" id="inventoryTable">
-                      <thead>
+                      <thead id="inventory-thead">
                         <tr>
                           <th class="sortable" data-sort="itemType">
                             Item Type <i class="fas fa-sort"></i>
@@ -529,7 +529,7 @@
                           <th>Actions</th>
                         </tr>
                       </thead>
-                      <tbody id="inventoryTableBody">
+                      <tbody id="inventory-tbody">
                         <!-- Inventory items will be populated here -->
                       </tbody>
                     </table>
