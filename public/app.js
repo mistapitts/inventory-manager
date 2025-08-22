@@ -849,13 +849,7 @@ function updateDashboardStats(stats) {
       }
       
       // Set "Show Out of Service" to checked/true
-      localStorage.setItem('showOutOfService', 'true');
-      
-      // Update both checkboxes if they exist
-      const chkToolbar = document.getElementById('chkShowOOS');
-      const chkDrawer = document.getElementById('drawerShowOOS');
-      if (chkToolbar) chkToolbar.checked = true;
-      if (chkDrawer) chkDrawer.checked = true;
+      setShowOOS(true);;
       
       // Clear list filters (if any UI state)
       // Note: We don't have a list filter dropdown yet, but this prepares for it
@@ -1186,10 +1180,17 @@ function closeAllRowMenus() {
   });
 }
 
-// Get Show OOS preference from localStorage
+// Show/Hide OOS flag – single source of truth in localStorage
 function getShowOOS() {
-  const v = localStorage.getItem('showOutOfService');
-  return v === null ? true : v === 'true';
+  return localStorage.getItem('showOutOfService') === 'true';
+}
+
+function setShowOOS(val) {
+  localStorage.setItem('showOutOfService', String(!!val));
+  // reflect to the drawer checkbox if present
+  const drawer = document.getElementById('drawerShowOOS');
+  if (drawer) drawer.checked = !!val;
+  loadInventoryItems(); // refresh
 }
 
 // Helper to convert #rrggbb to rgba
@@ -1202,15 +1203,14 @@ function hexToRgba(hex, alpha = 0.2) {
 }
 
 // Update the Lab chip color in the legend
-function updateLegendLabChip(colorHex, textColorHex) {
-  const el = document.getElementById('legend-lab');
-  if (!el) return;
-  const bg = colorHex || '#506dff';
-  const fg = textColorHex || '#a7b9ff';
-  // light border based on bg
-  el.style.setProperty('--lab-bg', hexToRgba(bg, 0.14));
-  el.style.setProperty('--lab-border', hexToRgba(bg, 0.35));
-  el.style.setProperty('--lab-fg', fg);
+function updateLegendLabChip(colorHex) {
+  const chip = document.getElementById('chipLab');
+  if (!chip) return;
+  const bg = colorHex || '#23324a';
+  // derive a readable fg; crude heuristic
+  const fg = '#cfe1ff';
+  chip.style.setProperty('--lab-chip-bg', bg);
+  chip.style.setProperty('--lab-chip-fg', fg);
 }
 
 function toggleActionMenu(e) {
@@ -1301,10 +1301,60 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// Close menus on outside click
-document.addEventListener('click', () => {
-  document.querySelectorAll('.action-menu.show').forEach((m) => m.classList.remove('show'));
-});
+// Robust ellipsis menu system
+let openMenuEl = null;
+
+function toggleActionMenu(btn) {
+  const cell = btn.closest('td');
+  if (!cell) return;
+
+  // close any other open menu
+  if (openMenuEl && openMenuEl !== cell.querySelector('.action-menu')) {
+    openMenuEl.classList.remove('show');
+    openMenuEl = null;
+  }
+
+  let menu = cell.querySelector('.action-menu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.className = 'action-menu';
+    menu.innerHTML = `
+      <button class="menu-item" data-action="edit">✏️ Edit</button>
+      <button class="menu-item" data-action="return">✅ Return to Service</button>
+      <button class="menu-item text-danger" data-action="delete">🗑️ Delete</button>
+    `;
+    cell.classList.add('actions-cell');    // ensure positioned ancestor
+    cell.appendChild(menu);
+    menu.addEventListener('click', onActionMenuClick);
+  }
+
+  menu.classList.toggle('show');
+  openMenuEl = menu.classList.contains('show') ? menu : null;
+}
+
+function onActionMenuClick(e) {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  const action = item.dataset.action;
+  const row = e.currentTarget.closest('tr');
+  const id = row?.dataset?.itemId;
+  e.currentTarget.classList.remove('show');
+  openMenuEl = null;
+
+  if (action === 'edit') openEditModal(id);
+  else if (action === 'return') openReturnToServiceModal(id);
+  else if (action === 'delete') confirmDeleteItem(id);
+}
+
+function onGlobalClickCloseMenus(e) {
+  if (!openMenuEl) return;
+  const anyBtn = e.target.closest('.btn-action-menu');
+  const inside = e.target.closest('.action-menu');
+  if (!anyBtn && !inside) {
+    openMenuEl.classList.remove('show');
+    openMenuEl = null;
+  }
+}
 
 async function deleteItem(itemId) {
   if (!confirm('Delete this item and all associated records? This cannot be undone.')) return;
@@ -1953,26 +2003,27 @@ document.addEventListener('click', () => {
   closeAllRowMenus();
 });
 
-// Wire up the OOS checkboxes (toolbar and drawer)
+// Wire up the OOS checkbox (drawer only)
 document.addEventListener('DOMContentLoaded', () => {
-  const chkToolbar = document.getElementById('chkShowOOS');
-  const chkDrawer = document.getElementById('drawerShowOOS');
-
-  // initialize from persisted setting
-  const stored = getShowOOS();
-  if (chkToolbar) chkToolbar.checked = stored;
-  if (chkDrawer) chkDrawer.checked = stored;
-
-  // one source of truth → persist & reload
-  function setShowOOS(val) {
-    localStorage.setItem('showOutOfService', !!val);
-    if (chkToolbar && chkToolbar.checked !== !!val) chkToolbar.checked = !!val;
-    if (chkDrawer && chkDrawer.checked !== !!val) chkDrawer.checked = !!val;
-    loadInventoryItems(); // reload with new setting
+  const drawer = document.getElementById('drawerShowOOS');
+  if (drawer) {
+    drawer.checked = getShowOOS();
+    drawer.addEventListener('change', () => setShowOOS(drawer.checked));
   }
 
-  chkToolbar?.addEventListener('change', () => setShowOOS(chkToolbar.checked));
-  chkDrawer?.addEventListener('change', () => setShowOOS(chkDrawer.checked));
+  // "Total Items" card should show all items -> check OOS and clear search
+  const totalCard = document.querySelector('[data-stat="total-items"]');
+  if (totalCard) {
+    totalCard.style.cursor = 'pointer';
+    totalCard.addEventListener('click', () => {
+      setShowOOS(true);
+      const q = document.getElementById('searchInventory');
+      if (q) q.value = '';
+    });
+  }
+
+  // after we render rows, wire the action menus
+  document.addEventListener('click', onGlobalClickCloseMenus);
 });
 });
 
