@@ -100,8 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
   checkAuthStatus();
   setupEventListeners();
   
-  // Initialize out-of-service filter
-  initializeOutOfServiceFilter();
+
   
   // Fetch company status before loading inventory
   fetchCompanyStatus();
@@ -609,7 +608,6 @@ async function loadDashboardData() {
     await loadInventoryItems();
 
     // Initialize out-of-service filter after inventory is loaded
-    initializeOutOfServiceFilter();
   } catch (error) {
     console.error('Error loading dashboard data:', error);
   }
@@ -851,11 +849,12 @@ function updateDashboardStats(stats) {
       }
       
       // Set "Show Out of Service" to checked/true
-      const showOutOfServiceCheckbox = document.getElementById('showOutOfService');
-      if (showOutOfServiceCheckbox) {
-        showOutOfServiceCheckbox.checked = true;
-        // Update localStorage
-        localStorage.setItem('showOutOfService', 'true');
+      localStorage.setItem('showOutOfService', 'true');
+      
+      // Update modal checkbox if open
+      const modalOOSCheckbox = document.getElementById('modalShowOOS');
+      if (modalOOSCheckbox) {
+        modalOOSCheckbox.checked = true;
       }
       
       // Clear list filters (if any UI state)
@@ -884,8 +883,8 @@ async function loadInventoryItems() {
   try {
     console.log('Loading inventory items...');
     
-    // Check if out-of-service filter is enabled
-    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
+    // Check if out-of-service filter is enabled from localStorage
+    const showOutOfService = getShowOOS();
     
     // Build query parameters
     const params = new URLSearchParams();
@@ -1185,6 +1184,12 @@ function closeAllRowMenus() {
   document.querySelectorAll('.row-actions .dropdown-menu.show').forEach(el => {
     el.classList.remove('show');
   });
+}
+
+// Get Show OOS preference from localStorage
+function getShowOOS() {
+  const v = localStorage.getItem('showOutOfService');
+  return v === null ? true : v === 'true';
 }
 
 function toggleActionMenu(e) {
@@ -1608,20 +1613,7 @@ function applyOutOfServiceFilter(showOutOfService) {
   });
 }
 
-function initializeOutOfServiceFilter() {
-  // Default to showing out-of-service items (true) - users should see all items by default
-  const checkbox = document.getElementById('showOutOfService');
 
-  if (checkbox) {
-    checkbox.checked = getShowOOS();
-    
-    // Wire up the change event
-    checkbox.addEventListener('change', () => {
-      setShowOOS(checkbox.checked);
-      loadInventoryItems(); // re-fetch with new OOS setting
-    });
-  }
-}
 
 function handleVerificationCheckboxChange() {
   const checkbox = document.getElementById('verificationCheckbox');
@@ -1940,6 +1932,20 @@ loadListsIntoSelectors();
 // Global click handler to close any open row menus
 document.addEventListener('click', () => {
   closeAllRowMenus();
+});
+
+// Wire up the modal OOS checkbox
+document.addEventListener('DOMContentLoaded', () => {
+  const modalOOSCheckbox = document.getElementById('modalShowOOS');
+  if (modalOOSCheckbox) {
+    // Set initial state from localStorage
+    modalOOSCheckbox.checked = getShowOOS();
+    
+    // Listen for changes
+    modalOOSCheckbox.addEventListener('change', () => {
+      localStorage.setItem('showOutOfService', modalOOSCheckbox.checked ? 'true' : 'false');
+    });
+  }
 });
 });
 

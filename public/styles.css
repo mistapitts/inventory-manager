@@ -704,6 +704,21 @@ tr.row-oos * {
   overflow: hidden;
 }
 
+/* ---------- Toolbar and table seam: make them kiss ---------- */
+.inventory-toolbar {
+  position: relative;
+  top: 2px;
+  z-index: 2;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.inventory-table-wrapper {
+  margin-top: -4px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 /* The small visual gap came from margins around the header/table shell */
 .inventory-header,
 .inventory-table-wrap {
@@ -781,6 +796,11 @@ tr.row-oos * {
   border: 1px solid rgba(255,255,255,0.06);
 }
 
+.legend-bar.compact {
+  padding: 6px 10px;
+  gap: 8px;
+}
+
 .legend-bar .legend-label {
   font-size: 12px;
   color: rgba(255,255,255,0.6);
@@ -817,6 +837,39 @@ tr.row-oos * {
   border-radius: 3px;
   background: var(--c, #60a5fa);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,0.18);
+  vertical-align: middle;
+}
+
+.legend-swatch.lab {
+  background-color: var(--c, #3b82f6);
+}
+
+/* ---------- Visibility section in modal ---------- */
+.visibility-options {
+  margin-bottom: 20px;
+}
+
+.visibility-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.visibility-option input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.visibility-option span {
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
 }
 
 /* Make "Total Items" look tappable */

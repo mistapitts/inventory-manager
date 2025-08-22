@@ -370,26 +370,13 @@
                         </button>
                       </div>
                       
-                      <div class="oos-filter">
-                        <label class="oos-filter-label">
-                          <input type="checkbox" id="showOutOfService" checked />
-                          <span>Show Out of Service</span>
-                        </label>
-                      </div>
-                      
-                      <!-- Inline legend bar with chips -->
-                      <div class="legend-bar" id="legendBar">
+                      <!-- Compact legend on the right -->
+                      <div class="legend-bar compact" id="legendBar">
                         <span class="legend-label">Legend:</span>
-                        
-                        <!-- Out of service chip mirrors the row badge meaning -->
                         <span class="chip chip-oos">OOS</span>
-                        
-                        <!-- Outsourced status matches the Cal Type chip styling -->
                         <span class="chip chip-outsourced">Outsourced</span>
-                        
-                        <!-- Optional list color sample(s) -->
                         <span class="chip">
-                          <span class="chip-swatch" style="--c:#3b82f6"></span> Lab
+                          <span class="legend-swatch lab" style="--c:#3b82f6"></span> Lab
                         </span>
                       </div>
 
@@ -476,6 +463,17 @@
                             </label>
                             <label class="column-option">
                               <input type="checkbox" data-column="notes" checked /> Notes
+                            </label>
+                          </div>
+                          
+                          <!-- Visibility Section -->
+                          <div class="column-customizer-header">
+                            <h4>Visibility</h4>
+                          </div>
+                          <div class="visibility-options">
+                            <label class="visibility-option">
+                              <input type="checkbox" id="modalShowOOS" checked />
+                              <span>Show Out of Service items</span>
                             </label>
                           </div>
                         </div>
