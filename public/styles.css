@@ -652,6 +652,17 @@ body {
   font-size: 0.9rem;
 }
 
+/* Make Total Items card look clickable */
+#totalItems {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#totalItems:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
 /* Toast Notifications */
 .toast {
   position: fixed;
@@ -1074,6 +1085,21 @@ body {
 .inventory-table tbody tr.out-of-service .action-buttons *,
 .inventory-table tbody tr.row-oos .action-buttons,
 .inventory-table tbody tr.row-oos .action-buttons * {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Additional specificity to override any conflicting rules */
+tr.out-of-service .action-buttons,
+tr.out-of-service .action-buttons *,
+tr.row-oos .action-buttons,
+tr.row-oos .action-buttons *,
+tr.out-of-service .action-btn,
+tr.row-oos .action-btn,
+tr.out-of-service .action-menu,
+tr.row-oos .action-menu,
+tr.out-of-service .action-menu-list,
+tr.row-oos .action-menu-list {
   opacity: 1 !important;
   filter: none !important;
 }

@@ -1115,8 +1115,8 @@ function createInventoryRow(item) {
       ? `${item.calibrationInterval} ${item.calibrationIntervalType}`
       : 'N/A';
 
-  // Format calibration type
-  const calType = item.isOutsourced === 1 ? 'Outsourced' : 'In-House';
+  // Format calibration type - always show "In-House" as base, add chip for outsourced
+  const calType = 'In-House';
 
   row.innerHTML = `
         <td class="column-itemType">${item.itemType || 'N/A'}</td>
