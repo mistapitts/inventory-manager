@@ -470,8 +470,8 @@
                     </div>
                   </div>
 
-                  <!-- Only this part scrolls -->
-                  <div class="inventory-table-scroll-wrapper">
+                  <!-- NEW wrapper so CSS can control seam/overlap properly -->
+                  <div class="inventory-table-wrap">
                     <table class="inventory-table" id="inventoryTable">
                       <thead id="inventory-thead">
                         <tr>
@@ -529,7 +529,7 @@
                           <th class="sortable" data-sort="notes">
                             Notes <i class="fas fa-sort"></i>
                           </th>
-                          <th>Actions</th>
+                          <th class="actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody id="inventory-tbody">
@@ -1143,6 +1143,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=6"></script>
+    <script src="/app.js?v=7"></script>
   </body>
 </html>

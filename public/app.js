@@ -1301,60 +1301,40 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// Robust ellipsis menu system
-let openMenuEl = null;
+function closeAllActionMenus() {
+  document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
+}
 
-function toggleActionMenu(btn) {
+function toggleActionMenu(btn, id) {
+  // Ensure the action cell is the positioning context
   const cell = btn.closest('td');
   if (!cell) return;
 
-  // close any other open menu
-  if (openMenuEl && openMenuEl !== cell.querySelector('.action-menu')) {
-    openMenuEl.classList.remove('show');
-    openMenuEl = null;
-  }
-
   let menu = cell.querySelector('.action-menu');
-  if (!menu) {
-    menu = document.createElement('div');
-    menu.className = 'action-menu';
-    menu.innerHTML = `
-      <button class="menu-item" data-action="edit">✏️ Edit</button>
-      <button class="menu-item" data-action="return">✅ Return to Service</button>
-      <button class="menu-item text-danger" data-action="delete">🗑️ Delete</button>
-    `;
-    cell.classList.add('actions-cell');    // ensure positioned ancestor
-    cell.appendChild(menu);
-    menu.addEventListener('click', onActionMenuClick);
-  }
+  if (!menu) return;
 
-  menu.classList.toggle('show');
-  openMenuEl = menu.classList.contains('show') ? menu : null;
-}
+  const isOpen = menu.classList.contains('open');
+  closeAllActionMenus();
 
-function onActionMenuClick(e) {
-  const item = e.target.closest('.menu-item');
-  if (!item) return;
-  const action = item.dataset.action;
-  const row = e.currentTarget.closest('tr');
-  const id = row?.dataset?.itemId;
-  e.currentTarget.classList.remove('show');
-  openMenuEl = null;
+  if (!isOpen) {
+    // place the menu relative to the button
+    const rect = btn.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
 
-  if (action === 'edit') openEditModal(id);
-  else if (action === 'return') openReturnToServiceModal(id);
-  else if (action === 'delete') confirmDeleteItem(id);
-}
-
-function onGlobalClickCloseMenus(e) {
-  if (!openMenuEl) return;
-  const anyBtn = e.target.closest('.btn-action-menu');
-  const inside = e.target.closest('.action-menu');
-  if (!anyBtn && !inside) {
-    openMenuEl.classList.remove('show');
-    openMenuEl = null;
+    // Position inside the cell so scrolling the table doesn't desync
+    menu.style.top = `${btn.offsetTop + btn.offsetHeight + 6}px`;
+    menu.style.right = `8px`;
+    menu.classList.add('open');
   }
 }
+
+// click-away to close menus
+document.addEventListener('click', (e) => {
+  const isToggle = e.target.closest('[data-action="toggle-actions"]');
+  const inMenu = e.target.closest('.action-menu');
+  if (isToggle || inMenu) return;
+  closeAllActionMenus();
+});
 
 async function deleteItem(itemId) {
   if (!confirm('Delete this item and all associated records? This cannot be undone.')) return;
@@ -2022,8 +2002,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // after we render rows, wire the action menus
-  document.addEventListener('click', onGlobalClickCloseMenus);
+
 });
 });
 
