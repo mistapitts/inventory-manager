@@ -20,14 +20,14 @@ async function fetchCompanyStatus() {
     if (!r.ok) throw new Error('COMPANY_STATUS_FAILED');
     const data = await r.json();
     appState.company = data.company || null;
-    toggleDemoCompanyButton(!!data.company);
+    toggleDemoCompanyButton(data.hasCompany);
   } catch (error) {
     console.error('Error fetching company status:', error);
   }
 }
 
 function toggleDemoCompanyButton(hasCompany) {
-  const btn = document.querySelector('#btnSetupDemoCompany');
+  const btn = document.querySelector('#setupCompanyBtn');
   if (!btn) return;
   if (hasCompany) {
     btn.classList.add('hidden');
@@ -825,6 +825,7 @@ async function loadInventoryStats() {
 
 function updateDashboardStats(stats) {
   const totalItemsElement = document.getElementById('totalItems');
+  const activeItemsElement = document.getElementById('activeItems');
   const dueThisMonthElement = document.getElementById('dueThisMonth');
   const maintenanceDueElement = document.getElementById('maintenanceDue');
 
@@ -840,6 +841,11 @@ function updateDashboardStats(stats) {
       loadInventoryItems();
     };
   }
+  
+  if (activeItemsElement) {
+    activeItemsElement.textContent = stats.activeItems || 0;
+  }
+  
   if (dueThisMonthElement) dueThisMonthElement.textContent = stats.dueThisMonth || 0;
   if (maintenanceDueElement) maintenanceDueElement.textContent = stats.maintenanceDue || 0;
 }
@@ -878,10 +884,14 @@ function displayInventoryItems(items) {
   const inventorySection = document.getElementById('inventorySection');
   const tableBody = document.getElementById('inventoryTableBody');
 
+  console.log('displayInventoryItems called with:', items);
+  console.log('Items array length:', Array.isArray(items) ? items.length : 'not an array');
+
   // Keep a global copy so actions like Edit can find items quickly
   window.inventoryItems = Array.isArray(items) ? items : [];
 
   if (Array.isArray(items) && items.length > 0) {
+    console.log('Showing inventory section with', items.length, 'items');
     // Hide welcome message, show inventory
     if (welcomeMessage) welcomeMessage.style.display = 'none';
     if (inventorySection) inventorySection.style.display = 'block';
@@ -894,7 +904,13 @@ function displayInventoryItems(items) {
       const row = createInventoryRow(item);
       if (tableBody) tableBody.appendChild(row);
     });
+    
+    // After adding items, apply the out-of-service filter
+    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
+    console.log('Applying out-of-service filter, showOutOfService:', showOutOfService);
+    applyOutOfServiceFilter(showOutOfService);
   } else {
+    console.log('Showing welcome message - no items');
     // Show welcome message, hide inventory
     if (welcomeMessage) welcomeMessage.style.display = 'block';
     if (inventorySection) inventorySection.style.display = 'none';
@@ -975,6 +991,9 @@ function createInventoryRow(item) {
   } else {
     row.setAttribute('data-list-id', ''); // Empty string for unassigned items
   }
+
+  // Add item ID attribute for targeting
+  row.setAttribute('data-item-id', item.id);
 
   // Format dates
   const nextCalDue = item.nextCalibrationDue
@@ -1419,6 +1438,32 @@ function updateItemInView(updatedItem) {
     // Update the row data and re-render if needed
     // This is a simplified update - in practice, you might want to re-render the entire row
     row.dataset.itemData = JSON.stringify(updatedItem);
+    
+    // Update the out-of-service styling
+    if (updatedItem.isOutOfService === 1 || updatedItem.isOutOfService === true) {
+      row.classList.add('out-of-service');
+    } else {
+      row.classList.remove('out-of-service');
+    }
+    
+    // Update the OOS badge in the nickname column
+    const nicknameCell = row.querySelector('.column-nickname');
+    if (nicknameCell) {
+      const oosBadge = nicknameCell.querySelector('.oos-badge');
+      if (updatedItem.isOutOfService === 1 || updatedItem.isOutOfService === true) {
+        if (!oosBadge) {
+          nicknameCell.innerHTML += '<span class="oos-badge">OOS</span>';
+        }
+      } else {
+        if (oosBadge) {
+          oosBadge.remove();
+        }
+      }
+    }
+    
+    // Re-apply the filter to ensure visibility is correct
+    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
+    applyOutOfServiceFilter(showOutOfService);
   }
 }
 
@@ -1452,7 +1497,8 @@ function applyOutOfServiceFilter(showOutOfService) {
 }
 
 function initializeOutOfServiceFilter() {
-  const showOutOfService = localStorage.getItem('showOutOfService') === 'true';
+  // Default to showing out-of-service items (true)
+  const showOutOfService = localStorage.getItem('showOutOfService') !== 'false';
   const checkbox = document.getElementById('showOutOfService');
 
   if (checkbox) {

@@ -1,0 +1,12 @@
+---
+description: <A short explanation of what this rule does>
+globs: ["**/*.{ts,tsx,js,jsx,md,mdx}"]
+alwaysApply: true
+---
+
+# Project Rule: Problem Escalation
+- Cursor should first attempt to resolve coding issues directly.
+- If Cursor cannot solve or the issue repeats, it should consult ChatGPT 5.0 for detailed analysis.
+- After ChatGPT’s analysis, Cursor should implement the fixes and refinements.
+- This ensures efficient debugging: GPT-5 for problem analysis, Cursor for implementation.
+

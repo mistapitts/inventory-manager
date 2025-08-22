@@ -1246,8 +1246,8 @@ router.get('/stats/overview', auth_1.authenticateToken, async (req, res) => {
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Get total items
-        const totalItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService != 1', [user.companyId]);
+        // Get total items (including out-of-service)
+        const totalItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ?', [user.companyId]);
         // Get items due for calibration this month
         const dueThisMonth = await database_1.database.get(`
             SELECT COUNT(*) as count FROM inventory_items 
@@ -1264,8 +1264,11 @@ router.get('/stats/overview', auth_1.authenticateToken, async (req, res) => {
         `, [user.companyId]);
         // Get out of service count
         const outOfService = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService = 1', [user.companyId]);
+        // Get active items count (non-out-of-service)
+        const activeItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService != 1', [user.companyId]);
         res.json({
             totalItems: totalItems.count,
+            activeItems: activeItems.count,
             dueThisMonth: dueThisMonth.count,
             maintenanceDue: maintenanceDue.count,
             outOfService: outOfService.count,
