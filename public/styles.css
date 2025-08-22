@@ -1148,6 +1148,11 @@ body {
   display: none; /* We'll use the native checkbox */
 }
 
+/* Hide demo company button when company exists */
+.hidden {
+  display: none !important;
+}
+
 /* Verification badge */
 .verification-badge {
   display: inline-block;

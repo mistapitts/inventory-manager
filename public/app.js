@@ -2,9 +2,74 @@
 let currentUser = null;
 let authToken = null;
 
+// Company state management
+window.appState = window.appState || {};
+appState.company = null;
+
 // Always use this to read the JWT
 function getAuthToken() {
   return (typeof authToken !== 'undefined' && authToken) || localStorage.getItem('authToken') || '';
+}
+
+// Company status management
+async function fetchCompanyStatus() {
+  try {
+    const r = await fetch('/api/company/status', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!r.ok) throw new Error('COMPANY_STATUS_FAILED');
+    const data = await r.json();
+    appState.company = data.company || null;
+    toggleDemoCompanyButton(!!data.company);
+  } catch (error) {
+    console.error('Error fetching company status:', error);
+  }
+}
+
+function toggleDemoCompanyButton(hasCompany) {
+  const btn = document.querySelector('#btnSetupDemoCompany');
+  if (!btn) return;
+  if (hasCompany) {
+    btn.classList.add('hidden');
+  } else {
+    btn.classList.remove('hidden');
+  }
+}
+
+// Safe error message helper
+async function safeErrorMessage(r) {
+  try { 
+    const j = await r.json(); 
+    return j?.error || j?.message || ''; 
+  } catch { 
+    return ''; 
+  }
+}
+
+// Improved setup demo company handler
+async function handleSetupDemoCompanyClick() {
+  try {
+    const r = await fetch('/api/company/setup-demo', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+
+    if (r.status === 409 || r.status === 400) {
+      // Server says you already have one – treat as success
+      showToast('Demo company already set up.', 'info');
+    } else if (!r.ok) {
+      const msg = await safeErrorMessage(r);
+      throw new Error(msg || 'Failed to set up demo company');
+    } else {
+      showToast('Demo company created!', 'success');
+    }
+
+    await fetchCompanyStatus();   // refresh state + hide button
+    await loadInventoryItems();   // refresh dashboard
+  } catch (err) {
+    console.error(err);
+    showToast('Could not set up demo company. Please try again.', 'error');
+  }
 }
 
 // DOM elements
@@ -24,10 +89,13 @@ const rememberMeCheckbox = document.getElementById('rememberMe');
 document.addEventListener('DOMContentLoaded', function () {
   checkAuthStatus();
   setupEventListeners();
-
+  
   // Initialize out-of-service filter
   initializeOutOfServiceFilter();
-
+  
+  // Fetch company status before loading inventory
+  fetchCompanyStatus();
+  
   // Handle deep links like /item/:id
   const parts = window.location.pathname.split('/').filter(Boolean);
   if (parts[0] === 'item' && parts[1]) {
@@ -105,10 +173,10 @@ function setupEventListeners() {
   rememberMeCheckbox.addEventListener('change', handleRememberMe);
 
   // Company setup button
-  const setupCompanyBtn = document.getElementById('setupCompanyBtn');
-  if (setupCompanyBtn) {
-    setupCompanyBtn.addEventListener('click', setupDemoCompany);
-  }
+const setupCompanyBtn = document.getElementById('setupDemoCompany');
+if (setupCompanyBtn) {
+  setupCompanyBtn.addEventListener('click', handleSetupDemoCompanyClick);
+}
 
   // Create first list button
   const createFirstListBtn = document.getElementById('createFirstListBtn');
@@ -517,6 +585,9 @@ async function loadDashboardData() {
       currentUser = data.user;
       updateDashboardUserInfo();
     }
+
+    // Fetch company status
+    await fetchCompanyStatus();
 
     // Load lists first (needed for inventory filtering)
     await loadListsIntoSelectors();
