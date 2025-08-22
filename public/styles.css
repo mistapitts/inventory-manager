@@ -1100,6 +1100,19 @@ body {
   font-size: 0.875rem;
 }
 
+/* Hidden Lists filter */
+.hidden-lists-filter {
+  display: flex;
+  align-items: center;
+  margin-left: 16px;
+}
+
+.hidden-lists-filter .btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  height: auto;
+}
+
 .oos-filter-label input[type='checkbox'] {
   width: 16px;
   height: 16px;

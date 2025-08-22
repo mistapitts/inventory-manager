@@ -866,10 +866,15 @@ async function loadInventoryItems() {
       const allItems = Array.isArray(data.items) ? data.items : [];
       const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
       console.log('Hidden lists:', hiddenLists);
+      console.log('All items with listIds:', allItems.map(item => ({ id: item.id, nickname: item.nickname, listId: item.listId })));
+      
+      // Filter items for display (only show items from visible lists)
       const visibleItems = allItems.filter(
         (item) => !item.listId || !hiddenLists.includes(item.listId),
       );
       console.log('Visible items:', visibleItems.length, 'of', allItems.length);
+      
+      // Display the filtered items (but stats will show total count)
       displayInventoryItems(visibleItems);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
@@ -1910,6 +1915,14 @@ function loadHiddenLists() {
   }
 }
 
+// Function to clear all hidden lists and show all items
+function clearHiddenLists() {
+  localStorage.removeItem('hiddenLists');
+  console.log('Cleared hidden lists');
+  // Refresh the inventory to show all items
+  loadInventoryItems();
+}
+
 function saveHiddenLists(hidden) {
   try {
     localStorage.setItem('hiddenLists', JSON.stringify(hidden));
@@ -2030,6 +2043,10 @@ async function loadListsIntoSelectors(selectAfterName) {
     if (listOptions) {
       console.log('Populating listOptions with', lists.length, 'lists');
       const hidden = loadHiddenLists();
+      console.log('Current hidden lists:', hidden);
+      
+
+      
       const withVirtual = [{ id: '', name: 'Unassigned' }, ...lists];
       listOptions.innerHTML = '';
       listOptions.style.display = 'block';
@@ -3544,6 +3561,15 @@ async function handleCreateList(e) {
 
     // Hide modal and refresh
     hideCreateListModal();
+    
+    // Ensure the new list is visible by default (remove from hidden lists if it was there)
+    const hiddenLists = loadHiddenLists();
+    const updatedHidden = hiddenLists.filter(id => id !== result.id);
+    if (updatedHidden.length !== hiddenLists.length) {
+      saveHiddenLists(updatedHidden);
+      console.log('Made new list visible by default');
+    }
+    
     await loadListsIntoSelectors(result.name);
     await loadInventoryItems();
 
