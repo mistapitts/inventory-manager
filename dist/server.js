@@ -18,8 +18,13 @@ const app = (0, express_1.default)();
 const PORT = Number(process.env.PORT) || config_1.default.env.port;
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
-// CORS: permissive for now (can be restricted later with ALLOWED_ORIGINS)
-app.use((0, cors_1.default)());
+// CORS: explicit configuration for security
+app.use((0, cors_1.default)({
+    origin: true, // Allow all origins for now (can restrict later)
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'Accept'],
+    credentials: false, // No cookies needed with Authorization headers
+}));
 // Directories are now handled by config.ensureBootPaths()
 const PUBLIC_DIR = config_1.default.paths.publicDir;
 const UPLOAD_DIR = config_1.default.paths.uploadDir;
