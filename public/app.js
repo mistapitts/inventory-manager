@@ -2,6 +2,11 @@
 let currentUser = null;
 let authToken = null;
 
+// Always use this to read the JWT
+function getAuthToken() {
+  return (typeof authToken !== 'undefined' && authToken) || localStorage.getItem('authToken') || '';
+}
+
 // DOM elements
 const loginContainer = document.getElementById('loginContainer');
 const registerContainer = document.getElementById('registerContainer');
