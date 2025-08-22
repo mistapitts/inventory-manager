@@ -870,20 +870,17 @@ async function loadInventoryItems() {
       
       // Check if out-of-service filter is enabled
       const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
-      console.log('Out-of-service filter enabled:', showOutOfService);
       
       // Filter items for display
       let visibleItems;
       if (showOutOfService) {
         // If showing out-of-service items, include them regardless of list visibility
         visibleItems = allItems;
-        console.log('Showing all items (including out-of-service) regardless of list visibility');
       } else {
         // If hiding out-of-service items, only show visible lists and non-out-of-service items
         visibleItems = allItems.filter(
           (item) => (!item.listId || !hiddenLists.includes(item.listId)) && !(item.isOutOfService === 1 || item.isOutOfService === true)
         );
-        console.log('Hiding out-of-service items and filtering by list visibility');
       }
       
       console.log('Visible items:', visibleItems.length, 'of', allItems.length);
