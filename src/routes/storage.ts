@@ -50,10 +50,13 @@ router.get('/download', authenticateToken, (req, res) => {
     // Get the filename for the download (just the basename, not the full path)
     const downloadFilename = path.basename(absPath);
 
-    // Set appropriate headers for file download (UX + security)
+    // Set appropriate headers for file download (UX + security) - RFC 6266 compliant
     const contentType = mime.getType(absPath) || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
+    
+    // RFC 6266 compliant filename headers with fallback for international characters
+    const asciiFilename = downloadFilename.replace(/[^\x00-\x7F]/g, '_'); // ASCII fallback
+    res.setHeader("Content-Disposition", `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
     res.setHeader("Cache-Control", "no-store");
 
     // Stream the file for efficient memory usage
@@ -109,7 +112,10 @@ router.get('/download/*', authenticateToken, (req, res) => {
     const downloadFilename = path.basename(absPath);
     const contentType = mime.getType(absPath) || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
+    
+    // RFC 6266 compliant filename headers with fallback for international characters
+    const asciiFilename = downloadFilename.replace(/[^\x00-\x7F]/g, '_'); // ASCII fallback
+    res.setHeader("Content-Disposition", `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
     res.setHeader("Cache-Control", "no-store");
 
     const fileStream = fs.createReadStream(absPath);

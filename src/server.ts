@@ -28,13 +28,28 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // allows file downloads
 }));
 
-// CORS: secure configuration with allow-list
+// CORS: secure configuration with allow-list (production-focused)
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || corsAllowedOrigins.length === 0 || corsAllowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) {
       return cb(null, true);
     }
-    return cb(new Error("CORS: origin not allowed"));
+    
+    // In production, only allow specified origins
+    if (config.env.nodeEnv === 'production') {
+      if (corsAllowedOrigins.length === 0) {
+        // If no origins specified, default to strict
+        return cb(new Error("CORS: no allowed origins configured for production"));
+      }
+      if (corsAllowedOrigins.includes(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error("CORS: origin not allowed"));
+    }
+    
+    // In development, be more permissive
+    return cb(null, true);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Authorization", "Content-Type"],
@@ -43,14 +58,14 @@ app.use(cors({
 }));
 app.options("*", cors()); // preflight
 
-// Rate limiting for login endpoint
-const loginLimiter = rateLimit({ 
+// Rate limiting for all auth endpoints
+const authLimiter = rateLimit({ 
   windowMs: 10 * 60 * 1000, // 10 minutes
   limit: 50, // max 50 requests per window
   standardHeaders: true, 
   legacyHeaders: false 
 });
-app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth", authLimiter);
 
 // Directories are now handled by config.ensureBootPaths()
 const PUBLIC_DIR = config.paths.publicDir;
