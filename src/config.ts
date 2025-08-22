@@ -9,6 +9,12 @@ dotenv.config();
 const isProd = process.env.NODE_ENV === "production";
 
 /**
+ * CORS allowed origins for security
+ * Comma-separated list of allowed domains
+ */
+export const corsAllowedOrigins = (process.env.ALLOWED_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean);
+
+/**
  * Root for persistent data.
  * Default to /var/data (Render disk). Locally, default to <project>/data.
  */

@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -6,7 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
-const config_1 = __importDefault(require("./config"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const config_1 = __importStar(require("./config"));
 const database_1 = require("./models/database");
 // Import routes
 const auth_1 = __importDefault(require("./routes/auth"));
@@ -18,13 +52,28 @@ const app = (0, express_1.default)();
 const PORT = Number(process.env.PORT) || config_1.default.env.port;
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
-// CORS: explicit configuration for security
+// CORS: secure configuration with allow-list
 app.use((0, cors_1.default)({
-    origin: true, // Allow all origins for now (can restrict later)
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'Accept'],
-    credentials: false, // No cookies needed with Authorization headers
+    origin: (origin, cb) => {
+        if (!origin || config_1.corsAllowedOrigins.length === 0 || config_1.corsAllowedOrigins.includes(origin)) {
+            return cb(null, true);
+        }
+        return cb(new Error("CORS: origin not allowed"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type"],
+    credentials: false,
+    maxAge: 600,
 }));
+app.options("*", (0, cors_1.default)()); // preflight
+// Rate limiting for login endpoint
+const loginLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    limit: 50, // max 50 requests per window
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use("/api/auth/login", loginLimiter);
 // Directories are now handled by config.ensureBootPaths()
 const PUBLIC_DIR = config_1.default.paths.publicDir;
 const UPLOAD_DIR = config_1.default.paths.uploadDir;

@@ -23,13 +23,30 @@ const storage = multer.diskStorage({
     cb(null, config.paths.uploadDocsDir);
   },
   filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `${uniquePrefix}-${safeName}`);
+    const safeBase = path.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
+    const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
+    cb(null, storedName);
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  fileFilter: (_req, file, cb) => {
+    const ok = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "image/png",
+      "image/jpeg"
+    ].includes(file.mimetype);
+    if (ok) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file type"));
+    }
+  }
+});
 
 // Lists: get all lists for current user's company
 router.get('/lists', authenticateToken, async (req: Request, res: Response) => {

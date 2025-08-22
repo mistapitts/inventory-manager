@@ -19,12 +19,30 @@ const storage = multer_1.default.diskStorage({
         cb(null, config_1.default.paths.uploadDocsDir);
     },
     filename(_req, file, cb) {
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `${uniquePrefix}-${safeName}`);
+        const safeBase = path_1.default.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
+        const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
+        cb(null, storedName);
     },
 });
-const upload = (0, multer_1.default)({ storage });
+const upload = (0, multer_1.default)({
+    storage,
+    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+    fileFilter: (_req, file, cb) => {
+        const ok = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "image/png",
+            "image/jpeg"
+        ].includes(file.mimetype);
+        if (ok) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error("Unsupported file type"));
+        }
+    }
+});
 // Lists: get all lists for current user's company
 router.get('/lists', auth_1.authenticateToken, async (req, res) => {
     try {

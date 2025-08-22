@@ -441,8 +441,8 @@ export class Database {
   }
 
   private async createAdminUser(): Promise<void> {
-    const adminEmail = process.env.ADMIN_EMAIL || 'mistapitts@gmail.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
+    const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@example.com';
+    const adminPassword = process.env.ADMIN_PASSWORD ?? 'Admin123!';
 
     // Check if admin user already exists
     const existingAdmin = await this.get('SELECT id FROM users WHERE email = ?', [adminEmail]);

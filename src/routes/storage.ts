@@ -49,8 +49,10 @@ router.get('/download', authenticateToken, (req, res) => {
     // Get the filename for the download (just the basename, not the full path)
     const downloadFilename = path.basename(absPath);
 
-    // Set appropriate headers for file download
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+    // Set appropriate headers for file download (UX + security)
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
+    res.setHeader("Cache-Control", "no-store");
 
     // Stream the file for efficient memory usage
     const fileStream = fs.createReadStream(absPath);
@@ -103,7 +105,9 @@ router.get('/download/*', authenticateToken, (req, res) => {
     }
 
     const downloadFilename = path.basename(absPath);
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
+    res.setHeader("Cache-Control", "no-store");
 
     const fileStream = fs.createReadStream(absPath);
     fileStream.pipe(res);

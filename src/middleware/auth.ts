@@ -14,7 +14,7 @@ export const authenticateToken = async (
   const token = authHeader && typeof authHeader === 'string' ? authHeader.split(' ')[1] : undefined;
 
   if (!token) {
-    res.status(401).json({ error: 'Access token required' });
+    res.status(401).json({ error: 'Access token required', code: 'TOKEN_MISSING' });
     return;
   }
 
@@ -48,7 +48,7 @@ export const authenticateToken = async (
       name: error?.name,
       stack: error?.stack?.split('\n')[0],
     });
-    res.status(403).json({ error: 'Invalid or expired token' });
+    res.status(401).json({ error: 'Invalid or expired token', code: 'TOKEN_INVALID' });
   }
 };
 

@@ -4,8 +4,9 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { type Request, type Response, type NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 
-import config from './config';
+import config, { corsAllowedOrigins } from './config';
 import { database } from './models/database';
 
 // Import routes
@@ -21,13 +22,29 @@ const PORT = Number(process.env.PORT) || config.env.port;
 /** Behind Render's proxy, trust X-Forwarded-* so req.protocol is correct */
 app.set('trust proxy', true);
 
-// CORS: explicit configuration for security
+// CORS: secure configuration with allow-list
 app.use(cors({
-  origin: true, // Allow all origins for now (can restrict later)
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'Accept'],
-  credentials: false, // No cookies needed with Authorization headers
+  origin: (origin, cb) => {
+    if (!origin || corsAllowedOrigins.length === 0 || corsAllowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+    return cb(new Error("CORS: origin not allowed"));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Authorization", "Content-Type"],
+  credentials: false,
+  maxAge: 600,
 }));
+app.options("*", cors()); // preflight
+
+// Rate limiting for login endpoint
+const loginLimiter = rateLimit({ 
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  limit: 50, // max 50 requests per window
+  standardHeaders: true, 
+  legacyHeaders: false 
+});
+app.use("/api/auth/login", loginLimiter);
 
 // Directories are now handled by config.ensureBootPaths()
 const PUBLIC_DIR = config.paths.publicDir;
