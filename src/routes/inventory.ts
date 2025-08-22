@@ -287,7 +287,7 @@ router.post('/lists/migrate-to-field', authenticateToken, async (req: Request, r
 router.get('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { listId } = req.query as { listId?: string };
+    const { listId, includeOOS } = req.query as { listId?: string; includeOOS?: string };
 
     // Get user's company info
     const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
@@ -296,13 +296,21 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'User not associated with a company' });
     }
 
-    // Get all inventory items for the company, optionally filtered by list
+    // Build query parameters
     const params: any[] = [user.companyId];
-    let where = 'companyId = ? AND isOutOfService != 1';
+    let where = 'companyId = ?';
+    
+    // Only exclude OOS items when explicitly requested
+    if (includeOOS !== '1') {
+      where += ' AND (isOutOfService IS NULL OR isOutOfService = 0)';
+    }
+    
+    // Optional list filtering
     if (listId && listId !== 'all') {
       where += ' AND listId = ?';
       params.push(listId);
     }
+
     const items = await database.all(
       `
             SELECT *

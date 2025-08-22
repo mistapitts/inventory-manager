@@ -853,8 +853,17 @@ function updateDashboardStats(stats) {
 async function loadInventoryItems() {
   try {
     console.log('Loading inventory items...');
-    // Always fetch all; filtering is applied client-side via hidden lists
-    const response = await fetch(`/api/inventory`, {
+    
+    // Check if out-of-service filter is enabled
+    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (showOutOfService) {
+      params.append('includeOOS', '1');
+    }
+    
+    const response = await fetch(`/api/inventory?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -868,24 +877,14 @@ async function loadInventoryItems() {
       console.log('Hidden lists:', hiddenLists);
       console.log('All items with listIds:', allItems.map(item => ({ id: item.id, nickname: item.nickname, listId: item.listId, isOutOfService: item.isOutOfService })));
       
-      // Check if out-of-service filter is enabled
-      const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
-      
-      // Filter items for display
-      let visibleItems;
-      if (showOutOfService) {
-        // If showing out-of-service items, include them regardless of list visibility
-        visibleItems = allItems;
-      } else {
-        // If hiding out-of-service items, only show visible lists and non-out-of-service items
-        visibleItems = allItems.filter(
-          (item) => (!item.listId || !hiddenLists.includes(item.listId)) && !(item.isOutOfService === 1 || item.isOutOfService === true)
-        );
-      }
+      // Apply list visibility filtering (but OOS filtering is now handled by API)
+      const visibleItems = allItems.filter(
+        (item) => !item.listId || !hiddenLists.includes(item.listId)
+      );
       
       console.log('Visible items:', visibleItems.length, 'of', allItems.length);
       
-      // Display the filtered items (but stats will show total count)
+      // Display the filtered items
       displayInventoryItems(visibleItems);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
@@ -1508,13 +1507,13 @@ function applyOutOfServiceFilter(showOutOfService) {
 }
 
 function initializeOutOfServiceFilter() {
-  // Default to showing out-of-service items (true)
+  // Default to showing out-of-service items (true) - users should see all items by default
   const showOutOfService = localStorage.getItem('showOutOfService') !== 'false';
   const checkbox = document.getElementById('showOutOfService');
 
   if (checkbox) {
     checkbox.checked = showOutOfService;
-    applyOutOfServiceFilter(showOutOfService);
+    // No need to call applyOutOfServiceFilter since filtering is now handled by API
   }
 }
 
@@ -1921,13 +1920,7 @@ function loadHiddenLists() {
   }
 }
 
-// Function to clear all hidden lists and show all items
-function clearHiddenLists() {
-  localStorage.removeItem('hiddenLists');
-  console.log('Cleared hidden lists');
-  // Refresh the inventory to show all items
-  loadInventoryItems();
-}
+
 
 function saveHiddenLists(hidden) {
   try {
