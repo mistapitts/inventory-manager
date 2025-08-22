@@ -1325,7 +1325,7 @@ async function handleOutOfServiceSubmit(e) {
     }
 
     // Refresh the current page to show updated data
-    await loadInventory();
+    await loadInventoryItems();
   } catch (error) {
     console.error('Error marking item out of service:', error);
     showToast('Failed to mark item out of service. Please try again.', 'error');
@@ -1452,7 +1452,7 @@ async function handleReturnToServiceSubmit(e) {
     }
 
     // Refresh the current page to show updated data
-    await loadInventory();
+    await loadInventoryItems();
   } catch (error) {
     console.error('Error returning item to service:', error);
     showToast('Failed to return item to service. Please try again.', 'error');
