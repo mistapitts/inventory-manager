@@ -845,13 +845,10 @@ function updateDashboardStats(stats) {
     totalItemsElement.style.cursor = 'pointer';
     totalItemsElement.onclick = () => {
       // Clear search input if it exists
-      const searchInput = document.querySelector('.search-box input');
+      const searchInput = document.querySelector('.search-box input') || document.getElementById('searchInput');
       if (searchInput) {
         searchInput.value = '';
       }
-      
-      // Clear any list filter (if we had one)
-      // Note: We don't have a list filter dropdown yet, but this prepares for it
       
       // Set "Show Out of Service" to checked/true
       const showOutOfServiceCheckbox = document.getElementById('showOutOfService');
@@ -860,6 +857,9 @@ function updateDashboardStats(stats) {
         // Update localStorage
         localStorage.setItem('showOutOfService', 'true');
       }
+      
+      // Clear list filters (if any UI state)
+      // Note: We don't have a list filter dropdown yet, but this prepares for it
       
       // Show inventory section and hide welcome message
       const welcomeMessage = document.getElementById('welcomeMessage');
@@ -1076,9 +1076,9 @@ function createInventoryRow(item) {
     row.classList.add('in-house');
   }
 
-  // Add out-of-service styling
+  // Add out-of-service styling - use background tint, not opacity
   if (item.isOutOfService === 1 || item.isOutOfService === true) {
-    row.classList.add('out-of-service', 'row-oos');
+    row.classList.add('row-oos');
   }
 
   // Add list ID attribute for CSS targeting
@@ -1138,9 +1138,9 @@ function createInventoryRow(item) {
         <td class="column-datePlacedInService">${dateInService}</td>
         <td class="column-location">${item.location || 'N/A'}</td>
         <td class="column-calibrationType">
-          <span>${calType}</span>
+          <span class="caltype-text">${(item.calibrationMethod || '').trim() || 'In-House'}</span>
           ${item.isOutsourced === 1 || item.isOutsourced === true
-            ? `<span class="chip chip-outsourced" title="Calibration is outsourced">Outsourced</span>`
+            ? `<span class="chip chip-outsourced" title="Calibration performed by an outside lab">Outsourced</span>`
             : ''
           }
         </td>

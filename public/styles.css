@@ -663,6 +663,56 @@ body {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
+/* Make quick-stat cards clearly clickable */
+.quick-stat-card.clickable { 
+  cursor: pointer; 
+  transition: transform .12s ease, box-shadow .12s ease; 
+}
+
+.quick-stat-card.clickable:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); 
+}
+
+/* Out-of-service rows: DO NOT lower child opacity; use a subtle bg tint instead */
+tr.row-oos { 
+  background-image: linear-gradient(0deg, rgba(255,77,79,.08), rgba(255,77,79,.08));
+}
+
+tr.row-oos * { 
+  opacity: 1 !important; 
+}
+
+/* Ensure dropdowns are not clipped inside the table container */
+.table-wrap, .table-container, table { 
+  overflow: visible !important; 
+}
+
+/* Make the action menu stack above rows */
+.actions .dropdown,
+.actions .dropdown-menu,
+.actions .menu,
+.tippy-box {
+  z-index: 9999 !important;
+}
+
+/* Cal Type chip styling */
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.chip-outsourced {
+  background: rgba(255, 159, 67, .18);
+  color: #ff9f43;
+  border: 1px solid rgba(255, 159, 67, .35);
+}
+
 /* Toast Notifications */
 .toast {
   position: fixed;
