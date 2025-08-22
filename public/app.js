@@ -841,13 +841,33 @@ function updateDashboardStats(stats) {
 
   if (totalItemsElement) {
     totalItemsElement.textContent = stats.totalItems || 0;
-    // Make the number clickable to show the inventory list
+    // Make the number clickable to clear filters and show all items
     totalItemsElement.style.cursor = 'pointer';
     totalItemsElement.onclick = () => {
+      // Clear search input if it exists
+      const searchInput = document.querySelector('.search-box input');
+      if (searchInput) {
+        searchInput.value = '';
+      }
+      
+      // Clear any list filter (if we had one)
+      // Note: We don't have a list filter dropdown yet, but this prepares for it
+      
+      // Set "Show Out of Service" to checked/true
+      const showOutOfServiceCheckbox = document.getElementById('showOutOfService');
+      if (showOutOfServiceCheckbox) {
+        showOutOfServiceCheckbox.checked = true;
+        // Update localStorage
+        localStorage.setItem('showOutOfService', 'true');
+      }
+      
+      // Show inventory section and hide welcome message
       const welcomeMessage = document.getElementById('welcomeMessage');
       const inventorySection = document.getElementById('inventorySection');
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (inventorySection) inventorySection.style.display = 'block';
+      
+      // Reload inventory with OOS items included
       loadInventoryItems();
     };
   }
@@ -1058,7 +1078,7 @@ function createInventoryRow(item) {
 
   // Add out-of-service styling
   if (item.isOutOfService === 1 || item.isOutOfService === true) {
-    row.classList.add('out-of-service');
+    row.classList.add('out-of-service', 'row-oos');
   }
 
   // Add list ID attribute for CSS targeting
@@ -1117,7 +1137,13 @@ function createInventoryRow(item) {
         <td class="column-dateReceived">${dateReceived}</td>
         <td class="column-datePlacedInService">${dateInService}</td>
         <td class="column-location">${item.location || 'N/A'}</td>
-        <td class="column-calibrationType">${calType}</td>
+        <td class="column-calibrationType">
+          <span>${calType}</span>
+          ${item.isOutsourced === 1 || item.isOutsourced === true
+            ? `<span class="chip chip-outsourced" title="Calibration is outsourced">Outsourced</span>`
+            : ''
+          }
+        </td>
         <td class="column-calibrationDate">${lastCal}</td>
         <td class="column-nextCalibrationDue">${nextCalDue}</td>
         <td class="column-calibrationInterval">${calInterval}</td>

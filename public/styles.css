@@ -1058,15 +1058,44 @@ body {
 }
 
 /* Out of Service styling */
-.inventory-table tbody tr.out-of-service {
-  opacity: 0.6;
-  background: rgba(239, 68, 68, 0.1) !important; /* Light red background */
+.inventory-table tbody tr.out-of-service,
+.inventory-table tbody tr.row-oos {
+  background: linear-gradient(0deg, rgba(255,91,91,.06), rgba(255,91,91,.06)) !important;
   border-left: 6px solid var(--accent-danger) !important; /* Red border for OOS items */
 }
 
-.inventory-table tbody tr.out-of-service:hover {
-  opacity: 0.8;
-  background: rgba(239, 68, 68, 0.15) !important;
+.inventory-table tbody tr.out-of-service:hover,
+.inventory-table tbody tr.row-oos:hover {
+  background: linear-gradient(0deg, rgba(255,91,91,.1), rgba(255,91,91,.1)) !important;
+}
+
+/* Make sure buttons/menus inside OOS rows remain crisp */
+.inventory-table tbody tr.out-of-service .action-buttons,
+.inventory-table tbody tr.out-of-service .action-buttons *,
+.inventory-table tbody tr.row-oos .action-buttons,
+.inventory-table tbody tr.row-oos .action-buttons * {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Ensure the menu/dropdown can sit above the table */
+.inventory-table,
+.inventory-table .action-buttons,
+.inventory-table .action-buttons .action-menu,
+.inventory-table .action-buttons .action-menu-list {
+  overflow: visible;
+}
+
+/* Give the ellipsis menu a healthy stacking order */
+.inventory-table .action-buttons .action-menu-list {
+  position: absolute;
+  z-index: 1000;           /* higher than table rows/cards */
+}
+
+/* Ensure the menu/dropdown can sit above the table - also target row-oos */
+tr.row-oos .action-buttons,
+tr.row-oos .action-buttons * {
+  overflow: visible;
 }
 
 /* Out of Service badge */
@@ -1081,6 +1110,26 @@ body {
   margin-left: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Chip styles for badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  vertical-align: middle;
+  margin-left: .5rem;
+}
+
+.chip-outsourced {
+  background: rgba(255, 165, 0, .14);
+  color: #ffb65c;          /* warm orange */
+  border: 1px solid rgba(255, 165, 0, .35);
 }
 
 /* Out of Service filter toggle */
