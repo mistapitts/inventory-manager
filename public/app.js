@@ -1151,7 +1151,7 @@ function createInventoryRow(item) {
         <td class="column-maintenanceDate">${lastMaintenance}</td>
         <td class="column-maintenanceDue">${maintenanceDue}</td>
         <td class="column-notes">${item.notes || 'N/A'}</td>
-        <td>
+        <td class="row-actions">
             <div class="action-buttons">
                 <button class="action-btn" onclick="viewItem('${item.id}')">
                     <i class="fas fa-eye"></i> View
@@ -1160,10 +1160,10 @@ function createInventoryRow(item) {
                     <i class="fas fa-plus"></i>
                 </button>
                 <div class="action-menu" data-id="${item.id}">
-                    <button class="action-menu-button" title="More actions" onclick="toggleActionMenu(event)">
+                    <button class="action-menu-button btn-ellipses" title="More actions" onclick="toggleActionMenu(event)">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <div class="action-menu-list">
+                    <div class="action-menu-list dropdown-menu">
                         <button onclick="editItem('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
                         ${
                           item.isOutOfService
@@ -1180,15 +1180,25 @@ function createInventoryRow(item) {
   return row;
 }
 
+// Utility: close all open row menus
+function closeAllRowMenus() {
+  document.querySelectorAll('.row-actions .dropdown-menu.show').forEach(el => {
+    el.classList.remove('show');
+  });
+}
+
 function toggleActionMenu(e) {
   e.stopPropagation();
   const menu = e.currentTarget.parentElement;
-  document.querySelectorAll('.action-menu.show').forEach((m) => {
-    if (m !== menu) m.classList.remove('show');
-  });
-  // Toggle first so we can measure
-  const willShow = !menu.classList.contains('show');
-  menu.classList.toggle('show');
+  const isOpen = menu.classList.contains('show');
+  
+  // Close all other menus first
+  closeAllRowMenus();
+  
+  // Toggle this menu
+  if (!isOpen) {
+    menu.classList.add('show');
+  }
 
   // Decide whether to open up or down based on viewport space
   if (willShow) {
@@ -1925,7 +1935,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Load lists into selectors on page load
-  loadListsIntoSelectors();
+loadListsIntoSelectors();
+
+// Global click handler to close any open row menus
+document.addEventListener('click', () => {
+  closeAllRowMenus();
+});
 });
 
 // Handle Add Item form submission

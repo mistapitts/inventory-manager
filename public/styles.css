@@ -696,21 +696,138 @@ tr.row-oos * {
   z-index: 9999 !important;
 }
 
-/* Cal Type chip styling */
-.chip {
-  display: inline-block;
-  padding: 2px 8px;
+/* ---------- Inventory header + table: remove the small gap ---------- */
+.inventory-card {
+  border-radius: 14px;
+  background: var(--card-bg, #121829);
+  /* make the header and table visually one piece */
+  overflow: hidden;
+}
+
+/* The small visual gap came from margins around the header/table shell */
+.inventory-header,
+.inventory-table-wrap {
+  margin: 0 !important;
+  border: 0;
+}
+
+/* Keep the top corners rounded on header, bottom corners on table */
+.inventory-header {
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+
+/* ---------- Table container must not clip dropdowns ---------- */
+.inventory-table-wrap,
+.table-container,
+.table-responsive {
+  position: relative;
+  overflow: visible !important;  /* critical for dropdowns */
+}
+
+/* Each row can be an anchoring container for the dropdown */
+.inventory-table tr {
+  position: relative;
+}
+
+/* Row looks "out-of-service" without dimming controls */
+.row-oos {
+  background:
+    linear-gradient(0deg, rgba(255, 77, 77, 0.06), rgba(255, 77, 77, 0.06)) !important;
+}
+
+.row-oos .btn,
+.row-oos [class*="actions"],
+.row-oos .dropdown,
+.row-oos .dropdown-menu {
+  opacity: 1 !important;
+}
+
+/* ---------- Ellipsis dropdown: make it overlay correctly ---------- */
+.row-actions {
+  position: relative;           /* anchor for menu */
+  z-index: 1;
+}
+
+.row-actions .dropdown-menu {
+  position: absolute !important;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 160px;
+  padding: 8px 0;
+  border-radius: 10px;
+  background: #0f1535;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  z-index: 9999 !important;   /* above the row */
+}
+
+.row-actions .dropdown-menu.show {
+  display: block;
+}
+
+/* Ensure the 3-dot button doesn't create a shifting "right bar" */
+.row-actions .btn-ellipses {
+  outline: none;
+}
+
+/* ---------- Inline legend bar (chips) ---------- */
+.legend-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.legend-bar .legend-label {
   font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  margin-right: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  margin-left: 8px;
-  vertical-align: middle;
-  line-height: 1.2;
+  line-height: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.chip-oos {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .chip-outsourced {
-  background: rgba(255, 159, 67, .18);
-  color: #ff9f43;
-  border: 1px solid rgba(255, 159, 67, .35);
+  color: #fff;
+  background: rgba(251, 146, 60, 0.16);
+  border-color: rgba(251, 146, 60, 0.35);
+}
+
+.chip-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--c, #60a5fa);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+}
+
+/* Make "Total Items" look tappable */
+.quick-stats .card {
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.quick-stats .card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.28);
 }
 
 /* Toast Notifications */
