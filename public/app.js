@@ -740,7 +740,7 @@ function updateDashboardStats(stats) {
 async function loadInventoryItems() {
   try {
     console.log('Loading inventory items...');
-    // Always fetch all; filtering is applied client-side via hidden lists
+    // Always fetch all items; filtering is applied client-side
     const response = await fetch(`/api/inventory`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -751,12 +751,24 @@ async function loadInventoryItems() {
       const data = await response.json();
       console.log('Inventory response:', data);
       const allItems = Array.isArray(data.items) ? data.items : [];
+      
+      // Cache all items for OOS functionality
+      _itemsCache = allItems;
+      
+      // Apply list filtering
       const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
       console.log('Hidden lists:', hiddenLists);
-      const visibleItems = allItems.filter(
+      let visibleItems = allItems.filter(
         (item) => !item.listId || !hiddenLists.includes(item.listId),
       );
-      console.log('Visible items:', visibleItems.length, 'of', allItems.length);
+      
+      // Apply OOS filtering
+      const showOOS = getShowOOS();
+      if (!showOOS) {
+        visibleItems = visibleItems.filter(item => !item.isOutOfService);
+      }
+      
+      console.log('Visible items:', visibleItems.length, 'of', allItems.length, 'showOOS:', showOOS);
       displayInventoryItems(visibleItems);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
@@ -827,6 +839,11 @@ function getListColor(listId) {
 function createInventoryRow(item) {
   const row = document.createElement('tr');
 
+  // Add OOS row styling
+  if (item.isOutOfService) {
+    row.classList.add('row-oos');
+  }
+
   // Add list color coding (background and text color)
   const listColors = getListColor(item.listId);
   console.log(
@@ -893,7 +910,7 @@ function createInventoryRow(item) {
 
   row.innerHTML = `
         <td class="column-itemType">${item.itemType || 'N/A'}</td>
-        <td class="column-nickname">${item.nickname || 'N/A'}</td>
+        <td class="column-nickname">${renderNicknameCell(item)}</td>
         <td class="column-labId">${item.labId || 'N/A'}</td>
         <td class="column-make">${item.make || 'N/A'}</td>
         <td class="column-model">${item.model || 'N/A'}</td>
@@ -918,15 +935,11 @@ function createInventoryRow(item) {
                 <button class="action-btn action-btn-plus" onclick="showQuickAddRecord('${item.id}')" title="Add Calibration/Maintenance Record">
                     <i class="fas fa-plus"></i>
                 </button>
-                <div class="action-menu" data-id="${item.id}">
+                <div class="action-menu-container" data-id="${item.id}">
                     <button class="action-menu-button" title="More actions" onclick="toggleActionMenu(event)">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <div class="action-menu-list">
-                        <button onclick="editItem('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="markOutOfService('${item.id}')"><i class="fas fa-times"></i> Mark Out of Service</button>
-                        <button class="delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
+                    ${buildActionsMenuHTML(item)}
                 </div>
             </div>
         </td>
@@ -3764,8 +3777,236 @@ async function apiFetchSummary() {
   return await response.json();
 }
 
+// ===== OOS FRONTEND FUNCTIONALITY =====
+
+// --- OOS visibility preference (default true)
+const OOS_KEY = 'inv.showOOS';
+function getShowOOS() {
+  const v = localStorage.getItem(OOS_KEY);
+  return v === null ? true : v === 'true';
+}
+function setShowOOS(val) {
+  localStorage.setItem(OOS_KEY, String(!!val));
+}
+
+// --- Small helpers for modals
+function openModal(id) { 
+  document.getElementById(id)?.classList.remove('hidden'); 
+}
+function closeModal(id) { 
+  document.getElementById(id)?.classList.add('hidden'); 
+}
+
+// --- Updated API wrappers to match our backend endpoints
+async function apiMarkOutOfServiceFixed(id, payload) {
+  const res = await fetch(`/api/inventory/${id}/out-of-service`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to mark OOS');
+  }
+  return res.json();
+}
+
+async function apiReturnToServiceFixed(id, payload) {
+  const res = await fetch(`/api/inventory/${id}/return-to-service`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to return to service');
+  }
+  return res.json();
+}
+
+async function apiFetchItemsFixed(options = {}) {
+  const params = new URLSearchParams();
+  
+  if (options.includeOOS !== undefined) {
+    params.append('includeOOS', options.includeOOS.toString());
+  }
+  
+  if (options.listId && options.listId !== 'all') {
+    params.append('listId', options.listId);
+  }
+
+  const url = `/api/inventory${params.toString() ? '?' + params.toString() : ''}`;
+  
+  const res = await fetch(url, {
+    headers: { 
+      'Authorization': `Bearer ${getAuthToken()}`
+    }
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch items');
+  }
+  return res.json();
+}
+
+async function apiFetchSummaryFixed() {
+  const res = await fetch('/api/inventory/stats/overview', {
+    headers: { 
+      'Authorization': `Bearer ${getAuthToken()}`
+    }
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch summary');
+  }
+  return res.json();
+}
+
+// --- Global cache for items
+let _itemsCache = [];
+
+// --- Render nickname cell with OOS chip
+function renderNicknameCell(item) {
+  const safeName = escapeHtml(item.nickname || '—');
+  if (item.isOutOfService) {
+    return `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>${safeName}</span>
+        <span class="chip chip-oos">OOS</span>
+      </div>
+    `;
+  }
+  return `<span>${safeName}</span>`;
+}
+
+// --- Build actions menu HTML with OOS options
+function buildActionsMenuHTML(item) {
+  const common = `
+    <button class="menu-item" data-action="view" data-id="${item.id}">👁️ View</button>
+  `;
+  const oos = `<button class="menu-item" style="color: #ffb3b3;" data-action="mark-oos" data-id="${item.id}">⛔ Mark Out of Service…</button>`;
+  const rts = `<button class="menu-item" data-action="return" data-id="${item.id}">↩️ Return to Service…</button>`;
+  const del = `<button class="menu-item" style="color: #ff6b6b;" data-action="delete" data-id="${item.id}">🗑️ Delete</button>`;
+  
+  return `
+    <div class="action-menu">
+      ${common}
+      ${item.isOutOfService ? rts : oos}
+      ${del}
+    </div>
+  `;
+}
+
 // Make functions globally available for ChatGPT's frontend code
 window.apiMarkOutOfService = apiMarkOutOfService;
 window.apiReturnToService = apiReturnToService;
 window.apiFetchItems = apiFetchItems;
 window.apiFetchSummary = apiFetchSummary;
+
+// Also make the fixed versions available
+window.apiMarkOutOfServiceFixed = apiMarkOutOfServiceFixed;
+window.apiReturnToServiceFixed = apiReturnToServiceFixed;
+window.apiFetchItemsFixed = apiFetchItemsFixed;
+window.apiFetchSummaryFixed = apiFetchSummaryFixed;
+
+// ===== OOS EVENT HANDLERS =====
+
+// Initialize OOS functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Set up OOS visibility toggle
+  const chkDrawer = document.getElementById('drawerShowOOS');
+  if (chkDrawer) {
+    chkDrawer.checked = getShowOOS();
+    chkDrawer.addEventListener('change', () => {
+      setShowOOS(chkDrawer.checked);
+      loadInventoryItems(); // re-render with new filter
+    });
+  }
+
+  // Modal close buttons
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+  });
+
+  // OOS form submit
+  const formOOS = document.getElementById('form-oos');
+  if (formOOS) {
+    formOOS.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('oos-item-id').value;
+      const reason = document.getElementById('oos-reason').value.trim();
+      const notes = document.getElementById('oos-notes').value.trim() || undefined;
+      if (!reason) return alert('Reason is required');
+      try {
+        await apiMarkOutOfServiceFixed(id, { reason, notes });
+        closeModal('modal-oos');
+        await refreshData();
+        showToast('Item marked out of service', 'success');
+      } catch (err) {
+        console.error('Error marking OOS:', err);
+        showToast(err.message || 'Failed to mark out of service', 'error');
+      }
+    });
+  }
+
+  // Return-to-service form submit
+  const formRTS = document.getElementById('form-rts');
+  if (formRTS) {
+    formRTS.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('rts-item-id').value;
+      const notes = document.getElementById('rts-notes').value.trim() || undefined;
+      try {
+        await apiReturnToServiceFixed(id, { verified: true, verifiedBy: 'User', notes });
+        closeModal('modal-rts');
+        await refreshData();
+        showToast('Item returned to service', 'success');
+      } catch (err) {
+        console.error('Error returning to service:', err);
+        showToast(err.message || 'Failed to return to service', 'error');
+      }
+    });
+  }
+});
+
+// Action menu click handler (delegated)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+  
+  if (action === 'mark-oos') {
+    document.getElementById('oos-item-id').value = id;
+    document.getElementById('oos-reason').value = '';
+    document.getElementById('oos-notes').value = '';
+    openModal('modal-oos');
+  } else if (action === 'return') {
+    document.getElementById('rts-item-id').value = id;
+    document.getElementById('rts-notes').value = '';
+    openModal('modal-rts');
+  } else if (action === 'view') {
+    viewItem(id);
+  } else if (action === 'delete') {
+    deleteItem(id);
+  }
+});
+
+// Refresh data function for OOS operations
+async function refreshData() {
+  try {
+    await Promise.all([
+      loadInventoryItems(),
+      loadStats()
+    ]);
+  } catch (error) {
+    console.error('Error refreshing data:', error);
+  }
+}

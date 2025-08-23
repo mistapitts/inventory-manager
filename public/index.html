@@ -444,6 +444,18 @@
                               <input type="checkbox" data-column="notes" checked /> Notes
                             </label>
                           </div>
+
+                          <!-- OOS Visibility Section -->
+                          <div class="column-customizer-header">
+                            <h4>Out of Service</h4>
+                          </div>
+                          <div class="mt-3" id="oos-visibility-block">
+                            <label class="column-option">
+                              <input type="checkbox" id="drawerShowOOS" checked />
+                              Show Out of Service items
+                            </label>
+                            <p class="text-xs opacity-70 mt-1" style="font-size: 12px; opacity: 0.7; margin-top: 4px; color: #b8b8d1;">Toggle visibility without refetching. Default is ON.</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1023,6 +1035,40 @@
             </div>
           </form>
         </div>
+      </div>
+    </div>
+
+    <!-- Mark Out of Service modal -->
+    <div id="modal-oos" class="modal hidden">
+      <div class="modal-card">
+        <h3>Mark Out of Service</h3>
+        <form id="form-oos">
+          <input type="hidden" id="oos-item-id" />
+          <label class="block text-sm mt-2">Reason <span class="text-red-400">*</span></label>
+          <input id="oos-reason" class="input" required maxlength="200" />
+          <label class="block text-sm mt-3">Notes (optional)</label>
+          <textarea id="oos-notes" class="textarea" maxlength="500"></textarea>
+          <div class="flex justify-end gap-2 mt-4">
+            <button type="button" class="btn btn-ghost" data-close="modal-oos">Cancel</button>
+            <button type="submit" class="btn btn-danger">Mark OOS</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Return to Service modal -->
+    <div id="modal-rts" class="modal hidden">
+      <div class="modal-card">
+        <h3>Return to Service</h3>
+        <form id="form-rts">
+          <input type="hidden" id="rts-item-id" />
+          <label class="block text-sm mt-2">Notes (optional)</label>
+          <textarea id="rts-notes" class="textarea" maxlength="500"></textarea>
+          <div class="flex justify-end gap-2 mt-4">
+            <button type="button" class="btn btn-ghost" data-close="modal-rts">Cancel</button>
+            <button type="submit" class="btn btn-primary">Return to Service</button>
+          </div>
+        </form>
       </div>
     </div>
 

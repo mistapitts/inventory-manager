@@ -3051,3 +3051,154 @@ body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
+
+/* --- OOS chip next to Nickname --- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+.chip-oos {
+  background: #3b0a0a;
+  color: #ffb3b3;
+  border-color: rgba(255, 64, 64, 0.35);
+}
+
+/* --- OOS row tint (no opacity!) --- */
+.row-oos {
+  background: linear-gradient(0deg, rgba(255,64,64,0.08), rgba(255,64,64,0.08));
+}
+
+/* Ensure action menus always render above rows */
+.table-col-actions,
+.table-col-actions .action-menu,
+.table-col-actions * {
+  position: relative;
+  z-index: 9999;
+}
+
+/* Make sure table wrappers don't clip menus */
+.inventory-table-wrap,
+.table-scroll,
+.table-container {
+  overflow: visible !important;
+}
+
+/* Legend & toolbar helpers (no scrollbars) */
+.legend-inline { 
+  flex-shrink: 0; 
+  overflow: visible; 
+}
+
+/* OOS modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50000;
+}
+.modal.hidden {
+  display: none;
+}
+.modal-card {
+  background: #1a1a2e;
+  border: 1px solid #2d2d5a;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.modal-card .input,
+.modal-card .textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #2d2d5a;
+  border-radius: 6px;
+  background: #2a2a4a;
+  color: #ffffff;
+  font-family: inherit;
+  margin-top: 4px;
+}
+.modal-card .textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.modal-card .btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.modal-card .btn-ghost {
+  background: transparent;
+  border-color: #2d2d5a;
+  color: #b8b8d1;
+}
+.modal-card .btn-ghost:hover {
+  background: #2a2a4a;
+}
+.modal-card .btn-danger {
+  background: #ef4444;
+  color: white;
+}
+.modal-card .btn-danger:hover {
+  background: #dc2626;
+}
+.modal-card .btn-primary {
+  background: #4f46e5;
+  color: white;
+}
+.modal-card .btn-primary:hover {
+  background: #4338ca;
+}
+.modal-card .flex {
+  display: flex;
+}
+.modal-card .justify-end {
+  justify-content: flex-end;
+}
+.modal-card .gap-2 {
+  gap: 8px;
+}
+.modal-card .mt-2 {
+  margin-top: 8px;
+}
+.modal-card .mt-3 {
+  margin-top: 12px;
+}
+.modal-card .mt-4 {
+  margin-top: 16px;
+}
+.modal-card .block {
+  display: block;
+}
+.modal-card .text-sm {
+  font-size: 14px;
+}
+.modal-card .text-red-400 {
+  color: #f87171;
+}
