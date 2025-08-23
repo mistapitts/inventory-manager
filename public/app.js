@@ -3944,20 +3944,18 @@ function renderNicknameCell(item) {
   return `<span>${safeName}</span>`;
 }
 
-// --- Build actions menu HTML with OOS options
+// --- Build actions menu HTML with OOS options (no duplicate View button)
 function buildActionsMenuHTML(item) {
-  const common = `
-    <button class="menu-item" data-action="view" data-id="${item.id}">👁️ View</button>
-  `;
-  const oos = `<button class="menu-item" style="color: #ffb3b3;" data-action="mark-oos" data-id="${item.id}">⛔ Mark Out of Service…</button>`;
-  const rts = `<button class="menu-item" data-action="return" data-id="${item.id}">↩️ Return to Service…</button>`;
-  const del = `<button class="menu-item" style="color: #ff6b6b;" data-action="delete" data-id="${item.id}">🗑️ Delete</button>`;
+  const editAction = `<button class="menu-item" onclick="editItem('${item.id}')">✏️ Edit</button>`;
+  const oosAction = `<button class="menu-item" data-action="mark-oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
+  const rtsAction = `<button class="menu-item" data-action="return" data-id="${item.id}">↩️ Return to Service</button>`;
+  const deleteAction = `<button class="menu-item" style="color: #ff6b6b;" onclick="deleteItem('${item.id}')">🗑️ Delete</button>`;
   
   return `
     <div class="action-menu">
-      ${common}
-      ${item.isOutOfService ? rts : oos}
-      ${del}
+      ${editAction}
+      ${item.isOutOfService ? rtsAction : oosAction}
+      ${deleteAction}
     </div>
   `;
 }
