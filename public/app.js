@@ -89,6 +89,24 @@ function setupEventListeners() {
     createListFromFormBtn.addEventListener('click', showCreateListFromFormModal);
   }
 
+  // OOS visibility toggle
+  const chkDrawer = document.getElementById('drawerShowOOS');
+  if (chkDrawer) {
+    chkDrawer.checked = getShowOOS();
+    chkDrawer.addEventListener('change', () => {
+      setShowOOS(chkDrawer.checked);
+      loadInventoryItems(); // re-render with new filter
+    });
+  }
+
+  // Modal close buttons for OOS
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+  });
+
+  // Setup OOS form handlers
+  setupOOSFormHandlers();
+
   // Maintenance checkbox toggle
   const useMaintenanceCheckbox = document.getElementById('useMaintenance');
   const maintenanceFields = document.getElementById('maintenanceFields');
@@ -738,43 +756,53 @@ function updateDashboardStats(stats) {
 }
 
 async function loadInventoryItems() {
-  try {
-    console.log('Loading inventory items...');
-    // Always fetch all items; filtering is applied client-side
-    const response = await fetch(`/api/inventory`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+  const showOOS = getShowOOS();
+  logStep('loadInventoryItems:start', { showOOS, cacheLen: _itemsCache.length });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Inventory response:', data);
-      const allItems = Array.isArray(data.items) ? data.items : [];
-      
-      // Cache all items for OOS functionality
-      _itemsCache = allItems;
-      
-      // Apply list filtering
-      const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
-      console.log('Hidden lists:', hiddenLists);
-      let visibleItems = allItems.filter(
-        (item) => !item.listId || !hiddenLists.includes(item.listId),
-      );
-      
-      // Apply OOS filtering
-      const showOOS = getShowOOS();
-      if (!showOOS) {
-        visibleItems = visibleItems.filter(item => !item.isOutOfService);
+  // If cache is empty, fetch fresh data
+  if (_itemsCache.length === 0) {
+    try {
+      console.log('Loading inventory items...');
+      const response = await fetch(`/api/inventory`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Inventory response:', data);
+        const allItems = Array.isArray(data.items) ? data.items : [];
+        _itemsCache = allItems;
+        logStep('loadInventoryItems:fetched', { count: allItems.length });
+      } else {
+        console.error('Failed to load inventory:', response.status, response.statusText);
+        _itemsCache = [];
       }
-      
-      console.log('Visible items:', visibleItems.length, 'of', allItems.length, 'showOOS:', showOOS);
-      displayInventoryItems(visibleItems);
-    } else {
-      console.error('Failed to load inventory:', response.status, response.statusText);
+    } catch (error) {
+      console.error('Error loading inventory items:', error);
+      _itemsCache = [];
     }
-  } catch (error) {
-    console.error('Error loading inventory items:', error);
+  }
+
+  // Apply list filtering
+  const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
+  let visibleItems = _itemsCache.filter(
+    (item) => !item.listId || !hiddenLists.includes(item.listId),
+  );
+  
+  // Apply OOS filtering
+  if (!showOOS) {
+    visibleItems = visibleItems.filter(item => !item.isOutOfService);
+  }
+  
+  logStep('loadInventoryItems:afterFilter', { rows: visibleItems.length });
+
+  try {
+    displayInventoryItems(visibleItems);
+    logStep('loadInventoryItems:rendered');
+  } catch (e) {
+    console.error('[INV] displayInventoryItems error', e);
   }
 }
 
@@ -783,26 +811,49 @@ function displayInventoryItems(items) {
   const inventorySection = document.getElementById('inventorySection');
   const tableBody = document.getElementById('inventoryTableBody');
 
+  logStep('displayInventoryItems:start', { itemCount: Array.isArray(items) ? items.length : 'not-array', hasTableBody: !!tableBody });
+
   // Keep a global copy so actions like Edit can find items quickly
   window.inventoryItems = Array.isArray(items) ? items : [];
+
+  if (!tableBody) {
+    console.error('[INV] tbody #inventoryTableBody not found');
+    return;
+  }
+
+  // Clear existing table rows
+  tableBody.innerHTML = '';
 
   if (Array.isArray(items) && items.length > 0) {
     // Hide welcome message, show inventory
     if (welcomeMessage) welcomeMessage.style.display = 'none';
     if (inventorySection) inventorySection.style.display = 'block';
 
-    // Clear existing table rows
-    if (tableBody) tableBody.innerHTML = '';
-
-    // Add items to table
-    items.forEach((item) => {
-      const row = createInventoryRow(item);
-      if (tableBody) tableBody.appendChild(row);
+    // Add items to table using document fragment for performance
+    const fragment = document.createDocumentFragment();
+    items.forEach((item, index) => {
+      try {
+        const row = createInventoryRow(item);
+        fragment.appendChild(row);
+      } catch (e) {
+        console.warn(`[INV] row render error for item ${index}:`, item?.id, e);
+      }
     });
+    tableBody.appendChild(fragment);
+    logStep('displayInventoryItems:rowsAdded', { count: items.length });
   } else {
-    // Show welcome message, hide inventory
-    if (welcomeMessage) welcomeMessage.style.display = 'block';
-    if (inventorySection) inventorySection.style.display = 'none';
+    // Show empty state in table
+    if (inventorySection) inventorySection.style.display = 'block';
+    if (welcomeMessage) welcomeMessage.style.display = 'none';
+    
+    tableBody.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="16" style="padding: 2rem; text-align: center; opacity: 0.7; color: #b8b8d1;">
+          ${_itemsCache.length === 0 ? 'No items found. Try adding some inventory items.' : 'No items match the current filters.'}
+        </td>
+      </tr>
+    `;
+    logStep('displayInventoryItems:emptyState');
   }
 }
 
@@ -3783,10 +3834,14 @@ async function apiFetchSummary() {
 const OOS_KEY = 'inv.showOOS';
 function getShowOOS() {
   const v = localStorage.getItem(OOS_KEY);
-  return v === null ? true : v === 'true';
+  const result = v === null ? true : v === 'true';
+  logStep('getShowOOS', { stored: v, result });
+  return result;
 }
 function setShowOOS(val) {
-  localStorage.setItem(OOS_KEY, String(!!val));
+  const boolVal = !!val;
+  localStorage.setItem(OOS_KEY, String(boolVal));
+  logStep('setShowOOS', { val, stored: boolVal });
 }
 
 // --- Small helpers for modals
@@ -3873,8 +3928,12 @@ let _itemsCache = [];
 
 // --- Render nickname cell with OOS chip
 function renderNicknameCell(item) {
-  const safeName = escapeHtml(item.nickname || '—');
-  if (item.isOutOfService) {
+  const name = (item?.nickname ?? item?.name ?? '').trim() || '—';
+  const safeName = typeof escapeHtml === 'function' ? escapeHtml(name) : name.replace(/[<>&"']/g, (m) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+  
+  if (item?.isOutOfService) {
     return `
       <div style="display: flex; align-items: center; gap: 8px;">
         <span>${safeName}</span>
@@ -3917,23 +3976,8 @@ window.apiFetchSummaryFixed = apiFetchSummaryFixed;
 
 // ===== OOS EVENT HANDLERS =====
 
-// Initialize OOS functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  // Set up OOS visibility toggle
-  const chkDrawer = document.getElementById('drawerShowOOS');
-  if (chkDrawer) {
-    chkDrawer.checked = getShowOOS();
-    chkDrawer.addEventListener('change', () => {
-      setShowOOS(chkDrawer.checked);
-      loadInventoryItems(); // re-render with new filter
-    });
-  }
-
-  // Modal close buttons
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
-  });
-
+// OOS form handlers (called from setupEventListeners)
+function setupOOSFormHandlers() {
   // OOS form submit
   const formOOS = document.getElementById('form-oos');
   if (formOOS) {
@@ -3973,7 +4017,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-});
+}
 
 // Action menu click handler (delegated)
 document.addEventListener('click', (e) => {
@@ -3999,14 +4043,35 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// TEMP robust logging
+function logStep(step, extra) {
+  console.log(`[INV] ${step}`, extra ?? '');
+}
+
 // Refresh data function for OOS operations
 async function refreshData() {
+  logStep('refreshData:start');
+  let items, summary;
   try {
-    await Promise.all([
-      loadInventoryItems(),
-      loadStats()
-    ]);
-  } catch (error) {
-    console.error('Error refreshing data:', error);
+    const [itemsRes, summaryRes] = await Promise.all([apiFetchItemsFixed(), apiFetchSummaryFixed()]);
+    items = itemsRes?.items || itemsRes; // Handle both {items: []} and [] formats
+    summary = summaryRes;
+  } catch (e) {
+    console.error('[INV] fetch failed', e);
+    items = []; 
+    summary = null;
   }
+  logStep('refreshData:fetched', { count: Array.isArray(items) ? items.length : 'n/a', sample: items?.[0] });
+
+  _itemsCache = Array.isArray(items) ? items : [];
+  try {
+    if (summary && typeof renderSummary === 'function') {
+      renderSummary(summary);
+    } else {
+      loadStats(); // fallback to existing stats loading
+    }
+  } catch (e) {
+    console.warn('[INV] renderSummary error', e);
+  }
+  loadInventoryItems();
 }
