@@ -344,32 +344,34 @@
 
               <div class="inventory-main-content">
                 <div class="inventory-table-container">
-                  <h3 class="inventory-table-title">Inventory</h3>
-                  
-                  <!-- Inventory toolbar -->
-                  <div id="inventory-toolbar" class="inventory-toolbar">
-                    <button id="btnEditLists" class="btn btn-primary btn-icon-left">
-                      <span class="icon-doc"></span>
-                      Edit Lists and Columns
-                    </button>
+                  <!-- INVENTORY TOOLBAR -->
+                  <div class="inv-toolbar card">
+                    <div class="inv-toolbar__left">
+                      <h2 class="inv-title">Inventory</h2>
+                    </div>
 
-                    <div class="spacer"></div>
+                    <div class="inv-toolbar__right">
+                      <button id="btnEditLists" class="btn btn-primary btn-icon">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
+                        Edit Lists and Columns
+                      </button>
 
-                    <label class="toolbar-check">
-                      <input id="chkShowOOS" type="checkbox" />
-                      <span>Show Out of Service</span>
-                    </label>
+                      <label class="chk inline" for="chkShowOOS">
+                        <input id="chkShowOOS" type="checkbox" />
+                        <span>Show Out of Service</span>
+                      </label>
 
-                    <div class="toolbar-legend">
-                      <span class="legend-label">Legend:</span>
-                      <span class="badge-oos">OOS</span>
-                      <span class="chip-outsourced">Outsourced</span>
-                      <span id="legendLab" class="chip-lab">Lab</span>
+                      <div class="inv-legend">
+                        <span class="legend-label">Legend:</span>
+                        <span class="badge badge-oos">OOS</span>
+                        <span class="chip chip-outsourced">Outsourced</span>
+                        <span class="chip chip-lab" id="legendLabChip">Lab</span>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- keep a real gap between toolbar and table (no overlap tricks) -->
-                  <div class="inventory-toolbar-gap" aria-hidden="true"></div>
+                  <!-- Divider gap (real space) -->
+                  <div class="inv-gap"></div>
 
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
                           <!-- Lists Section -->
@@ -473,7 +475,8 @@
                     </div>
                   </div>
 
-                  <div class="inventory-table-wrap">
+                  <!-- TABLE WRAP (leave your existing table inside this wrapper) -->
+                  <div class="inventory-table-wrap card">
                     <table class="inventory-table" id="inventoryTable">
                       <thead id="inventory-thead">
                         <tr>
@@ -1146,6 +1149,6 @@
     </div>
 
     <div id="menu-portal-root"></div>
-    <script src="/app.js?v=toolbar-polish-1"></script>
+    <script src="/app.js?v=ui-restore-1"></script>
   </body>
 </html>

@@ -1036,57 +1036,127 @@ td.actions-cell::after {
   content: none !important; 
 }
 
-/* --- Inventory toolbar card --- */
-.inventory-toolbar{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:10px 12px;
-  background:#191f35;                    /* match your panel tone */
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
-  overflow:visible !important;            /* never show a tiny scrollbar */
-}
-.inventory-toolbar .spacer{ flex:1 1 auto; }
-
-.inventory-toolbar-gap{
-  height:14px;                            /* the space you asked to keep */
+/* ===== Card + layout ===== */
+.card{
+  background: #141a33; /* matches your theme */
+  border: 1px solid rgba(142,142,189,0.18);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
-/* Toolbar bits */
-.toolbar-check{
-  display:flex; align-items:center; gap:8px;
-  color:#cfd6ff; font-size:14px; user-select:none;
+.inv-toolbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 14px 18px;
 }
-.toolbar-check input{ width:16px; height:16px; }
 
-.toolbar-legend{
-  display:flex; align-items:center; gap:8px;
-  color:#98a2c9; font-size:12px; white-space:nowrap;
-  flex-shrink:0;                          /* prevents legend-induced scrollbar */
+.inv-toolbar__right{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
 }
-.toolbar-legend .legend-label{ opacity:.8 }
 
-/* Chips/badges already exist, just make sure they don't cause overflow */
-.badge-oos,
-.chip-outsourced,
-.chip-lab{ flex-shrink:0 }
+.inv-title{
+  font-size: 20px; font-weight: 700; margin:0; color: #e7ebff;
+}
 
-/* View pill with clean vector eye */
+/* Consistent gap above the table */
+.inv-gap{ height:14px; }
+
+/* Table container */
+.inventory-table-wrap{
+  overflow: visible;         /* allow menus to escape */
+  padding: 0;                /* table handles its own padding */
+}
+
+/* Right page breathing room */
+.page-content,
+.main-content,
+.inventory-page{
+  padding-right: 16px;       /* keep a tiny right gutter */
+}
+
+/* ===== Buttons ===== */
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:10px; border:1px solid rgba(142,142,189,0.2);
+  background:#1b2340; color:#e7e9ff; font-weight:600; cursor: pointer;
+}
+.btn:hover{ background:#202a52; }
+
+.btn-primary{
+  background:#655BFF; border-color:transparent; color:white;
+}
+.btn-primary:hover{ background:#564ef2; }
+
+.btn-icon .icon{ width:16px; height:16px; }
+
+/* View pill specifically with vector eye */
 .btn-view{
-  display:inline-flex; align-items:center; gap:6px;
-  background:#1b2340; border:1px solid rgba(255,255,255,.08);
-  color:#e7ebff; padding:6px 10px; border-radius:10px;
-  font-weight:600; font-size:12.5px; cursor:pointer;
+  background:#1b2340; border-color:rgba(142,142,189,0.2);
 }
-.btn-view:hover{ background:#222b4e; }
+.btn-view .icon{ width:16px; height:16px; }
 
-/* SVG icon sizing (also used in other tiny buttons if you reuse) */
-.btn-view svg,
-.btn-icon svg{
-  width:16px; height:16px; display:block;
+/* Round icon buttons (+, ⋮) */
+.icon-btn{
+  width:34px; height:34px; border-radius:10px; display:inline-grid; place-items:center;
+  background:#1b2340; border:1px solid rgba(142,142,189,0.2); color:#e7e9ff; cursor: pointer;
 }
+.icon-btn:hover{ background:#202a52; }
+
+/* ===== Legend ===== */
+.inv-legend{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.legend-label{ color:#a8acd9; font-size:12px; }
+
+.badge{
+  display:inline-flex; align-items:center; height:22px;
+  padding:0 8px; border-radius:999px; font-weight:700; font-size:12px;
+}
+.badge-oos{ background:#3a1013; color:#ff7b85; border:1px solid #762028; }
+
+.chip{
+  display:inline-flex; align-items:center; height:22px;
+  padding:0 8px; border-radius:999px; font-weight:600; font-size:12px;
+  border:1px solid rgba(255,255,255,0.12);
+}
+.chip-outsourced{ background:#2a1d0a; color:#f7b04a; border-color:#6b4b12; }
+.chip-lab{ background:var(--lab-bg, #1b263b); color:var(--lab-fg, #b7c2ff); border-color:rgba(255,255,255,0.12); }
+
+/* Checkbox styling */
+.chk{ display:flex; align-items:center; gap:8px; color:#cfd6ff; font-size:14px; user-select:none; }
+.chk input{ width:16px; height:16px; }
+
+/* ===== Left status rails (restores the missing colored chips) ===== */
+.inventory-table tr{ position:relative; }
+.inventory-table tr::before{
+  content:""; position:absolute; left:6px; top:8px; bottom:8px; width:6px; border-radius:4px;
+  background:transparent;
+}
+.inventory-table tr.row-oos::before{ background:#dc3545; }             /* red rail */
+.inventory-table tr.row-outsourced::before{ background:#f59e0b; }       /* amber rail */
+
+/* ===== Sticky actions column (keeps right column visible) ===== */
+.inventory-table th.actions-col,
+.inventory-table td.actions-col{
+  position: sticky; right: 0;
+  background: #0e1330;            /* match table row bg so it blends */
+  z-index: 5;                      /* above cells, below menus */
+}
+
+/* ===== Action menu (rendered inside body; must float above all) ===== */
+.action-menu{
+  position: fixed; z-index: 2000;  /* higher than sticky cells */
+  min-width: 190px; border-radius: 10px; overflow: hidden;
+  background:#121735; border:1px solid rgba(142,142,189,0.25);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+}
+.action-menu .mi{
+  display:flex; align-items:center; gap:8px; padding:10px 12px;
+  cursor:pointer; color:#e7e9ff; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.action-menu .mi:last-child{ border-bottom:0; }
+.action-menu .mi:hover{ background:#1a2147; }
+.action-menu .mi .icon{ width:16px; height:16px; }
+
+/* ensure no ancestor clips popovers */
+.inventory-table-wrap, .inv-toolbar, .page, body { overflow: visible !important; }
 
 /* --- Table wrapper and rows --- */
 .inventory-table-wrap { 

@@ -1073,6 +1073,11 @@ function createInventoryRow(item) {
   if (item.isOutOfService === 1 || item.isOutOfService === true) {
     row.classList.add('row-oos');
   }
+  
+  // Add outsourced styling for status rail
+  if (item.isOutsourced === 1 || item.isOutsourced === true) {
+    row.classList.add('row-outsourced');
+  }
 
   // Add list ID attribute for CSS targeting
   if (item.listId) {
@@ -1181,38 +1186,24 @@ function hexToRgba(hex, alpha = 0.2) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// ---- Vector eye icon helper ----
-function eyeSvg() {
-  // Clean outline eye (optimized heroicons style)
-  return `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
-      <circle cx="12" cy="12" r="3.2"></circle>
-    </svg>`;
-}
-
-// ---- Single source of truth for Actions cell ----
-function buildActionsCell(item) {
+// ---- Actions cell builder ----
+function buildActionsCell(item){
   const td = document.createElement('td');
   td.className = 'actions-col';
-
+  
   td.innerHTML = `
     <div class="actions-stack" data-item-id="${item.id}">
-      <button class="btn-view" data-action="view" data-id="${item.id}">
-        ${eyeSvg()} <span>View</span>
+      <button class="btn btn-view" data-id="${item.id}">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke-width="2"/>
+          <circle cx="12" cy="12" r="3" stroke-width="2"/>
+        </svg>
+        <span>View</span>
       </button>
-      <button class="icon-btn" data-action="quick-add" data-id="${item.id}" aria-label="Quick add">+</button>
-      <button class="icon-btn more" data-action="menu" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋮</button>
-
-      <div class="action-menu" role="menu" aria-hidden="true">
-        <button class="menu-item" data-action="edit" role="menuitem">✏️ Edit</button>
-        <button class="menu-item" data-action="return" role="menuitem">↩️ Return to Service</button>
-        <button class="menu-item" data-action="oos" role="menuitem">⛔ Mark Out of Service</button>
-        <hr class="menu-sep" />
-        <button class="menu-item danger" data-action="delete" role="menuitem">🗑️ Delete</button>
-      </div>
-    </div>
-  `;
+      <button class="icon-btn add"  data-id="${item.id}">+</button>
+      <button class="icon-btn more" data-id="${item.id}" aria-expanded="false">⋮</button>
+    </div>`;
+  
   return td;
 }
 
@@ -1315,92 +1306,85 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// ---------- Menu Controller (portal) ----------
-const portalRoot = document.getElementById('menu-portal-root');
+// ---- Bulletproof menu controller ----
+let openMenu = null;
 
-function closeAnyMenu() {
-  if (portalRoot) portalRoot.innerHTML = ''; // remove existing menu portal
-  document.removeEventListener('keydown', onEscClose);
-  window.removeEventListener('scroll', closeAnyMenu, { capture: true });
-  window.removeEventListener('resize', closeAnyMenu);
+function closeMenu(){
+  if (!openMenu) return;
+  openMenu.remove();
+  openMenu = null;
 }
 
-function onEscClose(e){ if (e.key === 'Escape') closeAnyMenu(); }
+function toggleActionMenu(button, item){
+  if (openMenu) closeMenu();
 
-/** open the actions menu near the trigger button; menu is rendered in body */
-function openActionsMenuFor(item, triggerBtn) {
-  closeAnyMenu();
-
-  const r = triggerBtn.getBoundingClientRect();
-  // Construct portal container
-  const portal = document.createElement('div');
-  portal.className = 'menu-portal';
-  portal.style.left = `${Math.min(r.left, window.innerWidth - 260)}px`;
-  portal.style.top  = `${Math.min(r.bottom + 6, window.innerHeight - 260)}px`;
-
+  const rect = button.getBoundingClientRect();
   const menu = document.createElement('div');
   menu.className = 'action-menu';
   menu.innerHTML = `
-    <div class="row" data-cmd="edit">✏️ Edit</div>
-    ${item.isOutOfService ? 
-      `<div class="row" data-cmd="return">↩️ Return to Service</div>` :
-      `<div class="row" data-cmd="oos">⛔ Mark Out of Service</div>`
-    }
-    <div class="sep"></div>
-    <div class="row" data-cmd="delete" style="color:#ffb3b3">🗑️ Delete</div>
+    <div class="mi" data-act="edit"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Edit</div>
+    <div class="mi" data-act="return"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12h12m0 0-4-4m4 4-4 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Return to Service</div>
+    <div class="mi" data-act="oos"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Mark Out of Service</div>
+    <div class="mi" data-act="delete"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 7h12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m1 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h10Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete</div>
   `;
+  document.body.appendChild(menu);
+  openMenu = menu;
 
-  portal.appendChild(menu);
-  portalRoot.appendChild(portal);
+  // Position (viewport clamping)
+  const mw = Math.max(190, menu.offsetWidth);
+  let left = rect.right - mw;  // align right edges
+  let top  = rect.bottom + 8;
 
-  // Outside click = close
-  setTimeout(() => {
-    const onDoc = (ev) => {
-      if (!menu.contains(ev.target) && ev.target !== triggerBtn) closeAnyMenu();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  if (left + mw > vw - 8) left = vw - mw - 8;
+  if (left < 8) left = 8;
+  const mh = menu.offsetHeight;
+  if (top + mh > vh - 8) top = rect.top - mh - 8;
+
+  menu.style.left = `${left}px`;
+  menu.style.top  = `${top}px`;
+
+  // Wire actions
+  menu.addEventListener('click', (e)=>{
+    const act = e.target.closest('.mi')?.dataset.act;
+    if (!act) return;
+    closeMenu();
+    if (act === 'edit')        handleEditItem(item.id);
+    if (act === 'return')      showReturnToServiceModal(item.id);
+    if (act === 'oos')         showOutOfServiceModal(item.id);
+    if (act === 'delete')      handleDeleteItem(item.id);
+  });
+
+  // Close handlers
+  setTimeout(()=>{
+    const off = (ev)=>{
+      if (menu.contains(ev.target) || ev.target === button) return;
+      window.removeEventListener('mousedown', off, true);
+      window.removeEventListener('scroll', off, true);
+      window.removeEventListener('resize', off, true);
+      window.removeEventListener('keydown', key, true);
+      closeMenu();
     };
-    document.addEventListener('mousedown', onDoc, { once: true });
-  });
-
-  document.addEventListener('keydown', onEscClose);
-  window.addEventListener('scroll', closeAnyMenu, { capture: true });
-  window.addEventListener('resize', closeAnyMenu);
-
-  // Wire menu actions
-  menu.addEventListener('click', (e) => {
-    const row = e.target.closest('.row');
-    if (!row) return;
-    const cmd = row.dataset.cmd;
-    closeAnyMenu();
-    if (cmd === 'edit') handleEditItem(item.id);
-    else if (cmd === 'oos') showOutOfServiceModal(item.id);
-    else if (cmd === 'return') showReturnToServiceModal(item.id);
-    else if (cmd === 'delete') handleDeleteItem(item.id);
-  });
+    const key = (ev)=>{ if (ev.key === 'Escape') off(ev); };
+    window.addEventListener('mousedown', off, true);
+    window.addEventListener('scroll', off, true);
+    window.addEventListener('resize', off, true);
+    window.addEventListener('keydown', key, true);
+  },0);
 }
 
-// Delegate clicks for all action cells
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-
-  const stack = btn.closest('.actions-stack');
-  if (!stack) return;
-
-  const itemId = stack.dataset.itemId || btn.dataset.id;
-  const item = window.inventoryItems?.find(x => String(x.id) === String(itemId));
-  if (!item) return;
-
-  const action = btn.dataset.action;
-
-  if (action === 'view') {
-    console.log('View item:', item.id);
+// Delegate clicks
+document.addEventListener('click', (e)=>{
+  const more = e.target.closest('.icon-btn.more');
+  if (more) {
+    const id = more.dataset.id;
+    const item = window.inventoryItems?.find(x => String(x.id) === String(id)) || { id };
+    toggleActionMenu(more, item);
+  }
+  const view = e.target.closest('.btn-view');
+  if (view) {
+    console.log('View item:', view.dataset.id);
     // TODO: Navigate to item view
-  } else if (action === 'quick-add') {
-    console.log('Quick add for item:', item.id);
-    // TODO: Open quick add modal
-  } else if (action === 'menu') {
-    btn.setAttribute('aria-expanded', 'true');
-    openActionsMenuFor(item, btn);
   }
 });
 
