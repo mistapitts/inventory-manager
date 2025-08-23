@@ -613,7 +613,16 @@ function handleNavigation(route) {
       break;
     case '#settings':
       breadcrumb.textContent = 'Settings';
-      // TODO: Load settings view
+      // Show settings section, hide others
+      const settingsSec = document.getElementById('settingsSection');
+      const invSec3 = document.getElementById('inventorySection');
+      const calSec3 = document.getElementById('calendarSection');
+      if (invSec3) invSec3.style.display = 'none';
+      if (calSec3) calSec3.style.display = 'none';
+      if (settingsSec) {
+        settingsSec.style.display = 'block';
+        loadSettingsPage();
+      }
       break;
     case '#support':
       breadcrumb.textContent = 'Support';
@@ -4309,4 +4318,138 @@ async function refreshData() {
     console.warn('[INV] renderSummary error', e);
   }
   loadInventoryItems();
+}
+
+// Settings Page Functionality
+async function loadSettingsPage() {
+  try {
+    // Get current user info
+    const response = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    if (response.ok) {
+      const user = await response.json();
+      populateUserSettings(user);
+      setupSettingsEventListeners();
+      
+      // Show/hide cards based on user role
+      const isAdminOrOwner = user.role === 'admin' || user.role === 'company_owner';
+      
+      document.getElementById('profileSettingsCard').style.display = isAdminOrOwner ? 'block' : 'none';
+      document.getElementById('passwordSettingsCard').style.display = isAdminOrOwner ? 'block' : 'none';
+      document.getElementById('companySettingsCard').style.display = user.role === 'company_owner' ? 'block' : 'none';
+      
+      if (!isAdminOrOwner) {
+        document.querySelector('.settings-grid').innerHTML = `
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <h3><i class="fas fa-info-circle"></i> Access Restricted</h3>
+              <p>Settings access is limited to administrators</p>
+            </div>
+            <div class="settings-card-content">
+              <p>Contact your system administrator to modify account settings.</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    showToast('Failed to load settings', 'error');
+  }
+}
+
+function populateUserSettings(user) {
+  document.getElementById('profileFirstName').value = user.firstName || '';
+  document.getElementById('profileLastName').value = user.lastName || '';
+  document.getElementById('profileEmail').value = user.email || '';
+  document.getElementById('profileRole').value = user.role || '';
+}
+
+function setupSettingsEventListeners() {
+  // Profile settings save
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async () => {
+      const firstName = document.getElementById('profileFirstName').value.trim();
+      const lastName = document.getElementById('profileLastName').value.trim();
+      
+      if (!firstName || !lastName) {
+        showToast('First name and last name are required', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/auth/update-profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ firstName, lastName })
+        });
+        
+        if (response.ok) {
+          showToast('Profile updated successfully', 'success');
+        } else {
+          const error = await response.json();
+          showToast(error.message || 'Failed to update profile', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        showToast('Network error. Please try again.', 'error');
+      }
+    });
+  }
+  
+  // Password change
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', async () => {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showToast('All password fields are required', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showToast('New password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/auth/change-password', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        
+        if (response.ok) {
+          showToast('Password changed successfully', 'success');
+          // Clear password fields
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          const error = await response.json();
+          showToast(error.message || 'Failed to change password', 'error');
+        }
+      } catch (error) {
+        console.error('Error changing password:', error);
+        showToast('Network error. Please try again.', 'error');
+      }
+    });
+  }
 }
