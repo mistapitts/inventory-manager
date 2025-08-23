@@ -989,9 +989,7 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
         // Get updated item to return
         const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
         // Create changelog entry
-        const logMessage = isVerified
-            ? `Returned to service (verified by ${verifiedByUser})`
-            : 'Returned to service';
+        const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedBy.trim()})`;
         await database_1.database.run(`
             INSERT INTO changelog (
                 id, itemId, userId, action, fieldName, oldValue, newValue, timestamp

@@ -1263,9 +1263,7 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
     );
 
     // Create changelog entry
-    const logMessage = isVerified 
-      ? `Returned to service (verified by ${verifiedByUser})`
-      : 'Returned to service';
+    const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedBy.trim()})`;
     
     await database.run(
       `
