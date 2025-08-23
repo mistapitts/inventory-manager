@@ -1144,30 +1144,7 @@ function createInventoryRow(item) {
         <td class="column-maintenanceDate">${lastMaintenance}</td>
         <td class="column-maintenanceDue">${maintenanceDue}</td>
         <td class="column-notes">${item.notes || 'N/A'}</td>
-        <td class="row-actions">
-            <div class="action-buttons">
-                <button class="action-btn" onclick="viewItem('${item.id}')">
-                    <i class="fas fa-eye"></i> View
-                </button>
-                <button class="action-btn action-btn-plus" onclick="showQuickAddRecord('${item.id}')" title="Add Calibration/Maintenance Record">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <div class="action-menu" data-id="${item.id}">
-                    <button class="action-menu-button btn-ellipses" title="More actions" onclick="toggleActionMenu(event)">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div class="action-menu-list dropdown-menu">
-                        <button onclick="editItem('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
-                        ${
-                          item.isOutOfService
-                            ? `<button onclick="returnToService('${item.id}')"><i class="fas fa-check"></i> Return to Service</button>`
-                            : `<button onclick="markOutOfService('${item.id}')"><i class="fas fa-times"></i> Mark Out of Service</button>`
-                        }
-                        <button class="delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i> Delete</button>
-                    </div>
-                </div>
-            </div>
-        </td>
+        ${buildActionsCell(item)}
     `;
 
   return row;
@@ -1380,6 +1357,19 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('wheel', (e) => {
   if (currentOpenMenu && !e.target.closest('.action-menu')) closeAnyMenu();
 }, { passive: true });
+
+// ---- Handler functions for menu actions ----
+function handleEditItem(id) {
+  console.log('Edit item:', id);
+  // TODO: Implement edit modal
+  showToast('Edit functionality coming soon!', 'info');
+}
+
+function handleDeleteItem(id) {
+  if (confirm('Are you sure you want to delete this item?')) {
+    deleteItem(id);
+  }
+}
 
 // ---- 60-second diagnostic function ----
 window.__debugActions = () => {
