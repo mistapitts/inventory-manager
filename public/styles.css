@@ -3320,10 +3320,10 @@ td.actions {
   border: 1px solid var(--border-color);
 }
 
-/* Service Log styling - horizontal grid layout */
+/* Service Log styling - single column with horizontal card content */
 .service-log-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   margin-top: 12px;
 }
@@ -3343,8 +3343,22 @@ td.actions {
 .service-log-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 8px;
+}
+
+.service-log-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-log-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .service-log-icon {
@@ -3358,21 +3372,30 @@ td.actions {
   font-size: 0.9rem;
 }
 
-.service-log-content {
+.service-log-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.service-log-notes {
   color: var(--text-secondary);
   line-height: 1.4;
   font-size: 0.9rem;
+  margin-top: 8px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .service-log-grid {
-    grid-template-columns: 1fr;
+  .service-log-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-}
-
-@media (max-width: 1024px) and (min-width: 769px) {
-  .service-log-grid {
-    grid-template-columns: repeat(2, 1fr);
+  
+  .service-log-header-right {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 }

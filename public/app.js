@@ -2038,31 +2038,34 @@ function createServiceLogSection(item) {
     const eventIcon = event.type === 'out_of_service' ? '⛔' : '✅';
     const eventTitle = event.type === 'out_of_service' ? 'Marked Out of Service' : 'Returned to Service';
     
-    let details = `<strong>${eventTitle}</strong><br/>`;
-    details += `<span style="color: var(--text-secondary); font-size: 0.9rem;">`;
-    
+    // Build right-side fields
+    let rightFields = [];
     if (event.type === 'out_of_service') {
-      details += `Reason: ${event.reason}<br/>`;
-      details += `Reported by: ${event.reportedBy}`;
+      rightFields.push(`Reason: ${event.reason}`);
+      rightFields.push(`Reported by: ${event.reportedBy}`);
     } else {
-      details += `Resolved by: ${event.resolvedBy}<br/>`;
-      details += `Verified by: ${event.verifiedBy}`;
+      rightFields.push(`Resolved by: ${event.resolvedBy}`);
+      rightFields.push(`Verified by: ${event.verifiedBy}`);
     }
     
-    if (event.notes && event.notes.trim()) {
-      details += `<br/>Notes: ${event.notes}`;
-    }
-    details += `</span>`;
+    // Notes section (if present)
+    const notesSection = (event.notes && event.notes.trim()) 
+      ? `<div class="service-log-notes">Notes: ${event.notes}</div>` 
+      : '';
     
     return `
       <div class="service-log-card">
         <div class="service-log-header">
-          <span class="service-log-icon">${eventIcon}</span>
-          <span class="service-log-date">${date}</span>
+          <div class="service-log-header-left">
+            <span class="service-log-icon">${eventIcon}</span>
+            <span class="service-log-date">${date}</span>
+          </div>
+          <div class="service-log-header-right">
+            ${rightFields.join(' | ')}
+          </div>
         </div>
-        <div class="service-log-content">
-          ${details}
-        </div>
+        <div class="service-log-title">${eventTitle}</div>
+        ${notesSection}
       </div>
     `;
   };
