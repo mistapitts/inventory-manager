@@ -945,6 +945,97 @@ td.actions * {
   z-index: 1; 
 }
 
+/* --- Actions column: layout + context --- */
+td.actions-cell { 
+  position: relative; 
+  width: 96px; 
+  min-width: 96px; 
+}
+
+td.actions-cell .actions-stack { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+/* Small icon buttons ( +  ⋯ ) */
+.icon-btn {
+  width: 34px; 
+  height: 34px; 
+  border-radius: 8px; 
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05); 
+  color: #cfd2ff; 
+  cursor: pointer;
+}
+
+.icon-btn:hover { 
+  background: rgba(255,255,255,0.08); 
+}
+
+/* Ensure no ancestor clips the menu */
+.inventory-table-wrap,
+.inventory-table-wrap * { 
+  overflow: visible !important; 
+}
+
+/* The dropdown menu */
+.actions-cell .action-menu {
+  position: absolute;
+  top: 38px;            /* below buttons */
+  right: 6px;
+  min-width: 220px;
+  background: var(--card-bg, #121829);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.35);
+  padding: 6px;
+  z-index: 1000;
+  display: none;        /* hidden by default */
+}
+
+.actions-cell .action-menu.open { 
+  display: block; 
+}
+
+.actions-cell .action-menu .menu-item {
+  width: 100%; 
+  text-align: left; 
+  padding: 8px 10px; 
+  border-radius: 8px;
+  border: 0; 
+  background: transparent; 
+  color: #e6e8ff; 
+  cursor: pointer;
+}
+
+.actions-cell .action-menu .menu-item:hover { 
+  background: rgba(255,255,255,0.06); 
+}
+
+.actions-cell .action-menu .menu-item.danger:hover { 
+  background: rgba(255, 77, 77, 0.12); 
+  color: #ff8080; 
+}
+
+.actions-cell .action-menu .menu-sep { 
+  height: 1px; 
+  margin: 6px 4px; 
+  background: rgba(255,255,255,0.06); 
+}
+
+/* Never dim or block pointer events in OOS rows */
+tr.row-oos .actions-cell, 
+tr.row-oos .actions-cell * {
+  opacity: 1 !important; 
+  pointer-events: auto !important;
+}
+
+/* Kill the mysterious right-side "bar" (caused by accidental :after or border) */
+td.actions-cell::after { 
+  content: none !important; 
+}
+
 /* Menu items styling */
 .menu-item {
   display: block;

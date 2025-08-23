@@ -909,9 +909,6 @@ async function loadInventoryItems() {
       
       // Display the filtered items
       displayInventoryItems(visibleItems);
-      
-      // Debug actions column after rendering
-      setTimeout(debugActionsColumn, 100);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
     }
@@ -1205,22 +1202,27 @@ function hexToRgba(hex, alpha = 0.2) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function buildActionsCellHtml() {
+// ---- Single source of truth for Actions cell ----
+function buildActionsCell(item) {
   return `
-    <td class="actions">
+    <td class="actions-cell">
       <div class="actions-stack">
-        <button class="btn btn-view" data-action="view">👁️ View</button>
-        <button class="icon-btn add" data-action="quick-add">+</button>
-        <button class="icon-btn more" type="button"
-                data-action="toggle-actions"
-                aria-haspopup="menu" aria-expanded="false">⋯</button>
-        <div class="action-menu" role="menu">
-          <button type="button" data-action="edit">✏️ Edit</button>
-          <button type="button" data-action="return">✅ Return to Service</button>
-          <button type="button" data-action="delete">🗑️ Delete</button>
+        <button type="button" class="btn btn-xs btn-ghost view-btn" data-id="${item.id}">
+          <span class="icon-eye"></span> View
+        </button>
+        <button type="button" class="icon-btn add-btn" data-id="${item.id}" aria-label="Add"><span>+</span></button>
+        <button type="button" class="icon-btn more-btn" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
+
+        <div class="action-menu" role="menu" aria-hidden="true">
+          <button type="button" class="menu-item edit" data-id="${item.id}" role="menuitem">✎ Edit</button>
+          <button type="button" class="menu-item rts" data-id="${item.id}" role="menuitem">✓ Return to Service</button>
+          <button type="button" class="menu-item oos" data-id="${item.id}" role="menuitem">✖ Mark Out of Service</button>
+          <div class="menu-sep"></div>
+          <button type="button" class="menu-item danger delete" data-id="${item.id}" role="menuitem">🗑 Delete</button>
         </div>
       </div>
-    </td>`;
+    </td>
+  `;
 }
 
 // Update the Lab chip color in the legend
@@ -1322,71 +1324,76 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-function closeAllActionMenus() {
-  document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
-  document.querySelectorAll('.icon-btn.more[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
+// ---- Menu open/close handling with event delegation ----
+let currentOpenMenu = null;
+
+function closeAnyMenu() {
+  if (!currentOpenMenu) return;
+  const btn = currentOpenMenu.btn;
+  const menu = currentOpenMenu.menu;
+  btn.setAttribute('aria-expanded', 'false');
+  menu.classList.remove('open');
+  menu.setAttribute('aria-hidden', 'true');
+  currentOpenMenu = null;
 }
 
-function toggleActionMenu(btn) {
-  const cell = btn.closest('td.actions');
-  if (!cell) return;
+function openMenu(btn) {
+  const cell = btn.closest('td.actions-cell');
   const menu = cell.querySelector('.action-menu');
-  if (!menu) return;
-
-  const wasOpen = menu.classList.contains('open');
-  closeAllActionMenus();
-  if (!wasOpen) {
-    menu.classList.add('open');
-    btn.setAttribute('aria-expanded', 'true');
-  }
+  // Close existing
+  if (currentOpenMenu && currentOpenMenu.menu !== menu) closeAnyMenu();
+  // Toggle current
+  const willOpen = !(menu.classList.contains('open'));
+  if (!willOpen) { closeAnyMenu(); return; }
+  btn.setAttribute('aria-expanded', 'true');
+  menu.classList.add('open');
+  menu.setAttribute('aria-hidden', 'false');
+  currentOpenMenu = { btn, menu };
 }
 
-/* Delegation on the table wrapper so dynamic rows work */
-const tableWrap = document.querySelector('.inventory-table-wrap') || document;
-tableWrap.addEventListener('click', (e) => {
-  const toggleBtn = e.target.closest('.icon-btn.more[data-action="toggle-actions"]');
-  if (toggleBtn) { 
-    e.preventDefault(); 
-    toggleActionMenu(toggleBtn); 
-    return; 
+document.addEventListener('click', (e) => {
+  // Open/Toggle
+  const moreBtn = e.target.closest('.more-btn');
+  if (moreBtn) { openMenu(moreBtn); return; }
+
+  // Menu item clicks
+  const mi = e.target.closest('.action-menu .menu-item');
+  if (mi) {
+    const id = mi.dataset.id;
+    if (mi.classList.contains('edit'))        handleEditItem(id);
+    else if (mi.classList.contains('rts'))    showReturnToServiceModal(id);
+    else if (mi.classList.contains('oos'))    showOutOfServiceModal(id);
+    else if (mi.classList.contains('delete')) handleDeleteItem(id);
+    closeAnyMenu();
+    return;
   }
 
-  /* Click-away close when not clicking inside a menu */
-  if (!e.target.closest('.action-menu')) closeAllActionMenus();
+  // Click-away: close if clicking outside any open menu
+  if (currentOpenMenu && !e.target.closest('.actions-cell')) closeAnyMenu();
+});
 
-  /* Optional: hook menu actions (edit/return/delete) */
-  const menuActionBtn = e.target.closest('.action-menu [data-action]');
-  if (menuActionBtn) {
-    const action = menuActionBtn.getAttribute('data-action');
-    // TODO: route to your existing handlers:
-    // if (action === 'edit') openEditModal(rowId) ...
-    closeAllActionMenus();
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAnyMenu();
+});
+
+// (Optional) prevent scroll closing weirdness on wheel
+document.addEventListener('wheel', (e) => {
+  if (currentOpenMenu && !e.target.closest('.action-menu')) closeAnyMenu();
+}, { passive: true });
+
+// ---- 60-second diagnostic function ----
+window.__debugActions = () => {
+  const cells = [...document.querySelectorAll('td.actions-cell')];
+  console.log('actions cells:', cells.length);
+  if (cells[0]) {
+    const menu = cells[0].querySelector('.action-menu');
+    const btn  = cells[0].querySelector('.more-btn');
+    console.log('first cell -> has btn?', !!btn, 'has menu?', !!menu, 'computed display:', menu && getComputedStyle(menu).display);
+    if (btn) btn.click();  // force open
   }
-});
+};
 
-document.addEventListener('keydown', (e) => { 
-  if (e.key === 'Escape') closeAllActionMenus(); 
-});
 
-function debugActionsColumn() {
-  const rows = document.querySelectorAll('.inventory-table tbody tr');
-  console.log('[diag] rows:', rows.length);
-  const dots = document.querySelectorAll('.icon-btn.more');
-  console.log('[diag] ⋯ buttons:', dots.length);
-  if (!dots.length) {
-    console.warn('[diag] No ⋯ buttons found. Check row renderer includes buildActionsCellHtml().');
-  } else {
-    const b = dots[0];
-    const cs = getComputedStyle(b);
-    console.log('[diag] first ⋯ display:', cs.display, 'visibility:', cs.visibility, 'opacity:', cs.opacity);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(debugActionsColumn, 100);      // after initial render
-});
-
-/* Call debugActionsColumn() at the end of your loadInventoryItems() as well */
 
 async function deleteItem(itemId) {
   if (!confirm('Delete this item and all associated records? This cannot be undone.')) return;
