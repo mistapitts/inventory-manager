@@ -2001,24 +2001,30 @@ async function loadItemDetails(itemId) {
 
 // Create Service Log section for item details
 function createServiceLogSection(item) {
-  // For now, create mock service log entries from existing OOS data
-  // TODO: Replace with actual service log data from backend
   const serviceEvents = [];
   
-  // Add OOS event if item is currently out of service
-  if (item.isOutOfService) {
-    serviceEvents.push({
-      type: 'out_of_service',
-      date: item.outOfServiceDate || new Date().toISOString().split('T')[0],
-      reason: item.outOfServiceReason || 'Out of service',
-      reportedBy: item.outOfServiceReportedBy || 'Unknown',
-      notes: item.outOfServiceNotes || '',
-      timestamp: item.outOfServiceDate || new Date().toISOString()
+  // Get service events from changelog
+  if (item.changelog && Array.isArray(item.changelog)) {
+    item.changelog.forEach(entry => {
+      if (entry.action === 'service_out' || entry.action === 'service_return') {
+        try {
+          const serviceData = JSON.parse(entry.newValue || '{}');
+          serviceEvents.push({
+            type: entry.action === 'service_out' ? 'out_of_service' : 'return_to_service',
+            date: serviceData.date,
+            reason: serviceData.reason,
+            reportedBy: serviceData.reportedBy,
+            resolvedBy: serviceData.resolvedBy,
+            verifiedBy: serviceData.verifiedBy,
+            notes: serviceData.notes,
+            timestamp: entry.timestamp || serviceData.date
+          });
+        } catch (e) {
+          console.warn('Failed to parse service data:', entry);
+        }
+      }
     });
   }
-  
-  // Add RTS event if item was previously OOS (mock data for now)
-  // TODO: Get actual service log from database
   
   // Sort events chronologically (newest first)
   serviceEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
