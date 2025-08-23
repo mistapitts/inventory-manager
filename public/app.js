@@ -848,7 +848,7 @@ function displayInventoryItems(items) {
     
     tableBody.innerHTML = `
       <tr class="empty-row">
-        <td colspan="16" style="padding: 2rem; text-align: center; opacity: 0.7; color: #b8b8d1;">
+        <td colspan="17" style="padding: 2rem; text-align: center; opacity: 0.7; color: #b8b8d1;">
           ${_itemsCache.length === 0 ? 'No items found. Try adding some inventory items.' : 'No items match the current filters.'}
         </td>
       </tr>
@@ -968,7 +968,6 @@ function createInventoryRow(item) {
         <td class="column-serialNumber">${item.serialNumber || 'N/A'}</td>
         <td class="column-condition">${item.condition || 'N/A'}</td>
         <td class="column-dateReceived">${dateReceived}</td>
-        <td class="column-datePlacedInService">${dateInService}</td>
         <td class="column-location">${item.location || 'N/A'}</td>
         <td class="column-calibrationType">${calType}</td>
         <td class="column-calibrationDate">${lastCal}</td>
@@ -3920,14 +3919,27 @@ function renderNicknameCell(item) {
     '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
   }[m]));
   
+  const chips = [];
+  
+  // Add OOS chip if out of service
   if (item?.isOutOfService) {
+    chips.push('<span class="chip chip-oos">OOS</span>');
+  }
+  
+  // Add Outsourced chip if outsourced
+  if (item?.isOutsourced === 1 || item?.isOutsourced === true) {
+    chips.push('<span class="chip chip-outsourced">Outsourced</span>');
+  }
+  
+  if (chips.length > 0) {
     return `
       <div style="display: flex; align-items: center; gap: 8px;">
         <span>${safeName}</span>
-        <span class="chip chip-oos">OOS</span>
+        ${chips.join('')}
       </div>
     `;
   }
+  
   return `<span>${safeName}</span>`;
 }
 

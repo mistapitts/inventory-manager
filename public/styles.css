@@ -3078,6 +3078,12 @@ body {
   border-color: rgba(255, 64, 64, 0.35);
 }
 
+.chip-outsourced {
+  background: #1a2b3d;
+  color: #87ceeb;
+  border-color: rgba(135, 206, 235, 0.35);
+}
+
 /* --- OOS row tint (no opacity!) --- */
 .row-oos {
   background: linear-gradient(0deg, rgba(255,64,64,0.08), rgba(255,64,64,0.08));
