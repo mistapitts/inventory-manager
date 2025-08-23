@@ -189,26 +189,8 @@ function setupEventListeners() {
     }
 
     if (addListInlineBtn) {
-      addListInlineBtn.addEventListener('click', async () => {
-        const name = prompt('New list name:');
-        if (!name) return;
-        try {
-          const resp = await fetch('/api/inventory/lists', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-            body: JSON.stringify({ name }),
-          });
-          if (resp.ok) {
-            showToast('List created', 'success');
-            await loadListsIntoSelectors(name);
-            await loadInventoryItems();
-          } else {
-            const err = await resp.json().catch(() => ({}));
-            showToast(err.error || 'Failed to create list', 'error');
-          }
-        } catch (e) {
-          showToast('Network error creating list', 'error');
-        }
+      addListInlineBtn.addEventListener('click', () => {
+        showCreateListModal();
       });
     }
 

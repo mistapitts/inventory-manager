@@ -247,6 +247,10 @@
                 <i class="fas fa-plus"></i>
                 Add Item
               </button>
+              <button class="btn btn-secondary" id="createListBtn">
+                <i class="fas fa-list"></i>
+                Create List
+              </button>
               <div class="search-box">
                 <i class="fas fa-search"></i>
                 <label for="searchInventory" class="visually-hidden">Search inventory</label>
@@ -576,20 +580,17 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="listId">List</label>
-                  <div class="input-with-button">
-                    <select id="listId" name="listId">
-                      <option value="">No lists available</option>
-                    </select>
-                    <button
-                      type="button"
-                      id="createListFromForm"
-                      class="btn-icon"
-                      title="Create New List"
-                      style="display: inline-block"
-                    >
-                      <i class="fas fa-plus"></i>
-                    </button>
-                  </div>
+                  <select id="listId" name="listId">
+                    <option value="">No lists available</option>
+                  </select>
+                  <button
+                    type="button"
+                    id="createListFromForm"
+                    class="btn-secondary"
+                    style="margin-top: 8px; display: none"
+                  >
+                    <i class="fas fa-plus"></i> Create New List
+                  </button>
                 </div>
                 <div class="form-group">
                   <!-- spacer -->
