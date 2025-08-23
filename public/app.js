@@ -1997,6 +1997,73 @@ async function loadItemDetails(itemId) {
   }
 }
 
+// Create Service Log section for item details
+function createServiceLogSection(item) {
+  // For now, create mock service log entries from existing OOS data
+  // TODO: Replace with actual service log data from backend
+  const serviceEvents = [];
+  
+  // Add OOS event if item is currently out of service
+  if (item.isOutOfService) {
+    serviceEvents.push({
+      type: 'out_of_service',
+      date: item.outOfServiceDate || new Date().toISOString().split('T')[0],
+      reason: item.outOfServiceReason || 'Out of service',
+      reportedBy: item.outOfServiceReportedBy || 'Unknown',
+      notes: item.outOfServiceNotes || '',
+      timestamp: item.outOfServiceDate || new Date().toISOString()
+    });
+  }
+  
+  // Add RTS event if item was previously OOS (mock data for now)
+  // TODO: Get actual service log from database
+  
+  // Sort events chronologically (newest first)
+  serviceEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  const formatServiceEvent = (event) => {
+    const date = new Date(event.date).toLocaleDateString();
+    const eventIcon = event.type === 'out_of_service' ? '⛔' : '✅';
+    const eventTitle = event.type === 'out_of_service' ? 'Marked Out of Service' : 'Returned to Service';
+    
+    let details = `<strong>${eventTitle}</strong><br/>`;
+    details += `<span style="color: var(--text-secondary); font-size: 0.9rem;">`;
+    
+    if (event.type === 'out_of_service') {
+      details += `Reason: ${event.reason}<br/>`;
+      details += `Reported by: ${event.reportedBy}`;
+    } else {
+      details += `Resolved by: ${event.resolvedBy}<br/>`;
+      details += `Verified by: ${event.verifiedBy}`;
+    }
+    
+    if (event.notes) {
+      details += `<br/>Notes: ${event.notes}`;
+    }
+    details += `</span>`;
+    
+    return `
+      <div class="service-log-entry">
+        <div class="service-log-icon">${eventIcon}</div>
+        <div class="service-log-content">
+          <div class="service-log-date">${date}</div>
+          <div class="service-log-details">${details}</div>
+        </div>
+      </div>
+    `;
+  };
+  
+  return `
+    <div class="item-detail-section" style="margin-top:24px;">
+      <h3>Service Log (${serviceEvents.length})</h3>
+      ${serviceEvents.length > 0 
+        ? serviceEvents.map(formatServiceEvent).join('')
+        : '<p style="color: var(--text-secondary);">No service events recorded yet</p>'
+      }
+    </div>
+  `;
+}
+
 // Display item details in the modal
 function displayItemDetails(data) {
   const { item, calibrationRecords, maintenanceRecords, changelog } = data;
@@ -2220,6 +2287,9 @@ function displayItemDetails(data) {
             }
         </div>`;
 
+  // Create Service Log section
+  const serviceLogSection = createServiceLogSection(item);
+
   content.innerHTML = `
         ${topGridHtml}
         <div class="item-secondary-grid">
@@ -2227,6 +2297,7 @@ function displayItemDetails(data) {
             ${secondaryRight}
         </div>
         ${notesSection}
+        ${serviceLogSection}
         ${changelogSection}
     `;
 }
@@ -4000,11 +4071,17 @@ function setupOOSFormHandlers() {
     formOOS.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('oos-item-id').value;
+      const date = document.getElementById('oos-date').value;
       const reason = document.getElementById('oos-reason').value.trim();
+      const reportedBy = document.getElementById('oos-reported-by').value.trim();
       const notes = document.getElementById('oos-notes').value.trim() || undefined;
+      
+      if (!date) return alert('Date is required');
       if (!reason) return alert('Reason is required');
+      if (!reportedBy) return alert('Reported By is required');
+      
       try {
-        await apiMarkOutOfServiceFixed(id, { reason, notes });
+        await apiMarkOutOfServiceFixed(id, { date, reason, reportedBy, notes });
         closeModal('modal-oos');
         await refreshData();
         showToast('Item marked out of service', 'success');
@@ -4021,17 +4098,95 @@ function setupOOSFormHandlers() {
     formRTS.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('rts-item-id').value;
+      const date = document.getElementById('rts-date').value;
+      const resolvedBy = document.getElementById('rts-resolved-by').value.trim();
+      const verifiedBy = document.getElementById('rts-verified-by').value.trim();
       const notes = document.getElementById('rts-notes').value.trim() || undefined;
+      
+      if (!date) return alert('Date is required');
+      if (!resolvedBy) return alert('Issue Resolved By is required');
+      if (!verifiedBy) return alert('Verified By is required');
+      
       try {
-        await apiReturnToServiceFixed(id, { verified: true, verifiedBy: 'User', notes });
+        await apiReturnToServiceFixed(id, { date, resolvedBy, verifiedBy, notes });
         closeModal('modal-rts');
         await refreshData();
         showToast('Item returned to service', 'success');
+        
+        // Show post-return options modal
+        showPostReturnModal(id);
       } catch (err) {
         console.error('Error returning to service:', err);
         showToast(err.message || 'Failed to return to service', 'error');
       }
     });
+  }
+}
+}
+
+// Show post-return modal for calibration/maintenance options
+function showPostReturnModal(itemId) {
+  const modal = document.getElementById('modal-post-return');
+  if (!modal) return;
+  
+  modal.classList.remove('hidden');
+  
+  // Set up event listeners for the buttons
+  const btnCalibration = document.getElementById('btn-add-calibration');
+  const btnBoth = document.getElementById('btn-add-both-records');
+  const btnNotNow = document.getElementById('btn-not-now');
+  
+  // Remove any existing listeners
+  btnCalibration.replaceWith(btnCalibration.cloneNode(true));
+  btnBoth.replaceWith(btnBoth.cloneNode(true));
+  btnNotNow.replaceWith(btnNotNow.cloneNode(true));
+  
+  // Get fresh references
+  const newBtnCalibration = document.getElementById('btn-add-calibration');
+  const newBtnBoth = document.getElementById('btn-add-both-records');
+  const newBtnNotNow = document.getElementById('btn-not-now');
+  
+  newBtnCalibration.addEventListener('click', () => {
+    closeModal('modal-post-return');
+    showUploadModal('calibration', itemId);
+  });
+  
+  newBtnBoth.addEventListener('click', async () => {
+    closeModal('modal-post-return');
+    // First show calibration modal, then maintenance after it's saved
+    showUploadModal('calibration', itemId);
+    // TODO: Add logic to automatically show maintenance modal after calibration is saved
+  });
+  
+  newBtnNotNow.addEventListener('click', () => {
+    closeModal('modal-post-return');
+  });
+}
+
+// Add default dates when opening OOS/RTS modals
+function openModal(modalId, itemId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  
+  modal.classList.remove('hidden');
+  
+  // Set default dates to today
+  const today = new Date().toISOString().split('T')[0];
+  
+  if (modalId === 'modal-oos') {
+    document.getElementById('oos-item-id').value = itemId;
+    document.getElementById('oos-date').value = today;
+    // Clear other fields
+    document.getElementById('oos-reason').value = '';
+    document.getElementById('oos-reported-by').value = '';
+    document.getElementById('oos-notes').value = '';
+  } else if (modalId === 'modal-rts') {
+    document.getElementById('rts-item-id').value = itemId;
+    document.getElementById('rts-date').value = today;
+    // Clear other fields
+    document.getElementById('rts-resolved-by').value = '';
+    document.getElementById('rts-verified-by').value = '';
+    document.getElementById('rts-notes').value = '';
   }
 }
 
@@ -4085,14 +4240,9 @@ document.addEventListener('click', (e) => {
     if (action === 'edit') {
       editItem(id);
     } else if (action === 'oos') {
-      document.getElementById('oos-item-id').value = id;
-      document.getElementById('oos-reason').value = '';
-      document.getElementById('oos-notes').value = '';
-      openModal('modal-oos');
+      openModal('modal-oos', id);
     } else if (action === 'rts') {
-      document.getElementById('rts-item-id').value = id;
-      document.getElementById('rts-notes').value = '';
-      openModal('modal-rts');
+      openModal('modal-rts', id);
     } else if (action === 'delete') {
       deleteItem(id);
     }

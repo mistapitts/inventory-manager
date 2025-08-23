@@ -3319,3 +3319,38 @@ td.actions {
   border-radius: 4px;
   border: 1px solid var(--border-color);
 }
+
+/* Service Log styling */
+.service-log-entry {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.service-log-entry:last-child {
+  border-bottom: none;
+}
+
+.service-log-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.service-log-content {
+  flex: 1;
+}
+
+.service-log-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.service-log-details {
+  color: var(--text-secondary);
+  line-height: 1.4;
+}

@@ -1040,8 +1040,12 @@
         <h3>Mark Out of Service</h3>
         <form id="form-oos">
           <input type="hidden" id="oos-item-id" />
-          <label class="block text-sm mt-2">Reason <span class="text-red-400">*</span></label>
+          <label class="block text-sm mt-2">Date Out of Service <span class="text-red-400">*</span></label>
+          <input type="date" id="oos-date" class="input" required />
+          <label class="block text-sm mt-3">Reason <span class="text-red-400">*</span></label>
           <input id="oos-reason" class="input" required maxlength="200" />
+          <label class="block text-sm mt-3">Reported By <span class="text-red-400">*</span></label>
+          <input id="oos-reported-by" class="input" required maxlength="100" placeholder="Your name" />
           <label class="block text-sm mt-3">Notes (optional)</label>
           <textarea id="oos-notes" class="textarea" maxlength="500"></textarea>
           <div class="flex justify-end gap-2 mt-4">
@@ -1058,13 +1062,38 @@
         <h3>Return to Service</h3>
         <form id="form-rts">
           <input type="hidden" id="rts-item-id" />
-          <label class="block text-sm mt-2">Notes (optional)</label>
+          <label class="block text-sm mt-2">Date Returned to Service <span class="text-red-400">*</span></label>
+          <input type="date" id="rts-date" class="input" required />
+          <label class="block text-sm mt-3">Issue Resolved By <span class="text-red-400">*</span></label>
+          <input id="rts-resolved-by" class="input" required maxlength="200" placeholder="e.g., Repaired, Replaced part, Cleaned, etc." />
+          <label class="block text-sm mt-3">Verified By <span class="text-red-400">*</span></label>
+          <input id="rts-verified-by" class="input" required maxlength="100" placeholder="Your name" />
+          <label class="block text-sm mt-3">Notes (optional)</label>
           <textarea id="rts-notes" class="textarea" maxlength="500"></textarea>
           <div class="flex justify-end gap-2 mt-4">
             <button type="button" class="btn btn-ghost" data-close="modal-rts">Cancel</button>
             <button type="submit" class="btn btn-primary">Return to Service</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Post-Return Service Options modal -->
+    <div id="modal-post-return" class="modal hidden">
+      <div class="modal-card">
+        <h3>Add Records After Return to Service</h3>
+        <p class="text-sm opacity-70 mb-4">Would you like to add calibration or maintenance records for this item?</p>
+        <div class="flex flex-col gap-3">
+          <button type="button" class="btn btn-primary" id="btn-add-calibration">
+            <i class="fas fa-certificate"></i> Add Calibration Record
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-add-both-records">
+            <i class="fas fa-tools"></i> Add Calibration & Maintenance Records
+          </button>
+          <button type="button" class="btn btn-ghost" id="btn-not-now">
+            Not At This Moment
+          </button>
+        </div>
       </div>
     </div>
 
