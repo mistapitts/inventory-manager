@@ -3323,7 +3323,7 @@ td.actions {
 /* Service Log styling - horizontal grid layout */
 .service-log-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 12px;
 }
@@ -3368,5 +3368,11 @@ td.actions {
 @media (max-width: 768px) {
   .service-log-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .service-log-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
