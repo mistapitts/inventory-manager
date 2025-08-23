@@ -1184,18 +1184,18 @@ function buildActionsCell(item) {
   return `
     <td class="actions-cell">
       <div class="actions-stack">
-        <button type="button" class="btn btn-xs btn-ghost view-btn" data-id="${item.id}">
-          <span class="icon-eye"></span> View
+        <button type="button" class="view-btn" data-id="${item.id}">
+          <span class="icon-eye">👁️</span> View
         </button>
-        <button type="button" class="icon-btn add-btn" data-id="${item.id}" aria-label="Add"><span>+</span></button>
-        <button type="button" class="icon-btn more-btn" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
+        <button type="button" class="icon-btn add-btn" data-id="${item.id}" aria-label="Add">+</button>
+        <button type="button" class="icon-btn more-btn" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋮</button>
 
         <div class="action-menu" role="menu" aria-hidden="true">
-          <button type="button" class="menu-item edit" data-id="${item.id}" role="menuitem">✎ Edit</button>
-          <button type="button" class="menu-item rts" data-id="${item.id}" role="menuitem">✓ Return to Service</button>
-          <button type="button" class="menu-item oos" data-id="${item.id}" role="menuitem">✖ Mark Out of Service</button>
+          <button type="button" class="menu-item edit" data-id="${item.id}" role="menuitem">✏️ Edit</button>
+          <button type="button" class="menu-item rts" data-id="${item.id}" role="menuitem">↩️ Return to Service</button>
+          <button type="button" class="menu-item oos" data-id="${item.id}" role="menuitem">⛔ Mark Out of Service</button>
           <div class="menu-sep"></div>
-          <button type="button" class="menu-item danger delete" data-id="${item.id}" role="menuitem">🗑 Delete</button>
+          <button type="button" class="menu-item danger delete" data-id="${item.id}" role="menuitem">🗑️ Delete</button>
         </div>
       </div>
     </td>
@@ -1301,62 +1301,86 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// ---- Menu open/close handling with event delegation ----
-let currentOpenMenu = null;
+// === Actions menu controller (single source of truth) ===
+let __openMenu = null;
 
 function closeAnyMenu() {
-  if (!currentOpenMenu) return;
-  const btn = currentOpenMenu.btn;
-  const menu = currentOpenMenu.menu;
-  btn.setAttribute('aria-expanded', 'false');
-  menu.classList.remove('open');
-  menu.setAttribute('aria-hidden', 'true');
-  currentOpenMenu = null;
+  if (!__openMenu) return;
+  __openMenu.classList.remove('open');
+  __openMenu = null;
 }
 
-function openMenu(btn) {
-  const cell = btn.closest('td.actions-cell');
+function openMenuForCell(cell) {
+  closeAnyMenu();
   const menu = cell.querySelector('.action-menu');
-  // Close existing
-  if (currentOpenMenu && currentOpenMenu.menu !== menu) closeAnyMenu();
-  // Toggle current
-  const willOpen = !(menu.classList.contains('open'));
-  if (!willOpen) { closeAnyMenu(); return; }
-  btn.setAttribute('aria-expanded', 'true');
+  if (!menu) return;
+
+  // Reset anchors, open, then clamp to viewport
+  menu.style.right = '8px';
+  menu.style.left = '';
+  menu.style.top = '36px';
   menu.classList.add('open');
-  menu.setAttribute('aria-hidden', 'false');
-  currentOpenMenu = { btn, menu };
+  __openMenu = menu;
+
+  // Clamp horizontally if near right edge
+  const rect = menu.getBoundingClientRect();
+  const overflowX = rect.right - window.innerWidth;
+  if (overflowX > 0) {
+    // shift left by the overflow amount
+    menu.style.right = `${8 + overflowX}px`;
+  }
+
+  // Clamp vertically if close to bottom of viewport
+  const overflowY = rect.bottom - window.innerHeight;
+  if (overflowY > 0) {
+    menu.style.top = `${36 - overflowY}px`;
+  }
 }
 
+// Global closers
 document.addEventListener('click', (e) => {
-  // Open/Toggle
-  const moreBtn = e.target.closest('.more-btn');
-  if (moreBtn) { openMenu(moreBtn); return; }
+  // Handle ellipsis button clicks
+  const moreBtn = e.target.closest('.icon-btn.more-btn');
+  if (moreBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cell = moreBtn.closest('td.actions-cell');
+    if (!cell) return;
+    openMenuForCell(cell);
+    return;
+  }
 
-  // Menu item clicks
-  const mi = e.target.closest('.action-menu .menu-item');
-  if (mi) {
-    const id = mi.dataset.id;
-    if (mi.classList.contains('edit'))        handleEditItem(id);
-    else if (mi.classList.contains('rts'))    showReturnToServiceModal(id);
-    else if (mi.classList.contains('oos'))    showOutOfServiceModal(id);
-    else if (mi.classList.contains('delete')) handleDeleteItem(id);
+  // Handle menu item clicks
+  const menuBtn = e.target.closest('.action-menu button');
+  if (menuBtn) {
+    const cell = menuBtn.closest('td.actions-cell');
+    const row = cell.closest('tr');
+    const itemId = row?.dataset?.itemId || menuBtn.dataset.id;
+
+    if (menuBtn.classList.contains('edit')) {
+      handleEditItem(itemId);
+    } else if (menuBtn.classList.contains('rts')) {
+      showReturnToServiceModal(itemId);
+    } else if (menuBtn.classList.contains('oos')) {
+      showOutOfServiceModal(itemId);
+    } else if (menuBtn.classList.contains('delete')) {
+      handleDeleteItem(itemId);
+    }
+
     closeAnyMenu();
     return;
   }
 
-  // Click-away: close if clicking outside any open menu
-  if (currentOpenMenu && !e.target.closest('.actions-cell')) closeAnyMenu();
+  // Close if clicking outside any actions-stack
+  if (!e.target.closest('.actions-stack')) closeAnyMenu();
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeAnyMenu();
 });
 
-// (Optional) prevent scroll closing weirdness on wheel
-document.addEventListener('wheel', (e) => {
-  if (currentOpenMenu && !e.target.closest('.action-menu')) closeAnyMenu();
-}, { passive: true });
+window.addEventListener('scroll', closeAnyMenu, { passive: true });
+window.addEventListener('resize', closeAnyMenu);
 
 // ---- Handler functions for menu actions ----
 function handleEditItem(id) {

@@ -1036,6 +1036,125 @@ td.actions-cell::after {
   content: none !important; 
 }
 
+/* ---- Actions column: stacking + menu ---- */
+
+/* Everything around the Actions cell must allow overflow and be a stacking context */
+.inventory-table-wrap,
+#inventoryTable,
+#inventoryTable tbody,
+#inventoryTable tr,
+#inventoryTable td.actions-cell,
+#inventoryTable td .actions-stack {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Ensure rows never cover the dropdown */
+#inventoryTable tr { z-index: 1; }
+
+/* The dropdown menu itself sits above all rows */
+.actions-cell .action-menu {
+  position: absolute;
+  top: 36px;              /* under the 34px buttons */
+  right: 8px;
+  min-width: 200px;
+  z-index: 9999;          /* beat rows & sticky cells */
+  display: none;
+  background: #0f1422;    /* matches your theme */
+  border: 1px solid #2d3450;
+  border-radius: 10px;
+  box-shadow: 0 16px 32px rgba(0,0,0,.45);
+  padding: 6px;
+}
+
+.actions-cell .action-menu.open { display: block; }
+
+.actions-cell .action-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: #d6dcff;
+}
+
+.actions-cell .action-menu button:hover {
+  background: color-mix(in srgb, #ffffff 6%, transparent);
+}
+
+.actions-cell .action-menu .danger {
+  color: #ff8d8d;
+}
+
+.actions-cell .action-menu .danger:hover {
+  background: color-mix(in srgb, #ff5a5a 12%, transparent);
+}
+
+/* Don't let any OOS row tint block interactions */
+.row-oos .actions-stack,
+.row-oos .action-menu,
+.row-oos .icon-btn,
+.row-oos .view-btn {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* ---- "View" pill polish (re-apply lost style) ---- */
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  background: #1b2340;
+  border: 1px solid #2a345e;
+  border-radius: 8px;
+  color: #dbe2ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.view-btn:hover {
+  background: #202a4d;
+  border-color: #38457a;
+}
+
+/* Keep the + and ⋯ consistent */
+.icon-btn {
+  width: 34px; 
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #1b2340;
+  border: 1px solid #2a345e;
+  color: #dbe2ff;
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: #202a4d;
+  border-color: #38457a;
+}
+
+/* ---- kill phantom right-side gutter & any decorative afters ---- */
+.inventory-table-wrap,
+#inventoryTable { 
+  width: 100%; 
+  box-sizing: border-box; 
+}
+
+.inventory-table-wrap::after { 
+  content: none !important; 
+}
+
+/* In case a width calc created a sliver */
+#inventoryTable th:last-child,
+#inventoryTable td:last-child { 
+  padding-right: 12px; 
+}
+
 /* Menu items styling */
 .menu-item {
   display: block;
