@@ -1074,9 +1074,16 @@ function createInventoryRow(item) {
     row.classList.add('row-oos');
   }
   
-  // Add outsourced styling for status rail
+  // --- Row accent classes instead of inline bars ---
+  if (item.isOutOfService === 1 || item.isOutOfService === true) {
+    row.classList.add('row-accent--oos');
+  }
   if (item.isOutsourced === 1 || item.isOutsourced === true) {
-    row.classList.add('row-outsourced');
+    row.classList.add('row-accent--outsourced');
+  }
+  // Add lab accent if needed (you can customize this logic)
+  if (item.listName === 'Lab' || item.calibrationType === 'Lab') {
+    row.classList.add('row-accent--lab');
   }
 
   // Add list ID attribute for CSS targeting
@@ -1385,6 +1392,22 @@ document.addEventListener('click', (e)=>{
   if (view) {
     console.log('View item:', view.dataset.id);
     // TODO: Navigate to item view
+  }
+});
+
+// Fix for "Edit Lists and Columns" button
+document.addEventListener('DOMContentLoaded', () => {
+  const editBtn = document.getElementById('btnEditLists');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      const modal = document.getElementById('columnCustomizerMenu');
+      if (modal) {
+        modal.style.display = 'block';
+        modal.classList.add('open');
+      } else {
+        console.error("Column customizer menu not found!");
+      }
+    });
   }
 });
 

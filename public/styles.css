@@ -1044,8 +1044,13 @@ td.actions-cell::after {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
+/* ---------- TOOLBAR: clean gap, no underline ---------- */
 .inv-toolbar{
-  display:flex; align-items:center; justify-content:space-between;
+  border-bottom: 0 !important;            /* remove the bottom line */
+  margin-bottom: 16px !important;         /* real space between toolbar and list */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 14px 18px;
 }
 
@@ -1057,13 +1062,33 @@ td.actions-cell::after {
   font-size: 20px; font-weight: 700; margin:0; color: #e7ebff;
 }
 
+/* Hide the redundant Out of Service checkbox in toolbar */
+.inv-toolbar #chkShowOOS,
+.inv-toolbar label[for="chkShowOOS"] {
+  display: none !important;
+}
+
 /* Consistent gap above the table */
 .inv-gap{ height:14px; }
 
-/* Table container */
+/* ---------- TABLE WRAPPER: horizontal scroll enabled ---------- */
 .inventory-table-wrap{
-  overflow: visible;         /* allow menus to escape */
+  position: relative;
+  overflow-x: auto !important;            /* SHOW scrollbar when needed */
+  overflow-y: hidden;
+  border-radius: 12px;
   padding: 0;                /* table handles its own padding */
+}
+
+/* Prevent any parent from hiding the horizontal scrollbar */
+.inventory-section, .inventory-card, .content, body {
+  overflow-x: visible !important;
+}
+
+/* Make the table require scrolling instead of stretching the page */
+.inventory-table {
+  min-width: 1250px;
+  width: max-content;
 }
 
 /* Right page breathing room */
@@ -1123,22 +1148,45 @@ td.actions-cell::after {
 .chk{ display:flex; align-items:center; gap:8px; color:#cfd6ff; font-size:14px; user-select:none; }
 .chk input{ width:16px; height:16px; }
 
-/* ===== Left status rails (restores the missing colored chips) ===== */
-.inventory-table tr{ position:relative; }
-.inventory-table tr::before{
-  content:""; position:absolute; left:6px; top:8px; bottom:8px; width:6px; border-radius:4px;
-  background:transparent;
+/* ---------- LEFT COLOR BARS (no text overlap) ---------- */
+.inventory-table tr {
+  position: relative;
 }
-.inventory-table tr.row-oos::before{ background:#dc3545; }             /* red rail */
-.inventory-table tr.row-outsourced::before{ background:#f59e0b; }       /* amber rail */
+.inventory-table tr::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  bottom: 6px;
+  width: 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+}
 
-/* ===== Sticky actions column (keeps right column visible) ===== */
-.inventory-table th.actions-col,
-.inventory-table td.actions-col{
-  position: sticky; right: 0;
-  background: #0e1330;            /* match table row bg so it blends */
-  z-index: 5;                      /* above cells, below menus */
+/* Active accent classes */
+.row-accent--oos::before        { background: #ef4444; opacity: 1; } /* red */
+.row-accent--outsourced::before { background: #f59e0b; opacity: 1; } /* amber */
+.row-accent--lab::before        { background: #60a5fa; opacity: 1; } /* blue */
+
+/* Padding so text never overlaps the accent bar */
+.inventory-table td:first-child,
+.inventory-table th:first-child {
+  padding-left: 24px !important;
 }
+
+/* ---------- Sticky Actions column ---------- */
+td.actions-col, th.actions-col {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: var(--row-bg, #0f1224);
+  box-shadow: -1px 0 0 0 rgba(255,255,255,0.06) inset;
+}
+
+.actions-stack { display: inline-flex; gap: 8px; align-items: center; }
+
+.page-inner, .inventory-section { padding-right: 16px; }
 
 /* ===== Action menu (rendered inside body; must float above all) ===== */
 .action-menu{
