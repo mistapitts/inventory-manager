@@ -89,6 +89,12 @@ function setupEventListeners() {
     createListFromFormBtn.addEventListener('click', showCreateListFromFormModal);
   }
 
+  // Create list button in main toolbar
+  const createListBtn = document.getElementById('createListBtn');
+  if (createListBtn) {
+    createListBtn.addEventListener('click', showCreateListModal);
+  }
+
   // OOS visibility toggle
   const chkDrawer = document.getElementById('drawerShowOOS');
   if (chkDrawer) {
@@ -761,26 +767,26 @@ async function loadInventoryItems() {
 
   // If cache is empty, fetch fresh data
   if (_itemsCache.length === 0) {
-    try {
-      console.log('Loading inventory items...');
-      const response = await fetch(`/api/inventory`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+  try {
+    console.log('Loading inventory items...');
+    const response = await fetch(`/api/inventory`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Inventory response:', data);
-        const allItems = Array.isArray(data.items) ? data.items : [];
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Inventory response:', data);
+      const allItems = Array.isArray(data.items) ? data.items : [];
         _itemsCache = allItems;
         logStep('loadInventoryItems:fetched', { count: allItems.length });
-      } else {
-        console.error('Failed to load inventory:', response.status, response.statusText);
+    } else {
+      console.error('Failed to load inventory:', response.status, response.statusText);
         _itemsCache = [];
-      }
-    } catch (error) {
-      console.error('Error loading inventory items:', error);
+    }
+  } catch (error) {
+    console.error('Error loading inventory items:', error);
       _itemsCache = [];
     }
   }
@@ -833,7 +839,7 @@ function displayInventoryItems(items) {
     const fragment = document.createDocumentFragment();
     items.forEach((item, index) => {
       try {
-        const row = createInventoryRow(item);
+      const row = createInventoryRow(item);
         fragment.appendChild(row);
       } catch (e) {
         console.warn(`[INV] row render error for item ${index}:`, item?.id, e);
