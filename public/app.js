@@ -4122,15 +4122,13 @@ function setupOOSFormHandlers() {
       const id = document.getElementById('rts-item-id').value;
       const date = document.getElementById('rts-date').value;
       const resolvedBy = document.getElementById('rts-resolved-by').value.trim();
-      const verifiedBy = document.getElementById('rts-verified-by').value.trim();
       const notes = document.getElementById('rts-notes').value.trim() || undefined;
       
       if (!date) return alert('Date is required');
       if (!resolvedBy) return alert('Issue Resolved By is required');
-      if (!verifiedBy) return alert('Verified By is required');
       
       try {
-        await apiReturnToServiceFixed(id, { date, resolvedBy, verifiedBy, notes });
+        await apiReturnToServiceFixed(id, { date, resolvedBy, notes });
         closeModal('modal-rts');
         await refreshData();
         showToast('Item returned to service', 'success');
@@ -4206,7 +4204,6 @@ function openModal(modalId, itemId) {
     document.getElementById('rts-date').value = today;
     // Clear other fields
     document.getElementById('rts-resolved-by').value = '';
-    document.getElementById('rts-verified-by').value = '';
     document.getElementById('rts-notes').value = '';
   }
 }

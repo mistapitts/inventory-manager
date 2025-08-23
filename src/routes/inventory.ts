@@ -1221,7 +1221,7 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
-    const { date, resolvedBy, verifiedBy, notes } = req.body;
+    const { date, resolvedBy, notes } = req.body;
 
     // Validation: all required fields
     if (!date) {
@@ -1229,9 +1229,6 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
     }
     if (!resolvedBy || !resolvedBy.trim()) {
       return res.status(400).json({ error: 'Issue Resolved By is required' });
-    }
-    if (!verifiedBy || !verifiedBy.trim()) {
-      return res.status(400).json({ error: 'Verified By is required' });
     }
 
     const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
@@ -1255,6 +1252,12 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
       return res.status(409).json({ error: 'Item is not out of service' });
     }
 
+    // Get user info for verification
+    const currentUser = await database.get('SELECT firstName, lastName FROM users WHERE id = ?', [userId]);
+    const verifiedByName = currentUser && currentUser.firstName && currentUser.lastName 
+      ? `${currentUser.firstName} ${currentUser.lastName}` 
+      : 'Unknown User';
+
     // Update item status only
     await database.run(
       `
@@ -1267,14 +1270,14 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
                 updatedAt = datetime('now')
             WHERE id = ?
         `,
-      [date, verifiedBy.trim(), notes || null, itemId],
+      [date, verifiedByName, notes || null, itemId],
     );
 
     // Store detailed service information in changelog
     const serviceData = {
       date,
       resolvedBy: resolvedBy.trim(),
-      verifiedBy: verifiedBy.trim(),
+      verifiedBy: verifiedByName,
       notes: notes || null
     };
     
@@ -1294,7 +1297,7 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
     );
 
     // Create changelog entry
-    const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedBy.trim()})`;
+    const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedByName})`;
     
     await database.run(
       `

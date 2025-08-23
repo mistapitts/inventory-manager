@@ -960,16 +960,13 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
     try {
         const itemId = req.params.id;
         const userId = req.user.id;
-        const { date, resolvedBy, verifiedBy, notes } = req.body;
+        const { date, resolvedBy, notes } = req.body;
         // Validation: all required fields
         if (!date) {
             return res.status(400).json({ error: 'Date is required' });
         }
         if (!resolvedBy || !resolvedBy.trim()) {
             return res.status(400).json({ error: 'Issue Resolved By is required' });
-        }
-        if (!verifiedBy || !verifiedBy.trim()) {
-            return res.status(400).json({ error: 'Verified By is required' });
         }
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId) {
@@ -984,6 +981,11 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
         if (!existingItem.isOutOfService) {
             return res.status(409).json({ error: 'Item is not out of service' });
         }
+        // Get user info for verification
+        const currentUser = await database_1.database.get('SELECT firstName, lastName FROM users WHERE id = ?', [userId]);
+        const verifiedByName = currentUser && currentUser.firstName && currentUser.lastName
+            ? `${currentUser.firstName} ${currentUser.lastName}`
+            : 'Unknown User';
         // Update item status only
         await database_1.database.run(`
             UPDATE inventory_items 
@@ -994,12 +996,12 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
                 returnToServiceNotes = ?,
                 updatedAt = datetime('now')
             WHERE id = ?
-        `, [date, verifiedBy.trim(), notes || null, itemId]);
+        `, [date, verifiedByName, notes || null, itemId]);
         // Store detailed service information in changelog
         const serviceData = {
             date,
             resolvedBy: resolvedBy.trim(),
-            verifiedBy: verifiedBy.trim(),
+            verifiedBy: verifiedByName,
             notes: notes || null
         };
         await database_1.database.run(`
@@ -1010,7 +1012,7 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
         // Get updated item to return
         const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
         // Create changelog entry
-        const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedBy.trim()})`;
+        const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedByName})`;
         await database_1.database.run(`
             INSERT INTO changelog (
                 id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
