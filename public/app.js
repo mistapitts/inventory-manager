@@ -4122,7 +4122,6 @@ function setupOOSFormHandlers() {
     });
   }
 }
-}
 
 // Show post-return modal for calibration/maintenance options
 function showPostReturnModal(itemId) {
