@@ -1126,11 +1126,17 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
-    const { reason, notes, at } = req.body;
+    const { date, reason, reportedBy, notes } = req.body;
 
-    // Validation: reason is required
+    // Validation: all required fields
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
     if (!reason || !reason.trim()) {
       return res.status(400).json({ error: 'Reason is required' });
+    }
+    if (!reportedBy || !reportedBy.trim()) {
+      return res.status(400).json({ error: 'Reported By is required' });
     }
 
     const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
@@ -1154,22 +1160,22 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
       return res.status(409).json({ error: 'Item is already out of service' });
     }
 
-    const outOfServiceDate = at || new Date().toISOString().split('T')[0];
-
     await database.run(
       `
             UPDATE inventory_items 
             SET isOutOfService = 1, 
                 outOfServiceDate = ?, 
                 outOfServiceReason = ?,
+                outOfServiceReportedBy = ?,
+                outOfServiceNotes = ?,
                 returnToServiceVerified = NULL,
                 returnToServiceVerifiedAt = NULL,
                 returnToServiceVerifiedBy = NULL,
-                returnToServiceNotes = ?,
+                returnToServiceNotes = NULL,
                 updatedAt = datetime('now')
             WHERE id = ?
         `,
-      [outOfServiceDate, reason.trim(), notes || null, itemId],
+      [date, reason.trim(), reportedBy.trim(), notes || null, itemId],
     );
 
     // Get updated item to return
@@ -1200,7 +1206,18 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;
-    const { verified, verifiedBy, notes, at } = req.body;
+    const { date, resolvedBy, verifiedBy, notes } = req.body;
+
+    // Validation: all required fields
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+    if (!resolvedBy || !resolvedBy.trim()) {
+      return res.status(400).json({ error: 'Issue Resolved By is required' });
+    }
+    if (!verifiedBy || !verifiedBy.trim()) {
+      return res.status(400).json({ error: 'Verified By is required' });
+    }
 
     const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
 
@@ -1223,24 +1240,20 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
       return res.status(409).json({ error: 'Item is not out of service' });
     }
 
-    const returnDate = at || new Date().toISOString();
-    const isVerified = !!verified;
-    const verifiedAt = isVerified ? returnDate : null;
-    const verifiedByUser = isVerified ? (verifiedBy || 'System') : null;
-
     await database.run(
       `
             UPDATE inventory_items 
             SET isOutOfService = 0,
-                outOfServiceDate = NULL,
-                returnToServiceVerified = ?,
+                returnToServiceDate = ?,
+                returnToServiceResolvedBy = ?,
+                returnToServiceVerified = 1,
                 returnToServiceVerifiedAt = ?,
                 returnToServiceVerifiedBy = ?,
                 returnToServiceNotes = ?,
                 updatedAt = datetime('now')
             WHERE id = ?
         `,
-      [isVerified ? 1 : 0, verifiedAt, verifiedByUser, notes || null, itemId],
+      [date, resolvedBy.trim(), date, verifiedBy.trim(), notes || null, itemId],
     );
 
     // Get updated item to return
