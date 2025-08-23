@@ -2397,11 +2397,14 @@ body {
 .inventory-table th:last-child,
 .inventory-table td:last-child {
   max-width: none;
-  min-width: 200px; /* Ensure Actions column has enough space */
+  min-width: 160px; /* Reduced from 200px for tighter layout */
+  width: 160px; /* Fixed width to prevent expansion */
   position: sticky;
   right: 0;
-  background: var(--bg-secondary);
+  background: #0a0f1a; /* Darker than default --bg-secondary for distinction */
+  border-left: 1px solid rgba(112, 128, 255, 0.2); /* Subtle left border */
   z-index: 5;
+  padding: 8px 12px; /* Reduced padding */
 }
 
 /* When action menu is open, boost the entire actions cell z-index */
@@ -2411,12 +2414,12 @@ body {
 }
 
 .inventory-table th:last-child {
-  background: var(--bg-secondary);
+  background: #0a0f1a; /* Match darker background */
   z-index: 15; /* Higher than other sticky headers */
 }
 
 .inventory-table td:last-child {
-  background: var(--bg-secondary);
+  background: #0a0f1a; /* Match darker background */
   overflow: visible !important; /* Ensure dropdowns are not cut off */
 }
 
@@ -3095,7 +3098,7 @@ body {
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* Reduced from 8px to 6px (25% reduction) */
 }
 
 /* Dark buttons that should always be visible */
