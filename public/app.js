@@ -2009,11 +2009,15 @@ function createServiceLogSection(item) {
       if (entry.action === 'service_out' || entry.action === 'service_return') {
         try {
           const serviceData = JSON.parse(entry.newValue || '{}');
+          const userName = entry.first_name && entry.last_name 
+            ? `${entry.first_name} ${entry.last_name}` 
+            : 'Unknown User';
+          
           serviceEvents.push({
             type: entry.action === 'service_out' ? 'out_of_service' : 'return_to_service',
             date: serviceData.date,
             reason: serviceData.reason,
-            reportedBy: serviceData.reportedBy,
+            reportedBy: userName, // Use the actual user name from changelog
             resolvedBy: serviceData.resolvedBy,
             verifiedBy: serviceData.verifiedBy,
             notes: serviceData.notes,
@@ -2045,17 +2049,19 @@ function createServiceLogSection(item) {
       details += `Verified by: ${event.verifiedBy}`;
     }
     
-    if (event.notes) {
+    if (event.notes && event.notes.trim()) {
       details += `<br/>Notes: ${event.notes}`;
     }
     details += `</span>`;
     
     return `
-      <div class="service-log-entry">
-        <div class="service-log-icon">${eventIcon}</div>
+      <div class="service-log-card">
+        <div class="service-log-header">
+          <span class="service-log-icon">${eventIcon}</span>
+          <span class="service-log-date">${date}</span>
+        </div>
         <div class="service-log-content">
-          <div class="service-log-date">${date}</div>
-          <div class="service-log-details">${details}</div>
+          ${details}
         </div>
       </div>
     `;

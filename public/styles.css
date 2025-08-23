@@ -3320,37 +3320,53 @@ td.actions {
   border: 1px solid var(--border-color);
 }
 
-/* Service Log styling */
-.service-log-entry {
-  display: flex;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+/* Service Log styling - horizontal grid layout */
+.service-log-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
 }
 
-.service-log-entry:last-child {
-  border-bottom: none;
+.service-log-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.service-log-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.service-log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .service-log-icon {
-  font-size: 18px;
-  width: 24px;
-  text-align: center;
+  font-size: 16px;
   flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.service-log-content {
-  flex: 1;
 }
 
 .service-log-date {
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  font-size: 0.9rem;
 }
 
-.service-log-details {
+.service-log-content {
   color: var(--text-secondary);
   line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .service-log-grid {
+    grid-template-columns: 1fr;
+  }
 }
