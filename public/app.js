@@ -1306,33 +1306,25 @@ function closeAllActionMenus() {
 }
 
 function toggleActionMenu(btn, id) {
-  // Ensure the action cell is the positioning context
-  const cell = btn.closest('td');
+  // menu must be inside the same <td class="actions">
+  const cell = btn.closest('td.actions');
   if (!cell) return;
-
-  let menu = cell.querySelector('.action-menu');
+  const menu = cell.querySelector('.action-menu');
   if (!menu) return;
 
   const isOpen = menu.classList.contains('open');
   closeAllActionMenus();
-
   if (!isOpen) {
-    // place the menu relative to the button
-    const rect = btn.getBoundingClientRect();
-    const cellRect = cell.getBoundingClientRect();
-
-    // Position inside the cell so scrolling the table doesn't desync
-    menu.style.top = `${btn.offsetTop + btn.offsetHeight + 6}px`;
-    menu.style.right = `8px`;
+    // position already handled by CSS (top/right), just open
     menu.classList.add('open');
   }
 }
 
-// click-away to close menus
+// click-away close
 document.addEventListener('click', (e) => {
-  const isToggle = e.target.closest('[data-action="toggle-actions"]');
+  const onToggle = e.target.closest('[data-action="toggle-actions"]');
   const inMenu = e.target.closest('.action-menu');
-  if (isToggle || inMenu) return;
+  if (onToggle || inMenu) return;
   closeAllActionMenus();
 });
 

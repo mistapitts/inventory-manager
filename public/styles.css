@@ -714,11 +714,9 @@ tr.row-oos * {
   padding: 10px 14px;
   background: var(--card-bg, #121829);
   border: 1px solid rgba(255,255,255,0.08);
-  border-bottom: none;                  /* so it can visually join to the table */
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  /* allow a subtle overlap onto the table header */
-  margin-bottom: -6px;                  /* <— overlap; change to 8px positive if you prefer a gap */
+  border-radius: 10px;
+  /* use padding instead of overlap for cleaner look */
+  margin-bottom: 16px;
   position: relative;
   z-index: 2;
   overflow: visible !important;         /* kill the tiny scrollbar */
@@ -772,24 +770,30 @@ tr.row-oos * {
   position: relative;
   z-index: 1;
   border: 1px solid rgba(255,255,255,0.08);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+  border-radius: 10px;
   overflow: visible;                    /* so dropdowns are not clipped */
+}
+
+/* Visual separator line between toolbar and table */
+.inventory-table-wrap::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
 }
 
 /* Ensure the table itself doesn't clip menus */
 .inventory-table {
   overflow: visible !important;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
 }
 
 /* Action cell & menu layering */
 .inventory-table td.actions,
 .inventory-table th.actions {
-  position: sticky;  /* keeps cell area stable re: z-index stacking */
-  right: 0;
+  position: relative;  /* positioning context for the menu */
   z-index: 3;
   background: transparent;
 }
@@ -826,6 +830,7 @@ tr.row-oos * {
   align-items: center;
   white-space: nowrap;
   overflow: visible !important;  /* removes tiny scrollbar on some browsers */
+  flex-shrink: 0;                /* prevent legend from shrinking */
 }
 
 /* Keep OOS rows visually marked without dimming interactive elements */
