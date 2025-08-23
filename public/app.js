@@ -3900,6 +3900,19 @@ async function apiFetchSummaryFixed() {
 // --- Global cache for items
 let _itemsCache = [];
 
+// --- Utility function to truncate file names
+function truncateFileName(fileName, maxLength = 50) {
+  if (!fileName || fileName.length <= maxLength) return fileName;
+  
+  const extension = fileName.split('.').pop();
+  const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+  const maxNameLength = maxLength - extension.length - 4; // Account for "..." and "."
+  
+  if (nameWithoutExt.length <= maxNameLength) return fileName;
+  
+  return nameWithoutExt.substring(0, maxNameLength) + '...' + '.' + extension;
+}
+
 // --- Render nickname cell with OOS chip
 function renderNicknameCell(item) {
   const name = (item?.nickname ?? item?.name ?? '').trim() || '—';
