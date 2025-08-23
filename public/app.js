@@ -2026,9 +2026,9 @@ function createServiceLogSection(item) {
             type: entry.action === 'service_out' ? 'out_of_service' : 'return_to_service',
             date: serviceData.date,
             reason: serviceData.reason,
-            reportedBy: userName, // Use the actual user name from changelog
+            reportedBy: serviceData.reportedBy || userName, // Use reportedBy from form or fallback to user name
             resolvedBy: serviceData.resolvedBy,
-            verifiedBy: serviceData.verifiedBy,
+            verifiedBy: serviceData.verifiedBy || userName, // Use verifiedBy from service data or fallback to user name
             notes: serviceData.notes,
             timestamp: entry.timestamp || serviceData.date
           });

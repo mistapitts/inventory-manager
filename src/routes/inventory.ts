@@ -1181,6 +1181,7 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
     const serviceData = {
       date,
       reason: reason.trim(),
+      reportedBy: reportedBy.trim(),
       notes: notes || null
     };
     

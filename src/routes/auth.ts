@@ -174,8 +174,58 @@ router.get('/profile', authenticateToken, async (req: Request, res: Response) =>
   }
 });
 
+// Get current user (alias for /profile for frontend compatibility)
+router.get('/me', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const user = await database.get(
+      'SELECT id, email, firstName, lastName, role, companyId, regionId, isActive, createdAt FROM users WHERE id = ?',
+      [req.user.id],
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update user profile
+router.patch('/update-profile', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { firstName, lastName } = req.body;
+
+    if (!firstName || !lastName) {
+      return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    // Check if user has permission (admin or company_owner)
+    const user = await database.get('SELECT role FROM users WHERE id = ?', [req.user!.id]);
+    if (!user || (user.role !== 'admin' && user.role !== 'company_owner')) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Update user profile
+    await database.run(
+      'UPDATE users SET firstName = ?, lastName = ?, updatedAt = datetime("now") WHERE id = ?',
+      [firstName.trim(), lastName.trim(), req.user!.id],
+    );
+
+    res.json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Change password
-router.put('/change-password', authenticateToken, async (req: Request, res: Response) => {
+router.patch('/change-password', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
