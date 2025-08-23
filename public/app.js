@@ -1144,8 +1144,10 @@ function createInventoryRow(item) {
         <td class="column-maintenanceDate">${lastMaintenance}</td>
         <td class="column-maintenanceDue">${maintenanceDue}</td>
         <td class="column-notes">${item.notes || 'N/A'}</td>
-        ${buildActionsCell(item)}
     `;
+
+  // Add the Actions column as a DOM element
+  row.appendChild(buildActionsCell(item));
 
   return row;
 }
@@ -1181,25 +1183,17 @@ function hexToRgba(hex, alpha = 0.2) {
 
 // ---- Single source of truth for Actions cell ----
 function buildActionsCell(item) {
-  return `
-    <td class="actions-cell">
-      <div class="actions-stack">
-        <button type="button" class="view-btn" data-id="${item.id}">
-          <span class="icon-eye">👁️</span> View
-        </button>
-        <button type="button" class="icon-btn add-btn" data-id="${item.id}" aria-label="Add">+</button>
-        <button type="button" class="icon-btn more-btn" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋮</button>
+  const td = document.createElement('td');
+  td.className = 'actions-col';
 
-        <div class="action-menu" role="menu" aria-hidden="true">
-          <button type="button" class="menu-item edit" data-id="${item.id}" role="menuitem">✏️ Edit</button>
-          <button type="button" class="menu-item rts" data-id="${item.id}" role="menuitem">↩️ Return to Service</button>
-          <button type="button" class="menu-item oos" data-id="${item.id}" role="menuitem">⛔ Mark Out of Service</button>
-          <div class="menu-sep"></div>
-          <button type="button" class="menu-item danger delete" data-id="${item.id}" role="menuitem">🗑️ Delete</button>
-        </div>
-      </div>
-    </td>
+  td.innerHTML = `
+    <div class="actions-stack" data-item-id="${item.id}">
+      <button class="pill-btn view" data-action="view">👁️&nbsp;View</button>
+      <button class="icon-btn add" data-action="quick-add">+</button>
+      <button class="icon-btn more" data-action="menu" aria-expanded="false">⋮</button>
+    </div>
   `;
+  return td;
 }
 
 // Update the Lab chip color in the legend
@@ -1301,86 +1295,94 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// === Actions menu controller (single source of truth) ===
-let __openMenu = null;
+// ---------- Menu Controller (portal) ----------
+const portalRoot = document.getElementById('menu-portal-root');
 
 function closeAnyMenu() {
-  if (!__openMenu) return;
-  __openMenu.classList.remove('open');
-  __openMenu = null;
+  if (portalRoot) portalRoot.innerHTML = ''; // remove existing menu portal
+  document.removeEventListener('keydown', onEscClose);
+  window.removeEventListener('scroll', closeAnyMenu, { capture: true });
+  window.removeEventListener('resize', closeAnyMenu);
 }
 
-function openMenuForCell(cell) {
+function onEscClose(e){ if (e.key === 'Escape') closeAnyMenu(); }
+
+/** open the actions menu near the trigger button; menu is rendered in body */
+function openActionsMenuFor(item, triggerBtn) {
   closeAnyMenu();
-  const menu = cell.querySelector('.action-menu');
-  if (!menu) return;
 
-  // Reset anchors, open, then clamp to viewport
-  menu.style.right = '8px';
-  menu.style.left = '';
-  menu.style.top = '36px';
-  menu.classList.add('open');
-  __openMenu = menu;
+  const r = triggerBtn.getBoundingClientRect();
+  // Construct portal container
+  const portal = document.createElement('div');
+  portal.className = 'menu-portal';
+  portal.style.left = `${Math.min(r.left, window.innerWidth - 260)}px`;
+  portal.style.top  = `${Math.min(r.bottom + 6, window.innerHeight - 260)}px`;
 
-  // Clamp horizontally if near right edge
-  const rect = menu.getBoundingClientRect();
-  const overflowX = rect.right - window.innerWidth;
-  if (overflowX > 0) {
-    // shift left by the overflow amount
-    menu.style.right = `${8 + overflowX}px`;
-  }
+  const menu = document.createElement('div');
+  menu.className = 'action-menu';
+  menu.innerHTML = `
+    <div class="row" data-cmd="edit">✏️ Edit</div>
+    ${item.isOutOfService ? 
+      `<div class="row" data-cmd="return">↩️ Return to Service</div>` :
+      `<div class="row" data-cmd="oos">⛔ Mark Out of Service</div>`
+    }
+    <div class="sep"></div>
+    <div class="row" data-cmd="delete" style="color:#ffb3b3">🗑️ Delete</div>
+  `;
 
-  // Clamp vertically if close to bottom of viewport
-  const overflowY = rect.bottom - window.innerHeight;
-  if (overflowY > 0) {
-    menu.style.top = `${36 - overflowY}px`;
-  }
+  portal.appendChild(menu);
+  portalRoot.appendChild(portal);
+
+  // Outside click = close
+  setTimeout(() => {
+    const onDoc = (ev) => {
+      if (!menu.contains(ev.target) && ev.target !== triggerBtn) closeAnyMenu();
+    };
+    document.addEventListener('mousedown', onDoc, { once: true });
+  });
+
+  document.addEventListener('keydown', onEscClose);
+  window.addEventListener('scroll', closeAnyMenu, { capture: true });
+  window.addEventListener('resize', closeAnyMenu);
+
+  // Wire menu actions
+  menu.addEventListener('click', (e) => {
+    const row = e.target.closest('.row');
+    if (!row) return;
+    const cmd = row.dataset.cmd;
+    closeAnyMenu();
+    if (cmd === 'edit') handleEditItem(item.id);
+    else if (cmd === 'oos') showOutOfServiceModal(item.id);
+    else if (cmd === 'return') showReturnToServiceModal(item.id);
+    else if (cmd === 'delete') handleDeleteItem(item.id);
+  });
 }
 
-// Global closers
+// Delegate clicks for all action cells
 document.addEventListener('click', (e) => {
-  // Handle ellipsis button clicks
-  const moreBtn = e.target.closest('.icon-btn.more-btn');
-  if (moreBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const cell = moreBtn.closest('td.actions-cell');
-    if (!cell) return;
-    openMenuForCell(cell);
-    return;
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+
+  const stack = btn.closest('.actions-stack');
+  if (!stack) return;
+
+  const itemId = stack.dataset.itemId;
+  const item = window.inventoryItems?.find(x => String(x.id) === String(itemId));
+  if (!item) return;
+
+  const action = btn.dataset.action;
+
+  if (action === 'view') {
+    console.log('View item:', item.id);
+    // TODO: Navigate to item view
+  } else if (action === 'quick-add') {
+    console.log('Quick add for item:', item.id);
+    // TODO: Open quick add modal
+  } else if (action === 'menu') {
+    btn.setAttribute('aria-expanded', 'true');
+    openActionsMenuFor(item, btn);
   }
-
-  // Handle menu item clicks
-  const menuBtn = e.target.closest('.action-menu button');
-  if (menuBtn) {
-    const cell = menuBtn.closest('td.actions-cell');
-    const row = cell.closest('tr');
-    const itemId = row?.dataset?.itemId || menuBtn.dataset.id;
-
-    if (menuBtn.classList.contains('edit')) {
-      handleEditItem(itemId);
-    } else if (menuBtn.classList.contains('rts')) {
-      showReturnToServiceModal(itemId);
-    } else if (menuBtn.classList.contains('oos')) {
-      showOutOfServiceModal(itemId);
-    } else if (menuBtn.classList.contains('delete')) {
-      handleDeleteItem(itemId);
-    }
-
-    closeAnyMenu();
-    return;
-  }
-
-  // Close if clicking outside any actions-stack
-  if (!e.target.closest('.actions-stack')) closeAnyMenu();
 });
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeAnyMenu();
-});
-
-window.addEventListener('scroll', closeAnyMenu, { passive: true });
-window.addEventListener('resize', closeAnyMenu);
 
 // ---- Handler functions for menu actions ----
 function handleEditItem(id) {

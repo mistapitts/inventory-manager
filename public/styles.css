@@ -1036,123 +1036,140 @@ td.actions-cell::after {
   content: none !important; 
 }
 
-/* ---- Actions column: stacking + menu ---- */
-
-/* Everything around the Actions cell must allow overflow and be a stacking context */
-.inventory-table-wrap,
-#inventoryTable,
-#inventoryTable tbody,
-#inventoryTable tr,
-#inventoryTable td.actions-cell,
-#inventoryTable td .actions-stack {
-  position: relative;
-  overflow: visible !important;
+/* --- Toolbar/Table gap (no overlap) --- */
+.inventory-toolbar { 
+  margin-bottom: 14px; 
+  border-bottom-left-radius: 10px; 
+  border-bottom-right-radius: 10px; 
 }
 
-/* Ensure rows never cover the dropdown */
-#inventoryTable tr { z-index: 1; }
-
-/* The dropdown menu itself sits above all rows */
-.actions-cell .action-menu {
-  position: absolute;
-  top: 36px;              /* under the 34px buttons */
-  right: 8px;
-  min-width: 200px;
-  z-index: 9999;          /* beat rows & sticky cells */
-  display: none;
-  background: #0f1422;    /* matches your theme */
-  border: 1px solid #2d3450;
-  border-radius: 10px;
-  box-shadow: 0 16px 32px rgba(0,0,0,.45);
-  padding: 6px;
+.toolbar-divider { 
+  height: 1px; 
+  margin: -6px 8px 14px 8px; 
+  background: color-mix(in oklab, #fff 8%, transparent); 
 }
 
-.actions-cell .action-menu.open { display: block; }
-
-.actions-cell .action-menu button {
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: transparent;
-  border: 0;
-  font: inherit;
-  color: #d6dcff;
+/* --- Table wrapper and rows --- */
+.inventory-table-wrap { 
+  position: relative; 
+  overflow-x: auto; 
+  overflow-y: visible; 
+  border-radius: 10px; 
 }
 
-.actions-cell .action-menu button:hover {
-  background: color-mix(in srgb, #ffffff 6%, transparent);
-}
-
-.actions-cell .action-menu .danger {
-  color: #ff8d8d;
-}
-
-.actions-cell .action-menu .danger:hover {
-  background: color-mix(in srgb, #ff5a5a 12%, transparent);
-}
-
-/* Don't let any OOS row tint block interactions */
-.row-oos .actions-stack,
-.row-oos .action-menu,
-.row-oos .icon-btn,
-.row-oos .view-btn {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* ---- "View" pill polish (re-apply lost style) ---- */
-.view-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  background: #1b2340;
-  border: 1px solid #2a345e;
-  border-radius: 8px;
-  color: #dbe2ff;
-  font-weight: 600;
-  cursor: pointer;
-}
-.view-btn:hover {
-  background: #202a4d;
-  border-color: #38457a;
-}
-
-/* Keep the + and ⋯ consistent */
-.icon-btn {
-  width: 34px; 
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: #1b2340;
-  border: 1px solid #2a345e;
-  color: #dbe2ff;
-  cursor: pointer;
-}
-.icon-btn:hover {
-  background: #202a4d;
-  border-color: #38457a;
-}
-
-/* ---- kill phantom right-side gutter & any decorative afters ---- */
-.inventory-table-wrap,
-#inventoryTable { 
+.inventory-table-wrap table { 
   width: 100%; 
-  box-sizing: border-box; 
+  border-collapse: separate; 
+  border-spacing: 0; 
 }
 
-.inventory-table-wrap::after { 
-  content: none !important; 
+.inventory-table-wrap thead, 
+.inventory-table-wrap tbody, 
+.inventory-table-wrap tr { 
+  overflow: visible; 
+} /* allow menus to overhang */
+
+/* --- Sticky Actions column --- */
+th.actions-col,
+td.actions-col {
+  position: sticky;
+  right: 0;
+  z-index: 6;                 /* above other cells */
+  background: rgba(7, 10, 25, 0.85); /* same table bg, slight alpha for seam */
+  backdrop-filter: blur(2px);
 }
 
-/* In case a width calc created a sliver */
-#inventoryTable th:last-child,
-#inventoryTable td:last-child { 
-  padding-right: 12px; 
+th.actions-col { 
+  z-index: 7; 
+}
+
+/* remove phantom gutter on right if any */
+.inventory-table-wrap::-webkit-scrollbar { 
+  height: 10px; 
+}
+
+/* --- Action cell layout --- */
+.actions-stack { 
+  display: flex; 
+  gap: 8px; 
+  align-items: center; 
+  justify-content: flex-end; 
+}
+
+.icon-btn, .pill-btn { 
+  height: 32px; 
+  min-width: 32px; 
+  padding: 0 10px; 
+  border-radius: 10px; 
+  border: 1px solid rgba(255,255,255,0.08); 
+  background: #1b2340; 
+  color: #cfd7ff; 
+  cursor: pointer;
+}
+
+.icon-btn { 
+  width: 32px; 
+  padding: 0; 
+  display: inline-grid; 
+  place-items: center; 
+}
+
+.icon-btn.more { 
+  font-weight: 700; 
+} /* ⋮ */
+
+.pill-btn.view { 
+  padding: 0 12px; 
+}
+
+.icon-btn:hover, .pill-btn:hover {
+  background: #202a4d;
+  border-color: #38457a;
+}
+
+/* --- Menu (rendered in body via portal) --- */
+.menu-portal { 
+  position: fixed; 
+  z-index: 99999; 
+  pointer-events: none; 
+}
+
+.menu-portal .action-menu {
+  pointer-events: auto;
+  position: relative; /* local inside portal */
+  min-width: 220px;
+  background: #0f142d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03) inset;
+}
+
+.action-menu .row { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  padding: 8px 10px; 
+  border-radius: 8px; 
+  color: #e6ebff; 
+  cursor: pointer;
+}
+
+.action-menu .row:hover { 
+  background: rgba(255,255,255,0.06); 
+}
+
+.action-menu .sep { 
+  height: 1px; 
+  margin: 6px 4px; 
+  background: rgba(255,255,255,0.08); 
+  border-radius: 1px; 
+}
+
+/* ensure menus stay above sticky header too */
+thead { 
+  position: relative; 
+  z-index: 4; 
 }
 
 /* Menu items styling */
