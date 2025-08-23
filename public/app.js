@@ -1004,6 +1004,9 @@ function displayInventoryItems(items) {
   // Always render headers and body
   renderInventoryHeader();
   renderInventoryBody(items);
+  
+  // Enhance table layout after rendering
+  enhanceTableLayout();
 }
 
 // Generate consistent colors for lists based on their ID
@@ -1074,17 +1077,8 @@ function createInventoryRow(item) {
     row.classList.add('row-oos');
   }
   
-  // --- Row accent classes instead of inline bars ---
-  if (item.isOutOfService === 1 || item.isOutOfService === true) {
-    row.classList.add('row-accent--oos');
-  }
-  if (item.isOutsourced === 1 || item.isOutsourced === true) {
-    row.classList.add('row-accent--outsourced');
-  }
-  // Add lab accent if needed (you can customize this logic)
-  if (item.listName === 'Lab' || item.calibrationType === 'Lab') {
-    row.classList.add('row-accent--lab');
-  }
+  // --- Apply row tabs for colored bars ---
+  applyRowTabs(row, item);
 
   // Add list ID attribute for CSS targeting
   if (item.listId) {
@@ -1196,19 +1190,19 @@ function hexToRgba(hex, alpha = 0.2) {
 // ---- Actions cell builder ----
 function buildActionsCell(item){
   const td = document.createElement('td');
-  td.className = 'actions-col';
+  td.className = 'table-col-actions';
   
   td.innerHTML = `
-    <div class="actions-stack" data-item-id="${item.id}">
-      <button class="btn btn-view" data-id="${item.id}">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke-width="2"/>
+    <div class="action-cell" data-item-id="${item.id}">
+      <button class="btn-pill" data-action="view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke-width="2"/>
           <circle cx="12" cy="12" r="3" stroke-width="2"/>
         </svg>
         <span>View</span>
       </button>
-      <button class="icon-btn add"  data-id="${item.id}">+</button>
-      <button class="icon-btn more" data-id="${item.id}" aria-expanded="false">⋮</button>
+      <button class="icon-btn" data-action="add">+</button>
+      <button class="icon-btn" data-action="more" aria-expanded="false">⋮</button>
     </div>`;
   
   return td;
@@ -4363,4 +4357,138 @@ async function downloadFile(fileName, fileType) {
     console.error('Error downloading file:', error);
     showToast(`Failed to download file: ${error.message}`, 'error');
   }
+}
+
+/* ---------- TOOLBAR: open the lists panel ---------- */
+const toolbar = document.getElementById('inventoryToolbar');
+const btnEditLists = document.getElementById('btnEditLists');
+const listsPanel = document.getElementById('listsPanel');
+
+function renderListsPanel(panel) {
+  // Use the existing column customizer menu content
+  const existingMenu = document.getElementById('columnCustomizerMenu');
+  if (existingMenu) {
+    panel.innerHTML = existingMenu.innerHTML;
+  } else {
+    // Fallback content if the menu doesn't exist
+    panel.innerHTML = `
+      <div style="padding: 16px;">
+        <h4>Lists</h4>
+        <div id="listOptions"></div>
+        <button id="addListInlineBtn">+ Add List</button>
+        
+        <h4>Visible Columns</h4>
+        <div id="columnOptions"></div>
+      </div>
+    `;
+  }
+}
+
+function openListsPanel() {
+  if (!listsPanel) return;
+  // build / render panel here using your existing renderListsPanel()
+  renderListsPanel(listsPanel); // <- call your existing function
+  const rect = btnEditLists.getBoundingClientRect();
+  listsPanel.style.left = `${Math.max(16, rect.left)}px`;
+  listsPanel.style.top  = `${Math.max(16, rect.bottom + 10 + window.scrollY)}px`;
+  listsPanel.hidden = false;
+  document.addEventListener('keydown', escCloseLists);
+  document.addEventListener('mousedown', outsideCloseLists, { capture: true });
+}
+
+function closeListsPanel() {
+  if (!listsPanel || listsPanel.hidden) return;
+  listsPanel.hidden = true;
+  document.removeEventListener('keydown', escCloseLists);
+  document.removeEventListener('mousedown', outsideCloseLists, { capture: true });
+}
+
+function escCloseLists(e){ if (e.key === 'Escape') closeListsPanel(); }
+function outsideCloseLists(e){
+  if (!listsPanel.contains(e.target) && e.target !== btnEditLists) closeListsPanel();
+}
+
+if (btnEditLists) {
+  btnEditLists.onclick = (e) => {
+    e.preventDefault();
+    (listsPanel.hidden ? openListsPanel : closeListsPanel)();
+  };
+}
+
+/* ---------- TABLE: horizontal scroll & sticky actions ---------- */
+// call this after rows render
+function enhanceTableLayout() {
+  const wrap = document.querySelector('.inventory-table-wrap');
+  const table = document.getElementById('inventoryTable');
+  if (!wrap || !table) return;
+  // Make sure wrapper can scroll horizontally
+  wrap.style.overflowX = 'auto';
+  table.style.width = 'max-content';
+}
+
+/* ---------- ROW TABS: set --row-tab and classes ---------- */
+// call when mapping rows -> after data is fetched
+function applyRowTabs(tr, item){
+  tr.classList.add('inventory-row');
+  // left color priority example:
+  if (item.isOutOfService) tr.classList.add('oos');
+  if (item.isOutsourced) tr.classList.add('outsourced');
+  // prefer explicit color if you have list colors:
+  if (item.listColor) tr.style.setProperty('--row-tab', item.listColor);
+}
+
+/* ---------- ACTIONS: menu open/close (⋮), z-index above rows ---------- */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="more"]');
+  const anyMenu = document.querySelectorAll('.action-menu.open');
+  // click-away for open menus
+  if (!btn && !e.target.closest('.action-menu')) {
+    anyMenu.forEach(m => m.classList.remove('open'));
+    return;
+  }
+  if (!btn) return;
+
+  const cell = btn.closest('td');
+  let menu = cell.querySelector('.action-menu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.className = 'action-menu';
+    menu.innerHTML = `
+      <button data-menu="edit">✏️ Edit</button>
+      <button data-menu="return">↩️ Return to Service</button>
+      <button data-menu="oos">⛔ Mark Out of Service</button>
+      <button data-menu="delete" style="color:#ff6b6b">🗑 Delete</button>
+    `;
+    cell.appendChild(menu);
+  }
+  // position and clamp
+  menu.classList.toggle('open');
+  const r = menu.getBoundingClientRect();
+  const overRight = r.right > (window.innerWidth - 12);
+  if (overRight) menu.style.right = `${(r.right - window.innerWidth) + 20}px`;
+});
+
+document.addEventListener('click', (e) => {
+  const button = e.target.closest('.action-menu button');
+  if (!button) return;
+  const tr = e.target.closest('tr');
+  const id = tr?.dataset?.id;
+  const action = button.dataset.menu;
+  // TODO hook into your real handlers
+  if (action === 'edit') handleEditItem(id);
+  if (action === 'return') showReturnToServiceModal(id);
+  if (action === 'oos') showOutOfServiceModal(id);
+  if (action === 'delete') handleDeleteItem(id);
+  // close after action
+  e.target.closest('.action-menu').classList.remove('open');
+});
+
+/* ---------- CALL after rendering inventory ---------- */
+// wherever you currently render rows:
+function renderInventoryRows(items){
+  const tbody = document.querySelector('#inventoryTable tbody');
+  // ...build rows...
+  // for each row TR you create:
+  //   applyRowTabs(tr, item);
+  enhanceTableLayout();
 }

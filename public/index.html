@@ -345,33 +345,20 @@
               <div class="inventory-main-content">
                 <div class="inventory-table-container">
                   <!-- INVENTORY TOOLBAR -->
-                  <div class="inv-toolbar card">
-                    <div class="inv-toolbar__left">
-                      <h2 class="inv-title">Inventory</h2>
-                    </div>
-
-                    <div class="inv-toolbar__right">
-                      <button id="btnEditLists" class="btn btn-primary btn-icon">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
-                        Edit Lists and Columns
-                      </button>
-
-                      <label class="chk inline" for="chkShowOOS">
-                        <input id="chkShowOOS" type="checkbox" />
-                        <span>Show Out of Service</span>
-                      </label>
-
-                      <div class="inv-legend">
-                        <span class="legend-label">Legend:</span>
-                        <span class="badge badge-oos">OOS</span>
-                        <span class="chip chip-outsourced">Outsourced</span>
-                        <span class="chip chip-lab" id="legendLabChip">Lab</span>
-                      </div>
+                  <div class="inventory-toolbar" id="inventoryToolbar">
+                    <h3 class="section-title" style="margin:0;font-weight:650;">Inventory</h3>
+                    <div class="spacer"></div>
+                    <button id="btnEditLists" class="btn-pill">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
+                      Edit Lists and Columns
+                    </button>
+                    <div class="legend" style="display:flex;gap:10px;align-items:center;">
+                      <span style="opacity:.7">Legend:</span>
+                      <span class="badge badge-oos">OOS</span>
+                      <span class="chip chip-outsourced">Outsourced</span>
+                      <span class="chip chip-lab">Lab</span>
                     </div>
                   </div>
-
-                  <!-- Divider gap (real space) -->
-                  <div class="inv-gap"></div>
 
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
                           <!-- Lists Section -->
@@ -475,8 +462,8 @@
                     </div>
                   </div>
 
-                  <!-- TABLE WRAP (leave your existing table inside this wrapper) -->
-                  <div class="inventory-table-wrap card">
+                  <!-- TABLE WRAP -->
+                  <div class="inventory-table-wrap">
                     <table class="inventory-table" id="inventoryTable">
                       <thead id="inventory-thead">
                         <tr>
@@ -529,12 +516,12 @@
                             Last Maintenance <i class="fas fa-sort"></i>
                           </th>
                           <th class="sortable" data-sort="maintenanceDue">
-                            Maintenance Due <i class="fas fa-sort"></i>
+                            Maintenance Due <i classfas fa-sort"></i>
                           </th>
                           <th class="sortable" data-sort="notes">
                             Notes <i class="fas fa-sort"></i>
                           </th>
-                          <th class="actions-col">Actions</th>
+                          <th class="table-col-actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody id="inventory-tbody">
@@ -542,7 +529,9 @@
                       </tbody>
                     </table>
                   </div>
-                  <!-- Close inventory-table-scroll-wrapper -->
+
+                  <!-- lists panel exists once -->
+                  <div id="listsPanel" hidden></div>
                 </div>
               </div>
             </div>
@@ -1149,6 +1138,6 @@
     </div>
 
     <div id="menu-portal-root"></div>
-    <script src="/app.js?v=ui-fix-batch-1"></script>
+    <script src="/app.js?v=ui-comprehensive-fix-1"></script>
   </body>
 </html>

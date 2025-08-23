@@ -4165,3 +4165,120 @@ body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
+
+/* ---- INVENTORY TOOLBAR ---- */
+.inventory-toolbar {
+  border: 1px solid rgba(112, 128, 255, 0.25);
+  border-bottom: none;          /* remove thin line */
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #121628;
+  box-shadow: 0 0 0 1px rgba(112,128,255,.08) inset;
+  overflow: visible !important;
+  flex-wrap: wrap;
+}
+.inventory-toolbar .spacer { flex: 1 1 auto; }
+/* keep a REAL gap between toolbar and table */
+.inventory-toolbar + .inventory-table-wrap { margin-top: 14px; }
+
+/* hide toolbar OOS toggle (it exists only in editor) */
+#chkShowOOS, label[for="chkShowOOS"] { display: none !important; }
+
+/* ---- TABLE LAYOUT / SCROLL ---- */
+.inventory-table-wrap {
+  position: relative;
+  overflow-x: auto;           /* bring back horizontal scroll if needed */
+  overflow-y: visible;
+  border: 1px solid rgba(112,128,255,.25);
+  border-radius: 10px;
+  background: #0f1323;
+}
+.inventory-table {
+  width: max-content;         /* table sizes to content; wrapper scrolls */
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* keep sticky Actions column */
+.table-col-actions,
+.table-col-actions th,
+.table-col-actions td {
+  position: sticky;
+  right: 0;
+  background: #0f1323;        /* same bg as table */
+  z-index: 5;                 /* over rows */
+}
+
+/* action buttons look+feel */
+.action-cell {
+  display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+}
+.icon-btn, .btn-pill {
+  height: 32px; min-width: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(112,128,255,.35);
+  background: #151a2f;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 10px; gap: 8px;
+  cursor: pointer;
+}
+.btn-pill svg, .icon-btn svg { width: 16px; height: 16px; }
+
+/* menu should always sit above rows */
+.action-menu {
+  position: absolute;
+  top: 36px; right: 8px;
+  min-width: 170px;
+  background: #0f1323;
+  border: 1px solid rgba(112,128,255,.35);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.4);
+  z-index: 9999;
+  display: none;
+}
+.action-menu.open { display: block; }
+.action-menu button {
+  width: 100%; text-align: left; padding: 10px 12px;
+  background: transparent; border: 0; color: #dde3ff;
+}
+.action-menu button:hover { background: rgba(112,128,255,.12); }
+
+/* ---- LEFT STATUS TABS (colored bars) ---- */
+.inventory-row {
+  position: relative;
+  padding-left: 12px;                /* reserve space for the tab */
+}
+.inventory-row::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;   /* short bar that doesn't hit the text */
+  width: 4px;
+  border-radius: 2px;
+  background: var(--row-tab, #444);
+}
+/* examples; JS sets --row-tab per row */
+.inventory-row.oos::before { background: #f04747; }
+.inventory-row.outsourced::before { background: #f0a047; }
+
+/* table cells never overflow invisibly */
+.inventory-table th, .inventory-table td {
+  white-space: nowrap;
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* edit lists panel sizing + close on outside click */
+#listsPanel {
+  position: absolute;
+  z-index: 10000;
+  max-height: 70vh;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(112,128,255,.35);
+  background: #0f1323;
+}
