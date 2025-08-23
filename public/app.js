@@ -2,86 +2,6 @@
 let currentUser = null;
 let authToken = null;
 
-// ---- OOS toggle bootstrapping ----
-const SHOW_OOS_KEY = 'showOutOfService';
-
-function getShowOOS() {
-  return localStorage.getItem(SHOW_OOS_KEY) !== 'false'; // default to true
-}
-function setShowOOS(v) {
-  localStorage.setItem(SHOW_OOS_KEY, v ? 'true' : 'false');
-}
-
-// Company state management
-window.appState = window.appState || {};
-appState.company = null;
-
-// Always use this to read the JWT
-function getAuthToken() {
-  return (typeof authToken !== 'undefined' && authToken) || localStorage.getItem('authToken') || '';
-}
-
-// Company status management
-async function fetchCompanyStatus() {
-  try {
-    const r = await fetch('/api/company/status', {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
-    if (!r.ok) throw new Error('COMPANY_STATUS_FAILED');
-    const data = await r.json();
-    appState.company = data.company || null;
-    toggleDemoCompanyButton(data.hasCompany);
-  } catch (error) {
-    console.error('Error fetching company status:', error);
-  }
-}
-
-function toggleDemoCompanyButton(hasCompany) {
-  const btn = document.querySelector('#setupCompanyBtn');
-  if (!btn) return;
-  if (hasCompany) {
-    btn.classList.add('hidden');
-  } else {
-    btn.classList.remove('hidden');
-  }
-}
-
-// Safe error message helper
-async function safeErrorMessage(r) {
-  try { 
-    const j = await r.json(); 
-    return j?.error || j?.message || ''; 
-  } catch { 
-    return ''; 
-  }
-}
-
-// Improved setup demo company handler
-async function handleSetupDemoCompanyClick() {
-  try {
-    const r = await fetch('/api/company/setup-demo', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
-
-    if (r.status === 409 || r.status === 400) {
-      // Server says you already have one – treat as success
-      showToast('Demo company already set up.', 'info');
-    } else if (!r.ok) {
-      const msg = await safeErrorMessage(r);
-      throw new Error(msg || 'Failed to set up demo company');
-    } else {
-      showToast('Demo company created!', 'success');
-    }
-
-    await fetchCompanyStatus();   // refresh state + hide button
-    await loadInventoryItems();   // refresh dashboard
-  } catch (err) {
-    console.error(err);
-    showToast('Could not set up demo company. Please try again.', 'error');
-  }
-}
-
 // DOM elements
 const loginContainer = document.getElementById('loginContainer');
 const registerContainer = document.getElementById('registerContainer');
@@ -99,12 +19,6 @@ const rememberMeCheckbox = document.getElementById('rememberMe');
 document.addEventListener('DOMContentLoaded', function () {
   checkAuthStatus();
   setupEventListeners();
-  
-
-  
-  // Fetch company status before loading inventory
-  fetchCompanyStatus();
-  
   // Handle deep links like /item/:id
   const parts = window.location.pathname.split('/').filter(Boolean);
   if (parts[0] === 'item' && parts[1]) {
@@ -141,30 +55,6 @@ function setupEventListeners() {
   // Registration form submission
   registerForm.addEventListener('submit', handleRegistration);
 
-  // Out of service form submission
-  const outOfServiceForm = document.getElementById('outOfServiceForm');
-  if (outOfServiceForm) {
-    outOfServiceForm.addEventListener('submit', handleOutOfServiceSubmit);
-  }
-
-  // Return to service form submission
-  const returnToServiceForm = document.getElementById('returnToServiceForm');
-  if (returnToServiceForm) {
-    returnToServiceForm.addEventListener('submit', handleReturnToServiceSubmit);
-  }
-
-  // Out of service filter toggle
-  const showOutOfServiceCheckbox = document.getElementById('showOutOfService');
-  if (showOutOfServiceCheckbox) {
-    showOutOfServiceCheckbox.addEventListener('change', handleOutOfServiceFilterChange);
-  }
-
-  // Verification checkbox toggle
-  const verificationCheckbox = document.getElementById('verificationCheckbox');
-  if (verificationCheckbox) {
-    verificationCheckbox.addEventListener('change', handleVerificationCheckboxChange);
-  }
-
   // Show registration form
   showRegisterLink.addEventListener('click', showRegistration);
 
@@ -182,10 +72,10 @@ function setupEventListeners() {
   rememberMeCheckbox.addEventListener('change', handleRememberMe);
 
   // Company setup button
-const setupCompanyBtn = document.getElementById('setupDemoCompany');
-if (setupCompanyBtn) {
-  setupCompanyBtn.addEventListener('click', handleSetupDemoCompanyClick);
-}
+  const setupCompanyBtn = document.getElementById('setupCompanyBtn');
+  if (setupCompanyBtn) {
+    setupCompanyBtn.addEventListener('click', setupDemoCompany);
+  }
 
   // Create first list button
   const createFirstListBtn = document.getElementById('createFirstListBtn');
@@ -595,9 +485,6 @@ async function loadDashboardData() {
       updateDashboardUserInfo();
     }
 
-    // Fetch company status
-    await fetchCompanyStatus();
-
     // Load lists first (needed for inventory filtering)
     await loadListsIntoSelectors();
 
@@ -606,8 +493,6 @@ async function loadDashboardData() {
 
     // Load inventory items
     await loadInventoryItems();
-
-    // Initialize out-of-service filter after inventory is loaded
   } catch (error) {
     console.error('Error loading dashboard data:', error);
   }
@@ -833,42 +718,21 @@ async function loadInventoryStats() {
 
 function updateDashboardStats(stats) {
   const totalItemsElement = document.getElementById('totalItems');
-  const activeItemsElement = document.getElementById('activeItems');
   const dueThisMonthElement = document.getElementById('dueThisMonth');
   const maintenanceDueElement = document.getElementById('maintenanceDue');
 
   if (totalItemsElement) {
     totalItemsElement.textContent = stats.totalItems || 0;
-    // Make the number clickable to clear filters and show all items
+    // Make the number clickable to show the inventory list
     totalItemsElement.style.cursor = 'pointer';
     totalItemsElement.onclick = () => {
-      // Clear search input if it exists
-      const searchInput = document.querySelector('.search-box input') || document.getElementById('searchInput');
-      if (searchInput) {
-        searchInput.value = '';
-      }
-      
-      // Set "Show Out of Service" to checked/true
-      setShowOOS(true);;
-      
-      // Clear list filters (if any UI state)
-      // Note: We don't have a list filter dropdown yet, but this prepares for it
-      
-      // Show inventory section and hide welcome message
       const welcomeMessage = document.getElementById('welcomeMessage');
       const inventorySection = document.getElementById('inventorySection');
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       if (inventorySection) inventorySection.style.display = 'block';
-      
-      // Reload inventory with OOS items included
       loadInventoryItems();
     };
   }
-  
-  if (activeItemsElement) {
-    activeItemsElement.textContent = stats.activeItems || 0;
-  }
-  
   if (dueThisMonthElement) dueThisMonthElement.textContent = stats.dueThisMonth || 0;
   if (maintenanceDueElement) maintenanceDueElement.textContent = stats.maintenanceDue || 0;
 }
@@ -876,17 +740,8 @@ function updateDashboardStats(stats) {
 async function loadInventoryItems() {
   try {
     console.log('Loading inventory items...');
-    
-    // Check if out-of-service filter is enabled from localStorage
-    const showOutOfService = getShowOOS();
-    
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (showOutOfService) {
-      params.append('includeOOS', '1');
-    }
-    
-    const response = await fetch(`/api/inventory?${params.toString()}`, {
+    // Always fetch all; filtering is applied client-side via hidden lists
+    const response = await fetch(`/api/inventory`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -898,16 +753,10 @@ async function loadInventoryItems() {
       const allItems = Array.isArray(data.items) ? data.items : [];
       const hiddenLists = JSON.parse(localStorage.getItem('hiddenLists') || '[]');
       console.log('Hidden lists:', hiddenLists);
-      console.log('All items with listIds:', allItems.map(item => ({ id: item.id, nickname: item.nickname, listId: item.listId, isOutOfService: item.isOutOfService })));
-      
-      // Apply list visibility filtering (but OOS filtering is now handled by API)
       const visibleItems = allItems.filter(
-        (item) => !item.listId || !hiddenLists.includes(item.listId)
+        (item) => !item.listId || !hiddenLists.includes(item.listId),
       );
-      
       console.log('Visible items:', visibleItems.length, 'of', allItems.length);
-      
-      // Display the filtered items
       displayInventoryItems(visibleItems);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
@@ -917,96 +766,32 @@ async function loadInventoryItems() {
   }
 }
 
-function renderInventoryHeader() {
-  const thead = document.getElementById('inventory-thead');
-  if (!thead) return;
-  
-  thead.innerHTML = `
-    <tr>
-      <th class="sortable" data-sort="itemType">Item Type <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="nickname">Nickname <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="labId">Lab ID <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="make">Make <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="model">Model <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="serialNumber">Serial # <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="condition">Condition <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="dateReceived">Date Received <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="datePlacedInService">In Service <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="location">Location <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="calibrationType">Cal Type <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="calibrationDate">Last Cal <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="nextCalibrationDue">Next Cal Due <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="calibrationInterval">Cal Interval <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="calibrationMethod">Cal Method/Company <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="maintenanceDate">Last Maintenance <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="maintenanceDue">Maintenance Due <i class="fas fa-sort"></i></th>
-      <th class="sortable" data-sort="notes">Notes <i class="fas fa-sort"></i></th>
-      <th>Actions</th>
-    </tr>
-  `;
-}
-
-function renderInventoryBody(items) {
-  const tbody = document.getElementById('inventory-tbody');
-  if (!tbody) return;
-
-  if (!items || items.length === 0) {
-    tbody.innerHTML = `
-      <tr class="empty-state">
-        <td colspan="19">
-          <div class="empty-box">
-            <div class="empty-title">No items yet</div>
-            <div class="empty-sub">Add your first item or toggle "Show Out of Service".</div>
-            <div class="empty-actions">
-              <button id="emptyAddItemBtn" class="btn btn-primary">+ Add Item</button>
-            </div>
-          </div>
-        </td>
-      </tr>
-    `;
-    
-    // Wire up the empty state button
-    const addBtn = document.getElementById('emptyAddItemBtn');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        // Trigger the add item modal or form
-        const addItemBtn = document.querySelector('.btn-primary');
-        if (addItemBtn) addItemBtn.click();
-      });
-    }
-    return;
-  }
-
-  // Clear existing rows and add new ones
-  tbody.innerHTML = '';
-  items.forEach((item) => {
-    const row = createInventoryRow(item);
-    tbody.appendChild(row);
-  });
-}
-
 function displayInventoryItems(items) {
   const welcomeMessage = document.getElementById('welcomeMessage');
   const inventorySection = document.getElementById('inventorySection');
-
-  console.log('displayInventoryItems called with:', items);
-  console.log('Items array length:', Array.isArray(items) ? items.length : 'not an array');
+  const tableBody = document.getElementById('inventoryTableBody');
 
   // Keep a global copy so actions like Edit can find items quickly
   window.inventoryItems = Array.isArray(items) ? items : [];
 
-  // Always show inventory section, hide welcome message if we have items
-  if (inventorySection) inventorySection.style.display = 'block';
-  if (welcomeMessage) {
-    welcomeMessage.style.display = Array.isArray(items) && items.length > 0 ? 'none' : 'block';
-  }
+  if (Array.isArray(items) && items.length > 0) {
+    // Hide welcome message, show inventory
+    if (welcomeMessage) welcomeMessage.style.display = 'none';
+    if (inventorySection) inventorySection.style.display = 'block';
 
-  // Always render headers and body
-  renderInventoryHeader();
-  renderInventoryBody(items);
-  
-  // Enhance table layout after rendering
-  enhanceTableLayout();
+    // Clear existing table rows
+    if (tableBody) tableBody.innerHTML = '';
+
+    // Add items to table
+    items.forEach((item) => {
+      const row = createInventoryRow(item);
+      if (tableBody) tableBody.appendChild(row);
+    });
+  } else {
+    // Show welcome message, hide inventory
+    if (welcomeMessage) welcomeMessage.style.display = 'block';
+    if (inventorySection) inventorySection.style.display = 'none';
+  }
 }
 
 // Generate consistent colors for lists based on their ID
@@ -1072,23 +857,12 @@ function createInventoryRow(item) {
     row.classList.add('in-house');
   }
 
-  // Add out-of-service styling - use background tint, not opacity
-  if (item.isOutOfService === 1 || item.isOutOfService === true) {
-    row.classList.add('row-oos');
-  }
-  
-  // --- Apply row tabs for colored bars ---
-  applyRowTabs(row, item);
-
   // Add list ID attribute for CSS targeting
   if (item.listId) {
     row.setAttribute('data-list-id', item.listId);
   } else {
     row.setAttribute('data-list-id', ''); // Empty string for unassigned items
   }
-
-  // Add item ID attribute for targeting
-  row.setAttribute('data-item-id', item.id);
 
   // Format dates
   const nextCalDue = item.nextCalibrationDue
@@ -1114,20 +888,12 @@ function createInventoryRow(item) {
       ? `${item.calibrationInterval} ${item.calibrationIntervalType}`
       : 'N/A';
 
-  // Format calibration type - always show "In-House" as base, add chip for outsourced
-  const calType = 'In-House';
+  // Format calibration type
+  const calType = item.isOutsourced === 1 ? 'Outsourced' : 'In-House';
 
   row.innerHTML = `
         <td class="column-itemType">${item.itemType || 'N/A'}</td>
-        <td class="column-nickname">
-          ${item.nickname || 'N/A'}
-          ${item.isOutOfService === 1 || item.isOutOfService === true ? '<span class="oos-badge">OOS</span>' : ''}
-          ${
-            item.returnToServiceVerified === 1 || item.returnToServiceVerified === true
-              ? `<span class="verification-badge" title="Verified by ${item.returnToServiceVerifiedBy || 'Unknown'} on ${item.returnToServiceVerifiedAt ? new Date(item.returnToServiceVerifiedAt).toLocaleDateString() : 'Unknown date'}">✓</span>`
-              : ''
-          }
-        </td>
+        <td class="column-nickname">${item.nickname || 'N/A'}</td>
         <td class="column-labId">${item.labId || 'N/A'}</td>
         <td class="column-make">${item.make || 'N/A'}</td>
         <td class="column-model">${item.model || 'N/A'}</td>
@@ -1136,13 +902,7 @@ function createInventoryRow(item) {
         <td class="column-dateReceived">${dateReceived}</td>
         <td class="column-datePlacedInService">${dateInService}</td>
         <td class="column-location">${item.location || 'N/A'}</td>
-        <td class="column-calibrationType">
-          <span class="caltype-text">${(item.calibrationMethod || '').trim() || 'In-House'}</span>
-          ${item.isOutsourced === 1 || item.isOutsourced === true
-            ? `<span class="chip chip-outsourced" title="Calibration performed by an outside lab">Outsourced</span>`
-            : ''
-          }
-        </td>
+        <td class="column-calibrationType">${calType}</td>
         <td class="column-calibrationDate">${lastCal}</td>
         <td class="column-nextCalibrationDue">${nextCalDue}</td>
         <td class="column-calibrationInterval">${calInterval}</td>
@@ -1150,139 +910,94 @@ function createInventoryRow(item) {
         <td class="column-maintenanceDate">${lastMaintenance}</td>
         <td class="column-maintenanceDue">${maintenanceDue}</td>
         <td class="column-notes">${item.notes || 'N/A'}</td>
+        <td>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="viewItem('${item.id}')">
+                    <i class="fas fa-eye"></i> View
+                </button>
+                <button class="action-btn action-btn-plus" onclick="showQuickAddRecord('${item.id}')" title="Add Calibration/Maintenance Record">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <div class="action-menu" data-id="${item.id}">
+                    <button class="action-menu-button" title="More actions" onclick="toggleActionMenu(event)">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="action-menu-list">
+                        <button onclick="editItem('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button onclick="markOutOfService('${item.id}')"><i class="fas fa-times"></i> Mark Out of Service</button>
+                        <button class="delete" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            </div>
+        </td>
     `;
 
-  // Add the Actions column as a DOM element
-  row.appendChild(buildActionsCell(item));
-
   return row;
-}
-
-// Utility: close all open row menus
-function closeAllRowMenus() {
-  document.querySelectorAll('.row-actions .dropdown-menu.show').forEach(el => {
-    el.classList.remove('show');
-  });
-}
-
-// Show/Hide OOS flag – single source of truth in localStorage
-function getShowOOS() {
-  return localStorage.getItem('showOutOfService') === 'true';
-}
-
-function setShowOOS(val) {
-  localStorage.setItem('showOutOfService', String(!!val));
-  // reflect to the drawer checkbox if present
-  const drawer = document.getElementById('drawerShowOOS');
-  if (drawer) drawer.checked = !!val;
-  loadInventoryItems(); // refresh
-}
-
-// Helper to convert #rrggbb to rgba
-function hexToRgba(hex, alpha = 0.2) {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// ---- Actions cell builder ----
-function buildActionsCell(item){
-  const td = document.createElement('td');
-  td.className = 'table-col-actions';
-  
-  td.innerHTML = `
-    <div class="action-cell" data-item-id="${item.id}">
-      <button class="btn-pill" data-action="view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke-width="2"/>
-          <circle cx="12" cy="12" r="3" stroke-width="2"/>
-        </svg>
-        <span>View</span>
-      </button>
-      <button class="icon-btn" data-action="add">+</button>
-      <button class="icon-btn" data-action="more" aria-expanded="false">⋮</button>
-    </div>`;
-  
-  return td;
-}
-
-// Update the Lab chip color in the legend
-function updateLegendLabChip(colorHex) {
-  const chip = document.getElementById('chipLab');
-  if (!chip) return;
-  const bg = colorHex || '#23324a';
-  // derive a readable fg; crude heuristic
-  const fg = '#cfe1ff';
-  chip.style.setProperty('--lab-chip-bg', bg);
-  chip.style.setProperty('--lab-chip-fg', fg);
 }
 
 function toggleActionMenu(e) {
   e.stopPropagation();
   const menu = e.currentTarget.parentElement;
-  const isOpen = menu.classList.contains('show');
-  
-  // Close all other menus first
-  closeAllRowMenus();
-  
-  // Toggle this menu
-  if (!isOpen) {
-    menu.classList.add('show');
-  }
+  document.querySelectorAll('.action-menu.show').forEach((m) => {
+    if (m !== menu) m.classList.remove('show');
+  });
+  // Toggle first so we can measure
+  const willShow = !menu.classList.contains('show');
+  menu.classList.toggle('show');
 
   // Decide whether to open up or down based on viewport space
-  const list = menu.querySelector('.action-menu-list');
-  if (list) {
-    // Reset orientation, then measure
-    menu.classList.remove('open-up');
-    list.classList.remove('floating');
+  if (willShow) {
+    const list = menu.querySelector('.action-menu-list');
+    if (list) {
+      // Reset orientation, then measure
+      menu.classList.remove('open-up');
+      list.classList.remove('floating');
 
-    // Temporarily show to measure natural size
-    const prevDisplay = list.style.display;
-    const prevVisibility = list.style.visibility;
-    list.style.display = 'flex';
-    list.style.visibility = 'hidden'; // Hide while measuring to prevent flicker
+      // Temporarily show to measure natural size
+      const prevDisplay = list.style.display;
+      const prevVisibility = list.style.visibility;
+      list.style.display = 'flex';
+      list.style.visibility = 'hidden'; // Hide while measuring to prevent flicker
 
-    const btnRect = e.currentTarget.getBoundingClientRect();
-    const listRect = list.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - btnRect.bottom;
-    const spaceAbove = btnRect.top;
-    const wantHeight = Math.min(listRect.height || 200, 300);
+      const btnRect = e.currentTarget.getBoundingClientRect();
+      const listRect = list.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - btnRect.bottom;
+      const spaceAbove = btnRect.top;
+      const wantHeight = Math.min(listRect.height || 200, 300);
 
-    // Flip if not enough space below
-    const openUp = spaceBelow < wantHeight && spaceAbove > spaceBelow;
-    if (openUp) {
-      menu.classList.add('open-up');
+      // Flip if not enough space below
+      const openUp = spaceBelow < wantHeight && spaceAbove > spaceBelow;
+      if (openUp) {
+        menu.classList.add('open-up');
+      }
+
+      // Always use floating positioning to avoid scrollbar and container clipping issues
+      list.classList.add('floating');
+
+      // Anchor to viewport using the button coordinates
+      const top = openUp ? btnRect.top - wantHeight - 8 : btnRect.bottom + 8;
+
+      // Ensure the menu doesn't extend beyond the right edge of the viewport
+      const menuWidth = listRect.width || 180;
+      let left = btnRect.right - menuWidth; // Align right edge of menu with right edge of button
+
+      // If menu would go off the left edge, align left edge with button's left edge
+      if (left < 8) {
+        left = btnRect.left;
+      }
+
+      // If menu would go off the right edge, move it left
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+      }
+
+      list.style.top = `${top}px`;
+      list.style.left = `${left}px`;
+
+      // Restore original display properties
+      list.style.display = prevDisplay || '';
+      list.style.visibility = prevVisibility || '';
     }
-
-    // Always use floating positioning to avoid scrollbar and container clipping issues
-    list.classList.add('floating');
-
-    // Anchor to viewport using the button coordinates
-    const top = openUp ? btnRect.top - wantHeight - 8 : btnRect.bottom + 8;
-
-    // Ensure the menu doesn't extend beyond the right edge of the viewport
-    const menuWidth = listRect.width || 180;
-    let left = btnRect.right - menuWidth; // Align right edge of menu with right edge of button
-
-    // If menu would go off the left edge, align left edge with button's left edge
-    if (left < 8) {
-      left = btnRect.left;
-    }
-
-    // If menu would go off the right edge, move it left
-    if (left + menuWidth > window.innerWidth - 8) {
-      left = window.innerWidth - menuWidth - 8;
-    }
-
-    list.style.top = `${top}px`;
-    list.style.left = `${left}px`;
-
-    // Restore original display properties
-    list.style.display = prevDisplay || '';
-    list.style.visibility = prevVisibility || '';
   }
 }
 
@@ -1307,130 +1022,10 @@ async function deleteRecord(recordId, type, itemId) {
   }
 }
 
-// ---- Bulletproof menu controller ----
-let openMenu = null;
-
-function closeMenu(){
-  if (!openMenu) return;
-  openMenu.remove();
-  openMenu = null;
-}
-
-function toggleActionMenu(button, item){
-  if (openMenu) closeMenu();
-
-  const rect = button.getBoundingClientRect();
-  const menu = document.createElement('div');
-  menu.className = 'action-menu';
-  menu.innerHTML = `
-    <div class="mi" data-act="edit"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Edit</div>
-    <div class="mi" data-act="return"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12h12m0 0-4-4m4 4-4 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Return to Service</div>
-    <div class="mi" data-act="oos"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Mark Out of Service</div>
-    <div class="mi" data-act="delete"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 7h12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m1 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h10Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete</div>
-  `;
-  document.body.appendChild(menu);
-  openMenu = menu;
-
-  // Position (viewport clamping)
-  const mw = Math.max(190, menu.offsetWidth);
-  let left = rect.right - mw;  // align right edges
-  let top  = rect.bottom + 8;
-
-  const vw = window.innerWidth, vh = window.innerHeight;
-  if (left + mw > vw - 8) left = vw - mw - 8;
-  if (left < 8) left = 8;
-  const mh = menu.offsetHeight;
-  if (top + mh > vh - 8) top = rect.top - mh - 8;
-
-  menu.style.left = `${left}px`;
-  menu.style.top  = `${top}px`;
-
-  // Wire actions
-  menu.addEventListener('click', (e)=>{
-    const act = e.target.closest('.mi')?.dataset.act;
-    if (!act) return;
-    closeMenu();
-    if (act === 'edit')        handleEditItem(item.id);
-    if (act === 'return')      showReturnToServiceModal(item.id);
-    if (act === 'oos')         showOutOfServiceModal(item.id);
-    if (act === 'delete')      handleDeleteItem(item.id);
-  });
-
-  // Close handlers
-  setTimeout(()=>{
-    const off = (ev)=>{
-      if (menu.contains(ev.target) || ev.target === button) return;
-      window.removeEventListener('mousedown', off, true);
-      window.removeEventListener('scroll', off, true);
-      window.removeEventListener('resize', off, true);
-      window.removeEventListener('keydown', key, true);
-      closeMenu();
-    };
-    const key = (ev)=>{ if (ev.key === 'Escape') off(ev); };
-    window.addEventListener('mousedown', off, true);
-    window.addEventListener('scroll', off, true);
-    window.addEventListener('resize', off, true);
-    window.addEventListener('keydown', key, true);
-  },0);
-}
-
-// Delegate clicks
-document.addEventListener('click', (e)=>{
-  const more = e.target.closest('.icon-btn.more');
-  if (more) {
-    const id = more.dataset.id;
-    const item = window.inventoryItems?.find(x => String(x.id) === String(id)) || { id };
-    toggleActionMenu(more, item);
-  }
-  const view = e.target.closest('.btn-view');
-  if (view) {
-    console.log('View item:', view.dataset.id);
-    // TODO: Navigate to item view
-  }
+// Close menus on outside click
+document.addEventListener('click', () => {
+  document.querySelectorAll('.action-menu.show').forEach((m) => m.classList.remove('show'));
 });
-
-// Fix for "Edit Lists and Columns" button
-document.addEventListener('DOMContentLoaded', () => {
-  const editBtn = document.getElementById('btnEditLists');
-  if (editBtn) {
-    editBtn.addEventListener('click', () => {
-      const modal = document.getElementById('columnCustomizerMenu');
-      if (modal) {
-        modal.style.display = 'block';
-        modal.classList.add('open');
-      } else {
-        console.error("Column customizer menu not found!");
-      }
-    });
-  }
-});
-
-// ---- Handler functions for menu actions ----
-function handleEditItem(id) {
-  console.log('Edit item:', id);
-  // TODO: Implement edit modal
-  showToast('Edit functionality coming soon!', 'info');
-}
-
-function handleDeleteItem(id) {
-  if (confirm('Are you sure you want to delete this item?')) {
-    deleteItem(id);
-  }
-}
-
-// ---- 60-second diagnostic function ----
-window.__debugActions = () => {
-  const cells = [...document.querySelectorAll('td.actions-cell')];
-  console.log('actions cells:', cells.length);
-  if (cells[0]) {
-    const menu = cells[0].querySelector('.action-menu');
-    const btn  = cells[0].querySelector('.more-btn');
-    console.log('first cell -> has btn?', !!btn, 'has menu?', !!menu, 'computed display:', menu && getComputedStyle(menu).display);
-    if (btn) btn.click();  // force open
-  }
-};
-
-
 
 async function deleteItem(itemId) {
   if (!confirm('Delete this item and all associated records? This cannot be undone.')) return;
@@ -1569,272 +1164,9 @@ function editItem(itemId) {
 }
 
 function markOutOfService(itemId) {
-  // Set the item ID in the modal
-  document.getElementById('outOfServiceItemId').value = itemId;
-
-  // Set default date to today
-  const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('outOfServiceDate').value = today;
-
-  // Clear any previous reason
-  document.getElementById('outOfServiceReason').value = '';
-
-  // Show the modal
-  showOutOfServiceModal();
-}
-
-function showOutOfServiceModal() {
-  const modal = document.getElementById('outOfServiceModal');
-  modal.style.display = 'flex';
-
-  // Focus on the date input
-  setTimeout(() => {
-    document.getElementById('outOfServiceDate').focus();
-  }, 100);
-}
-
-function hideOutOfServiceModal() {
-  const modal = document.getElementById('outOfServiceModal');
-  modal.style.display = 'none';
-}
-
-function showReturnToServiceModal() {
-  const modal = document.getElementById('returnToServiceModal');
-  modal.style.display = 'flex';
-
-  // Focus on the checkbox
-  setTimeout(() => {
-    document.getElementById('verificationCheckbox').focus();
-  }, 100);
-}
-
-function hideReturnToServiceModal() {
-  const modal = document.getElementById('returnToServiceModal');
-  modal.style.display = 'none';
-}
-
-function returnToService(itemId) {
-  // Set the item ID in the modal
-  document.getElementById('returnToServiceItemId').value = itemId;
-
-  // Clear any previous values
-  document.getElementById('verificationCheckbox').checked = false;
-  document.getElementById('returnToServiceNotes').value = '';
-
-  // Disable submit button initially
-  document.getElementById('returnToServiceSubmitBtn').disabled = true;
-
-  // Show the modal
-  showReturnToServiceModal();
-}
-
-async function handleOutOfServiceSubmit(e) {
-  e.preventDefault();
-
-  const itemId = document.getElementById('outOfServiceItemId').value;
-  const date = document.getElementById('outOfServiceDate').value;
-  const reason = document.getElementById('outOfServiceReason').value.trim();
-
-  if (!date) {
-    showToast('Please select a date', 'error');
-    return;
-  }
-
-  try {
-    // Show loading state
-    const submitBtn = e.target.querySelector('.btn-primary');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-
-    btnText.style.display = 'none';
-    btnLoader.style.display = 'block';
-    submitBtn.disabled = true;
-
-    const response = await fetch(`/api/inventory/${itemId}/out-of-service`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAuthToken()}`,
-      },
-      body: JSON.stringify({ outOfServiceDate: date, reason }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // Hide modal
-    hideOutOfServiceModal();
-
-    // Show success message
-    showToast(result.message, 'success');
-
-    // Update the item in the current view
-    if (result.item) {
-      updateItemInView(result.item);
-    }
-
-    // Refresh the current page to show updated data
-    await loadInventoryItems();
-  } catch (error) {
-    console.error('Error marking item out of service:', error);
-    showToast('Failed to mark item out of service. Please try again.', 'error');
-  } finally {
-    // Reset button state
-    const submitBtn = e.target.querySelector('.btn-primary');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-
-    btnText.style.display = 'block';
-    btnLoader.style.display = 'none';
-    submitBtn.disabled = false;
-  }
-}
-
-function updateItemInView(updatedItem) {
-  // Find and update the item in the current table view
-  const row = document.querySelector(`tr[data-item-id="${updatedItem.id}"]`);
-  if (row) {
-    // Update the row data and re-render if needed
-    // This is a simplified update - in practice, you might want to re-render the entire row
-    row.dataset.itemData = JSON.stringify(updatedItem);
-    
-    // Update the out-of-service styling
-    if (updatedItem.isOutOfService === 1 || updatedItem.isOutOfService === true) {
-      row.classList.add('out-of-service');
-    } else {
-      row.classList.remove('out-of-service');
-    }
-    
-    // Update the OOS badge in the nickname column
-    const nicknameCell = row.querySelector('.column-nickname');
-    if (nicknameCell) {
-      const oosBadge = nicknameCell.querySelector('.oos-badge');
-      if (updatedItem.isOutOfService === 1 || updatedItem.isOutOfService === true) {
-        if (!oosBadge) {
-          nicknameCell.innerHTML += '<span class="oos-badge">OOS</span>';
-        }
-      } else {
-        if (oosBadge) {
-          oosBadge.remove();
-        }
-      }
-    }
-    
-    // Re-apply the filter to ensure visibility is correct
-    const showOutOfService = document.getElementById('showOutOfService')?.checked ?? true;
-    applyOutOfServiceFilter(showOutOfService);
-  }
-}
-
-function handleOutOfServiceFilterChange() {
-  const showOutOfService = document.getElementById('showOutOfService').checked;
-
-  // Store the preference in localStorage
-  localStorage.setItem('showOutOfService', showOutOfService);
-
-  // Reload inventory items with new filter settings
-  loadInventoryItems();
-}
-
-function applyOutOfServiceFilter(showOutOfService) {
-  const table = document.querySelector('.inventory-table tbody');
-  if (!table) return;
-
-  const rows = table.querySelectorAll('tr');
-
-  rows.forEach((row) => {
-    const isOutOfService = row.classList.contains('out-of-service');
-
-    if (isOutOfService && !showOutOfService) {
-      // Hide out-of-service items when filter is off
-      row.style.display = 'none';
-    } else {
-      // Show all items when filter is on, or show non-OOS items when filter is off
-      row.style.display = '';
-    }
-  });
-}
-
-
-
-function handleVerificationCheckboxChange() {
-  const checkbox = document.getElementById('verificationCheckbox');
-  const submitBtn = document.getElementById('returnToServiceSubmitBtn');
-
-  // Enable/disable submit button based on checkbox state
-  submitBtn.disabled = !checkbox.checked;
-}
-
-async function handleReturnToServiceSubmit(e) {
-  e.preventDefault();
-
-  const itemId = document.getElementById('returnToServiceItemId').value;
-  const verified = document.getElementById('verificationCheckbox').checked;
-  const notes = document.getElementById('returnToServiceNotes').value.trim();
-
-  if (!verified) {
-    showToast('Verification is required before returning item to service', 'error');
-    return;
-  }
-
-  try {
-    // Show loading state
-    const submitBtn = e.target.querySelector('.btn-primary');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-
-    btnText.style.display = 'none';
-    btnLoader.style.display = 'block';
-    submitBtn.disabled = true;
-
-    const response = await fetch(`/api/inventory/${itemId}/return-to-service`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAuthToken()}`,
-      },
-      body: JSON.stringify({ verified: true, notes }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      if (errorData.error === 'VERIFICATION_REQUIRED') {
-        showToast('Verification is required before returning item to service', 'error');
-        return;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // Hide modal
-    hideReturnToServiceModal();
-
-    // Show success message
-    showToast(result.message, 'success');
-
-    // Update the item in the current view
-    if (result.item) {
-      updateItemInView(result.item);
-    }
-
-    // Refresh the current page to show updated data
-    await loadInventoryItems();
-  } catch (error) {
-    console.error('Error returning item to service:', error);
-    showToast('Failed to return item to service. Please try again.', 'error');
-  } finally {
-    // Reset button state
-    const submitBtn = e.target.querySelector('.btn-primary');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-
-    btnText.style.display = 'block';
-    btnLoader.style.display = 'none';
-    submitBtn.disabled = false;
+  if (confirm('Are you sure you want to mark this item as out of service?')) {
+    showToast(`Marking item ${itemId} as out of service - Feature coming soon!`, 'info');
+    // TODO: Implement out of service functionality
   }
 }
 
@@ -2072,34 +1404,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Load lists into selectors on page load
-loadListsIntoSelectors();
-
-// Global click handler to close any open row menus
-document.addEventListener('click', () => {
-  closeAllRowMenus();
-});
-
-// Wire up the OOS checkbox (drawer only)
-document.addEventListener('DOMContentLoaded', () => {
-  const drawer = document.getElementById('drawerShowOOS');
-  if (drawer) {
-    drawer.checked = getShowOOS();
-    drawer.addEventListener('change', () => setShowOOS(drawer.checked));
-  }
-
-  // "Total Items" card should show all items -> check OOS and clear search
-  const totalCard = document.querySelector('[data-stat="total-items"]');
-  if (totalCard) {
-    totalCard.style.cursor = 'pointer';
-    totalCard.addEventListener('click', () => {
-      setShowOOS(true);
-      const q = document.getElementById('searchInventory');
-      if (q) q.value = '';
-    });
-  }
-
-
-});
+  loadListsIntoSelectors();
 });
 
 // Handle Add Item form submission
@@ -2189,8 +1494,6 @@ function loadHiddenLists() {
     return [];
   }
 }
-
-
 
 function saveHiddenLists(hidden) {
   try {
@@ -2312,10 +1615,6 @@ async function loadListsIntoSelectors(selectAfterName) {
     if (listOptions) {
       console.log('Populating listOptions with', lists.length, 'lists');
       const hidden = loadHiddenLists();
-      console.log('Current hidden lists:', hidden);
-      
-
-      
       const withVirtual = [{ id: '', name: 'Unassigned' }, ...lists];
       listOptions.innerHTML = '';
       listOptions.style.display = 'block';
@@ -3830,15 +3129,6 @@ async function handleCreateList(e) {
 
     // Hide modal and refresh
     hideCreateListModal();
-    
-    // Ensure the new list is visible by default (remove from hidden lists if it was there)
-    const hiddenLists = loadHiddenLists();
-    const updatedHidden = hiddenLists.filter(id => id !== result.id);
-    if (updatedHidden.length !== hiddenLists.length) {
-      saveHiddenLists(updatedHidden);
-      console.log('Made new list visible by default');
-    }
-    
     await loadListsIntoSelectors(result.name);
     await loadInventoryItems();
 
@@ -4357,138 +3647,4 @@ async function downloadFile(fileName, fileType) {
     console.error('Error downloading file:', error);
     showToast(`Failed to download file: ${error.message}`, 'error');
   }
-}
-
-/* ---------- TOOLBAR: open the lists panel ---------- */
-const toolbar = document.getElementById('inventoryToolbar');
-const btnEditLists = document.getElementById('btnEditLists');
-const listsPanel = document.getElementById('listsPanel');
-
-function renderListsPanel(panel) {
-  // Use the existing column customizer menu content
-  const existingMenu = document.getElementById('columnCustomizerMenu');
-  if (existingMenu) {
-    panel.innerHTML = existingMenu.innerHTML;
-  } else {
-    // Fallback content if the menu doesn't exist
-    panel.innerHTML = `
-      <div style="padding: 16px;">
-        <h4>Lists</h4>
-        <div id="listOptions"></div>
-        <button id="addListInlineBtn">+ Add List</button>
-        
-        <h4>Visible Columns</h4>
-        <div id="columnOptions"></div>
-      </div>
-    `;
-  }
-}
-
-function openListsPanel() {
-  if (!listsPanel) return;
-  // build / render panel here using your existing renderListsPanel()
-  renderListsPanel(listsPanel); // <- call your existing function
-  const rect = btnEditLists.getBoundingClientRect();
-  listsPanel.style.left = `${Math.max(16, rect.left)}px`;
-  listsPanel.style.top  = `${Math.max(16, rect.bottom + 10 + window.scrollY)}px`;
-  listsPanel.hidden = false;
-  document.addEventListener('keydown', escCloseLists);
-  document.addEventListener('mousedown', outsideCloseLists, { capture: true });
-}
-
-function closeListsPanel() {
-  if (!listsPanel || listsPanel.hidden) return;
-  listsPanel.hidden = true;
-  document.removeEventListener('keydown', escCloseLists);
-  document.removeEventListener('mousedown', outsideCloseLists, { capture: true });
-}
-
-function escCloseLists(e){ if (e.key === 'Escape') closeListsPanel(); }
-function outsideCloseLists(e){
-  if (!listsPanel.contains(e.target) && e.target !== btnEditLists) closeListsPanel();
-}
-
-if (btnEditLists) {
-  btnEditLists.onclick = (e) => {
-    e.preventDefault();
-    (listsPanel.hidden ? openListsPanel : closeListsPanel)();
-  };
-}
-
-/* ---------- TABLE: horizontal scroll & sticky actions ---------- */
-// call this after rows render
-function enhanceTableLayout() {
-  const wrap = document.querySelector('.inventory-table-wrap');
-  const table = document.getElementById('inventoryTable');
-  if (!wrap || !table) return;
-  // Make sure wrapper can scroll horizontally
-  wrap.style.overflowX = 'auto';
-  table.style.width = 'max-content';
-}
-
-/* ---------- ROW TABS: set --row-tab and classes ---------- */
-// call when mapping rows -> after data is fetched
-function applyRowTabs(tr, item){
-  tr.classList.add('inventory-row');
-  // left color priority example:
-  if (item.isOutOfService) tr.classList.add('oos');
-  if (item.isOutsourced) tr.classList.add('outsourced');
-  // prefer explicit color if you have list colors:
-  if (item.listColor) tr.style.setProperty('--row-tab', item.listColor);
-}
-
-/* ---------- ACTIONS: menu open/close (⋮), z-index above rows ---------- */
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action="more"]');
-  const anyMenu = document.querySelectorAll('.action-menu.open');
-  // click-away for open menus
-  if (!btn && !e.target.closest('.action-menu')) {
-    anyMenu.forEach(m => m.classList.remove('open'));
-    return;
-  }
-  if (!btn) return;
-
-  const cell = btn.closest('td');
-  let menu = cell.querySelector('.action-menu');
-  if (!menu) {
-    menu = document.createElement('div');
-    menu.className = 'action-menu';
-    menu.innerHTML = `
-      <button data-menu="edit">✏️ Edit</button>
-      <button data-menu="return">↩️ Return to Service</button>
-      <button data-menu="oos">⛔ Mark Out of Service</button>
-      <button data-menu="delete" style="color:#ff6b6b">🗑 Delete</button>
-    `;
-    cell.appendChild(menu);
-  }
-  // position and clamp
-  menu.classList.toggle('open');
-  const r = menu.getBoundingClientRect();
-  const overRight = r.right > (window.innerWidth - 12);
-  if (overRight) menu.style.right = `${(r.right - window.innerWidth) + 20}px`;
-});
-
-document.addEventListener('click', (e) => {
-  const button = e.target.closest('.action-menu button');
-  if (!button) return;
-  const tr = e.target.closest('tr');
-  const id = tr?.dataset?.id;
-  const action = button.dataset.menu;
-  // TODO hook into your real handlers
-  if (action === 'edit') handleEditItem(id);
-  if (action === 'return') showReturnToServiceModal(id);
-  if (action === 'oos') showOutOfServiceModal(id);
-  if (action === 'delete') handleDeleteItem(id);
-  // close after action
-  e.target.closest('.action-menu').classList.remove('open');
-});
-
-/* ---------- CALL after rendering inventory ---------- */
-// wherever you currently render rows:
-function renderInventoryRows(items){
-  const tbody = document.querySelector('#inventoryTable tbody');
-  // ...build rows...
-  // for each row TR you create:
-  //   applyRowTabs(tr, item);
-  enhanceTableLayout();
 }

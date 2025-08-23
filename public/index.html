@@ -283,22 +283,13 @@
 
             <!-- Quick Stats -->
             <div class="quick-stats">
-              <div class="stat-card clickable" data-stat="total-items">
+              <div class="stat-card">
                 <div class="stat-icon">
                   <i class="fas fa-boxes"></i>
                 </div>
                 <div class="stat-content">
                   <h3 id="totalItems">0</h3>
                   <p>Total Items</p>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">
-                  <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                  <h3 id="activeItems">0</h3>
-                  <p>Active Items</p>
                 </div>
               </div>
               <div class="stat-card">
@@ -321,8 +312,8 @@
               </div>
             </div>
 
-            <!-- Inventory List (always visible) -->
-            <div class="inventory-section" id="inventorySection">
+            <!-- Inventory List (shown when items exist) -->
+            <div class="inventory-section" id="inventorySection" style="display: none">
               <!-- Main content area with legend on the right -->
               <div class="inventory-content-wrapper">
                 <!-- Left side content -->
@@ -339,27 +330,35 @@
                   </div>
                 </div>
 
-
+                <!-- Legend positioned on the right side -->
+                <div class="inventory-legend" id="inventoryLegend">
+                  <div class="legend-outsourced-section">
+                    <div class="legend-item">
+                      <div class="legend-color outsourced"></div>
+                      <span>Outsourced Items</span>
+                    </div>
+                  </div>
+                  <div class="legend-lists-section">
+                    <h4>List Colors</h4>
+                    <div class="legend-lists" id="legendLists"></div>
+                  </div>
+                </div>
               </div>
 
               <div class="inventory-main-content">
                 <div class="inventory-table-container">
-                  <!-- INVENTORY TOOLBAR -->
-                  <div class="inventory-toolbar" id="inventoryToolbar">
-                    <h3 class="section-title" style="margin:0;font-weight:650;">Inventory</h3>
-                    <div class="spacer"></div>
-                    <button id="btnEditLists" class="btn-pill">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h16" stroke-width="2" stroke-linecap="round"/></svg>
-                      Edit Lists and Columns
-                    </button>
-                    <div class="legend" style="display:flex;gap:10px;align-items:center;">
-                      <span style="opacity:.7">Legend:</span>
-                      <span class="badge badge-oos">OOS</span>
-                      <span class="chip chip-outsourced">Outsourced</span>
-                      <span class="chip chip-lab">Lab</span>
-                    </div>
-                  </div>
-
+                  <!-- Fixed toolbar (never scrolls) -->
+                  <div class="inventory-table-header">
+                    <h3 class="inventory-table-title">Inventory</h3>
+                    <div class="table-header-controls">
+                      <div class="column-customizer">
+                        <button
+                          class="column-customizer-btn"
+                          id="columnCustomizerBtn"
+                          title="Edit Lists and Columns"
+                        >
+                          <i class="fas fa-columns"></i> Edit Lists and Columns
+                        </button>
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
                           <!-- Lists Section -->
                           <div class="column-customizer-header">
@@ -445,27 +444,15 @@
                               <input type="checkbox" data-column="notes" checked /> Notes
                             </label>
                           </div>
-                          
-                          <!-- Visibility Section -->
-                          <div class="column-customizer-header">
-                            <h4>Visibility</h4>
-                          </div>
-                          <div class="visibility-options">
-                            <label class="visibility-option">
-                              <input type="checkbox" id="drawerShowOOS" checked />
-                              <span>Show Out of Service</span>
-                            </label>
-                            <small class="muted">This mirrors the toolbar setting.</small>
-                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <!-- TABLE WRAP -->
-                  <div class="inventory-table-wrap">
+                  <!-- Only this part scrolls -->
+                  <div class="inventory-table-scroll-wrapper">
                     <table class="inventory-table" id="inventoryTable">
-                      <thead id="inventory-thead">
+                      <thead>
                         <tr>
                           <th class="sortable" data-sort="itemType">
                             Item Type <i class="fas fa-sort"></i>
@@ -516,22 +503,20 @@
                             Last Maintenance <i class="fas fa-sort"></i>
                           </th>
                           <th class="sortable" data-sort="maintenanceDue">
-                            Maintenance Due <i classfas fa-sort"></i>
+                            Maintenance Due <i class="fas fa-sort"></i>
                           </th>
                           <th class="sortable" data-sort="notes">
                             Notes <i class="fas fa-sort"></i>
                           </th>
-                          <th class="table-col-actions">Actions</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
-                      <tbody id="inventory-tbody">
+                      <tbody id="inventoryTableBody">
                         <!-- Inventory items will be populated here -->
                       </tbody>
                     </table>
                   </div>
-
-                  <!-- lists panel exists once -->
-                  <div id="listsPanel" hidden></div>
+                  <!-- Close inventory-table-scroll-wrapper -->
                 </div>
               </div>
             </div>
@@ -1041,103 +1026,6 @@
       </div>
     </div>
 
-    <!-- Out of Service Modal -->
-    <div id="outOfServiceModal" class="modal-overlay">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Mark Item Out of Service</h2>
-          <button class="modal-close" onclick="hideOutOfServiceModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <form id="outOfServiceForm">
-            <input type="hidden" id="outOfServiceItemId" name="itemId" />
-            
-            <div class="form-group">
-              <label for="outOfServiceDate">Out of Service Date</label>
-              <input
-                type="date"
-                id="outOfServiceDate"
-                name="outOfServiceDate"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="outOfServiceReason">Reason (Optional)</label>
-              <textarea
-                id="outOfServiceReason"
-                name="outOfServiceReason"
-                rows="3"
-                placeholder="Enter reason for taking item out of service..."
-                maxlength="500"
-              ></textarea>
-              <small class="form-help">Maximum 500 characters</small>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" class="btn-secondary" onclick="hideOutOfServiceModal()">
-                Cancel
-              </button>
-              <button type="submit" class="btn-primary">
-                <span class="btn-text">Mark Out of Service</span>
-                <div class="btn-loader" style="display: none">
-                  <div class="spinner"></div>
-                </div>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Return to Service Verification Modal -->
-    <div id="returnToServiceModal" class="modal-overlay">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Return Item to Service</h2>
-          <button class="modal-close" onclick="hideReturnToServiceModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <form id="returnToServiceForm">
-            <input type="hidden" id="returnToServiceItemId" name="itemId" />
-            
-            <div class="form-group">
-              <label class="checkbox-wrapper verification-checkbox">
-                <input type="checkbox" id="verificationCheckbox" required />
-                <span class="checkmark"></span>
-                <span class="checkbox-label">I performed a functional test and it passed</span>
-              </label>
-              <small class="form-help">This verification is required before returning the item to service</small>
-            </div>
-
-            <div class="form-group">
-              <label for="returnToServiceNotes">Verification Notes (Optional)</label>
-              <textarea
-                id="returnToServiceNotes"
-                name="returnToServiceNotes"
-                rows="3"
-                placeholder="Describe what was tested and any relevant details..."
-                maxlength="500"
-              ></textarea>
-              <small class="form-help">Maximum 500 characters</small>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" class="btn-secondary" onclick="hideReturnToServiceModal()">
-                Cancel
-              </button>
-              <button type="submit" class="btn-primary" id="returnToServiceSubmitBtn" disabled>
-                <span class="btn-text">Return to Service</span>
-                <div class="btn-loader" style="display: none">
-                  <div class="spinner"></div>
-                </div>
-              </button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div id="menu-portal-root"></div>
-    <script src="/app.js?v=ui-comprehensive-fix-1"></script>
+    <script src="/app.js"></script>
   </body>
 </html>

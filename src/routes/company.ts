@@ -15,7 +15,7 @@ router.post('/setup-demo', authenticateToken, async (req: Request, res: Response
     ]);
 
     if (existingCompany) {
-      return res.status(409).json({ error: 'ALREADY_HAS_COMPANY' });
+      return res.status(400).json({ error: 'Demo company already exists' });
     }
 
     // Create demo company
@@ -58,26 +58,6 @@ router.post('/setup-demo', authenticateToken, async (req: Request, res: Response
   } catch (error) {
     console.error('Error setting up demo company:', error);
     res.status(500).json({ error: 'Failed to setup demo company' });
-  }
-});
-
-// Get company status for current user
-router.get('/status', authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.id;
-    
-    const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
-    
-    if (!user || !user.companyId) {
-      return res.json({ hasCompany: false, company: null });
-    }
-    
-    const company = await database.get('SELECT * FROM companies WHERE id = ?', [user.companyId]);
-    
-    res.json({ hasCompany: !!company, company: company || null });
-  } catch (error) {
-    console.error('Error fetching company status:', error);
-    res.status(500).json({ error: 'Failed to fetch company status' });
   }
 });
 

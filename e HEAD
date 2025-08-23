@@ -1,0 +1,5 @@
+[33m5c4254d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mbackup-before-revert[m[33m)[m COMPREHENSIVE UI RESTORATION: restore colored tabs, horizontal scroll, working actions, proper toolbar layout, and fix Edit Lists panel
+[33m5af19b0[m FIX BATCH: remove toolbar line, fix colored bars spacing, restore scrollbar, hide duplicate checkbox, fix edit button
+[33m7010f43[m RESTORE UI: fix toolbar layout, restore status rails, bulletproof menu system
+[33maff8644[m polish(ui): toolbar card design + clean vector eye icon in View button
+[33m80b838b[m CRITICAL FIX: restore sticky Actions column and bulletproof menu via body portal

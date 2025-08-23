@@ -1,0 +1,10 @@
+[33m5c4254d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mbackup-before-revert[m[33m)[m COMPREHENSIVE UI RESTORATION: restore colored tabs, horizontal scroll, working actions, proper toolbar layout, and fix Edit Lists panel
+[33m5af19b0[m FIX BATCH: remove toolbar line, fix colored bars spacing, restore scrollbar, hide duplicate checkbox, fix edit button
+[33m7010f43[m RESTORE UI: fix toolbar layout, restore status rails, bulletproof menu system
+[33maff8644[m polish(ui): toolbar card design + clean vector eye icon in View button
+[33m80b838b[m CRITICAL FIX: restore sticky Actions column and bulletproof menu via body portal
+[33m2298758[m fix(ui): restore View button styling, fix menu z-index, remove right gutter, use vertical ellipsis
+[33mbdc9998[m[33m ([m[1;31morigin/fix/actions-menu[m[33m)[m fix(actions): connect buildActionsCell to createInventoryRow - ellipsis menu now renders
+[33me05eef8[m fix(actions): restore  menu with robust structure, CSS and delegated handlers; ensure no overflow clipping; keep OOS rows fully interactive
+[33me728c5e[m fix: force-fix ellipsis menu with comprehensive hardening and diagnostics - add hardened CSS to defeat any dimming or blocking of menu buttons - implement robust event delegation on table wrapper for dynamic rows - add buildActionsCellHtml function with complete menu structure - add debugActionsColumn diagnostic function with console logging - ensure overflow: visible and pointer-events: auto on all menu elements - bump script version to v11 for cache busting
+[33mb9d21e7[m fix: position divider correctly in gap, restore ellipsis menu with proper structure - move toolbar-divider to sit in page gap between toolbar and table - add actions-stack container for proper button layout - implement buildActionsCell function with complete menu HTML - simplify toggleActionMenu logic for reliable operation - add ESC key support and improved accessibility - bump script version to v10 for cache busting
