@@ -3077,6 +3077,66 @@ body {
   background: linear-gradient(0deg, rgba(255,64,64,0.08), rgba(255,64,64,0.08));
 }
 
+/* Actions cell is a positioning context for the dropdown */
+.actions-cell {
+  position: relative;
+  white-space: nowrap;
+}
+
+/* Dark buttons that should always be visible */
+.actions-cell .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The menu container (rendered once per row) */
+.actions-cell .action-menu {
+  display: none;                 /* ← hidden by default */
+  position: absolute;
+  right: 8px;
+  top: 36px;
+  min-width: 220px;
+  background: #0f1424;
+  border: 1px solid #2b3152;
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* Visible state */
+.actions-cell .action-menu.open {
+  display: block;
+}
+
+/* Menu item buttons */
+.actions-cell .action-menu .menu-item {
+  display: flex;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #e6e7ee;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.actions-cell .action-menu .menu-item:hover {
+  background: #171c30;
+}
+
+/* If any legacy "light" inline buttons sneak in, make them vanish */
+.actions-cell > .menu-item,
+.actions-cell > .btn-light,
+.actions-cell > .inline-menu,
+.action-buttons > .menu-item,
+.action-buttons > .btn-light {
+  display: none !important;
+}
+
 /* Ensure action menus always render above rows */
 .table-col-actions,
 .table-col-actions .action-menu,

@@ -978,21 +978,8 @@ function createInventoryRow(item) {
         <td class="column-maintenanceDate">${lastMaintenance}</td>
         <td class="column-maintenanceDue">${maintenanceDue}</td>
         <td class="column-notes">${item.notes || 'N/A'}</td>
-        <td>
-            <div class="action-buttons">
-                <button class="action-btn" onclick="viewItem('${item.id}')">
-                    <i class="fas fa-eye"></i> View
-                </button>
-                <button class="action-btn action-btn-plus" onclick="showQuickAddRecord('${item.id}')" title="Add Calibration/Maintenance Record">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <div class="action-menu-container" data-id="${item.id}">
-                    <button class="action-menu-button" title="More actions" onclick="toggleActionMenu(event)">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    ${buildActionsMenuHTML(item)}
-                </div>
-            </div>
+        <td class="actions">
+            ${renderActionsCell(item)}
         </td>
     `;
 
@@ -3944,18 +3931,30 @@ function renderNicknameCell(item) {
   return `<span>${safeName}</span>`;
 }
 
-// --- Build actions menu HTML with OOS options (no duplicate View button)
+// --- Build actions menu HTML with OOS options (ChatGPT's approach)
 function buildActionsMenuHTML(item) {
-  const editAction = `<button class="menu-item" onclick="editItem('${item.id}')">✏️ Edit</button>`;
-  const oosAction = `<button class="menu-item" data-action="mark-oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
-  const rtsAction = `<button class="menu-item" data-action="return" data-id="${item.id}">↩️ Return to Service</button>`;
-  const deleteAction = `<button class="menu-item" style="color: #ff6b6b;" onclick="deleteItem('${item.id}')">🗑️ Delete</button>`;
-  
+  const edit = `<button class="menu-item" data-action="edit" data-id="${item.id}">✏️ Edit</button>`;
+  const oos  = `<button class="menu-item" data-action="oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
+  const rts  = `<button class="menu-item" data-action="rts" data-id="${item.id}">↩️ Return to Service</button>`;
+  const del  = `<button class="menu-item" data-action="delete" data-id="${item.id}" style="color:#ff6b6b">🗑️ Delete</button>`;
+
   return `
-    <div class="action-menu">
-      ${editAction}
-      ${item.isOutOfService ? rtsAction : oosAction}
-      ${deleteAction}
+    <div class="action-menu" data-id="${item.id}">
+      ${edit}
+      ${item.isOutOfService ? rts : oos}
+      ${del}
+    </div>
+  `;
+}
+
+// --- Render complete actions cell (ChatGPT's single renderer)
+function renderActionsCell(item) {
+  return `
+    <div class="actions-cell" data-id="${item.id}">
+      <button class="action-btn" data-action="view" data-id="${item.id}">👁️ View</button>
+      <button class="action-btn" data-action="quick-add" data-id="${item.id}">＋</button>
+      <button class="action-btn" data-action="more" data-id="${item.id}">⋮</button>
+      ${buildActionsMenuHTML(item)}
     </div>
   `;
 }
@@ -4017,27 +4016,64 @@ function setupOOSFormHandlers() {
   }
 }
 
-// Action menu click handler (delegated)
+// ChatGPT's robust action delegation system
+function toggleActionMenuForCell(cellEl) {
+  document.querySelectorAll('.actions-cell .action-menu.open')
+    .forEach(m => { if (!cellEl.contains(m)) m.classList.remove('open'); });
+
+  const menu = cellEl.querySelector('.action-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+// Delegation for the three dark buttons + menu items
 document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  
-  const id = btn.getAttribute('data-id');
-  const action = btn.getAttribute('data-action');
-  
-  if (action === 'mark-oos') {
-    document.getElementById('oos-item-id').value = id;
-    document.getElementById('oos-reason').value = '';
-    document.getElementById('oos-notes').value = '';
-    openModal('modal-oos');
-  } else if (action === 'return') {
-    document.getElementById('rts-item-id').value = id;
-    document.getElementById('rts-notes').value = '';
-    openModal('modal-rts');
-  } else if (action === 'view') {
-    viewItem(id);
-  } else if (action === 'delete') {
-    deleteItem(id);
+  const moreBtn = e.target.closest('.actions-cell [data-action="more"]');
+  if (moreBtn) {
+    const cell = moreBtn.closest('.actions-cell');
+    toggleActionMenuForCell(cell);
+    return;
+  }
+
+  const viewBtn = e.target.closest('.actions-cell [data-action="view"]');
+  if (viewBtn) {
+    viewItem(viewBtn.dataset.id);
+    return;
+  }
+
+  const qaBtn = e.target.closest('.actions-cell [data-action="quick-add"]');
+  if (qaBtn) {
+    showQuickAddRecord(qaBtn.dataset.id);
+    return;
+  }
+
+  const menuItem = e.target.closest('.actions-cell .action-menu .menu-item');
+  if (menuItem) {
+    const { action, id } = menuItem.dataset;
+    if (action === 'edit') {
+      editItem(id);
+    } else if (action === 'oos') {
+      document.getElementById('oos-item-id').value = id;
+      document.getElementById('oos-reason').value = '';
+      document.getElementById('oos-notes').value = '';
+      openModal('modal-oos');
+    } else if (action === 'rts') {
+      document.getElementById('rts-item-id').value = id;
+      document.getElementById('rts-notes').value = '';
+      openModal('modal-rts');
+    } else if (action === 'delete') {
+      deleteItem(id);
+    }
+
+    // close menu after any menu action
+    const menu = menuItem.closest('.action-menu');
+    menu?.classList.remove('open');
+    return;
+  }
+
+  // Click-away: close menus when clicking outside any actions cell
+  if (!e.target.closest('.actions-cell')) {
+    document.querySelectorAll('.actions-cell .action-menu.open')
+      .forEach(m => m.classList.remove('open'));
   }
 });
 
