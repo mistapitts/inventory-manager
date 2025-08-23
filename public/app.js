@@ -1502,8 +1502,10 @@ async function handleAddItem(event) {
       showToast('Item added successfully!', 'success');
       hideAddItemModal();
 
-      // Refresh inventory list
+      // Clear the cache and refresh inventory list
+      _itemsCache = [];
       await loadInventoryItems();
+      await loadInventoryStats();
       await loadInventoryStats();
 
       // Show success message with QR code info
@@ -3970,6 +3972,11 @@ async function apiFetchSummaryFixed() {
 
 // --- Global cache for items
 let _itemsCache = [];
+
+// --- Authentication helper
+function getAuthToken() {
+  return authToken;
+}
 
 // --- Utility function to truncate file names
 function truncateFileName(fileName, maxLength = 50) {

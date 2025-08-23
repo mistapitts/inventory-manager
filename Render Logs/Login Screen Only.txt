@@ -1,0 +1,150 @@
+2025-08-23T21:07:13.000753464Z   'name',
+2025-08-23T21:07:13.000755575Z   'color',
+2025-08-23T21:07:13.000757655Z   'textColor',
+2025-08-23T21:07:13.000759824Z   'createdAt',
+2025-08-23T21:07:13.000761915Z   'updatedAt'
+2025-08-23T21:07:13.000764015Z ]
+2025-08-23T21:07:13.000770455Z ✅ Column color already exists in lists
+2025-08-23T21:07:13.000772765Z ✅ Column textColor already exists in lists
+2025-08-23T21:07:14.216533358Z ==> Your service is live 🎉
+2025-08-23T21:07:14.252414483Z ==> 
+2025-08-23T21:07:14.296934287Z ==> ///////////////////////////////////////////////////////////
+2025-08-23T21:07:14.334809172Z ==> 
+2025-08-23T21:07:14.372650097Z ==> Available at your primary URL https://inventory-manager-d2we.onrender.com
+2025-08-23T21:07:14.409051712Z ==> 
+2025-08-23T21:07:14.452263777Z ==> ///////////////////////////////////////////////////////////
+2025-08-23T21:07:40.196100716Z 📊 Retrieved calibration records: []
+2025-08-23T21:12:22.724990448Z ==> Detected service running on port 10000
+2025-08-23T21:12:22.849622735Z ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2025-08-23T21:16:40.63188946Z 📊 Retrieved calibration records: []
+2025-08-23T21:21:27.408829848Z File download successful: {
+2025-08-23T21:21:27.408860898Z   fileQuery: '1755839178283-706459280-2025-08-18_30-25025T_6360_ASTM_D1557_Moisture_Density_Proctor.pdf',
+2025-08-23T21:21:27.408867598Z   downloadFilename: '1755839178283-706459280-2025-08-18_30-25025T_6360_ASTM_D1557_Moisture_Density_Proctor.pdf',
+2025-08-23T21:21:27.408874298Z   fileSize: 374946
+2025-08-23T21:21:27.408878518Z }
+2025-08-23T21:45:54.733408784Z ==> Deploying...
+2025-08-23T21:46:18.963517161Z > node dist/server.js
+2025-08-23T21:46:18.963519781Z 
+2025-08-23T21:46:19.447239863Z 🚀 Inventory Manager API running on port 10000 (env=production)
+2025-08-23T21:46:19.447387745Z 📁 Public dir: /opt/render/project/src/public
+2025-08-23T21:46:19.447394896Z 📁 Upload dir: /var/data/uploads
+2025-08-23T21:46:19.447452037Z 📁 Upload docs dir: /var/data/uploads/docs
+2025-08-23T21:46:19.447469357Z 📁 Data dir: /var/data
+2025-08-23T21:46:19.447504668Z 🗄️ DB file:   /var/data/data.sqlite
+2025-08-23T21:46:19.452843234Z Existing columns in inventory_items: [
+2025-08-23T21:46:19.452854304Z   'id',
+2025-08-23T21:46:19.452857214Z   'companyId',
+2025-08-23T21:46:19.452859934Z   'itemType',
+2025-08-23T21:46:19.452862034Z   'nickname',
+2025-08-23T21:46:19.452864064Z   'labId',
+2025-08-23T21:46:19.452866124Z   'make',
+2025-08-23T21:46:19.452868184Z   'model',
+2025-08-23T21:46:19.452870644Z   'serialNumber',
+2025-08-23T21:46:19.452872814Z   'condition',
+2025-08-23T21:46:19.452874854Z   'dateReceived',
+2025-08-23T21:46:19.452876874Z   'datePlacedInService',
+2025-08-23T21:46:19.452878914Z   'location',
+2025-08-23T21:46:19.452880904Z   'calibrationDate',
+2025-08-23T21:46:19.452882944Z   'nextCalibrationDue',
+2025-08-23T21:46:19.452884934Z   'calibrationInterval',
+2025-08-23T21:46:19.452889314Z   'calibrationIntervalType',
+2025-08-23T21:46:19.452892124Z   'calibrationMethod',
+2025-08-23T21:46:19.452894474Z   'maintenanceDate',
+2025-08-23T21:46:19.452896504Z   'maintenanceDue',
+2025-08-23T21:46:19.452898504Z   'maintenanceInterval',
+2025-08-23T21:46:19.452900595Z   'maintenanceIntervalType',
+2025-08-23T21:46:19.452902715Z   'isOutsourced',
+2025-08-23T21:46:19.452904764Z   'isOutOfService',
+2025-08-23T21:46:19.452906755Z   'outOfServiceDate',
+2025-08-23T21:46:19.452908805Z   'outOfServiceReason',
+2025-08-23T21:46:19.452910845Z   'notes',
+2025-08-23T21:46:19.452912905Z   'image',
+2025-08-23T21:46:19.452914975Z   'createdAt',
+2025-08-23T21:46:19.452916995Z   'updatedAt',
+2025-08-23T21:46:19.452919025Z   'calibrationTemplate',
+2025-08-23T21:46:19.452921065Z   'calibrationInstructions',
+2025-08-23T21:46:19.452923085Z   'maintenanceTemplate',
+2025-08-23T21:46:19.452925125Z   'maintenanceInstructions',
+2025-08-23T21:46:19.452927195Z   'listId',
+2025-08-23T21:46:19.452929205Z   'returnToServiceVerified',
+2025-08-23T21:46:19.452931225Z   'returnToServiceVerifiedAt',
+2025-08-23T21:46:19.452933205Z   'returnToServiceVerifiedBy',
+2025-08-23T21:46:19.452935245Z   'returnToServiceNotes'
+2025-08-23T21:46:19.452937345Z ]
+2025-08-23T21:46:19.452947495Z ✅ Column condition already exists
+2025-08-23T21:46:19.453008306Z ✅ Column calibrationIntervalType already exists
+2025-08-23T21:46:19.45322269Z ✅ Column maintenanceIntervalType already exists
+2025-08-23T21:46:19.45323347Z ✅ Column calibrationTemplate already exists
+2025-08-23T21:46:19.453235961Z ✅ Column calibrationInstructions already exists
+2025-08-23T21:46:19.453252071Z ✅ Column maintenanceTemplate already exists
+2025-08-23T21:46:19.453267901Z ✅ Column maintenanceInstructions already exists
+2025-08-23T21:46:19.453272651Z ✅ Column isOutsourced already exists
+2025-08-23T21:46:19.453274861Z ✅ Column isOutOfService already exists
+2025-08-23T21:46:19.453295631Z ✅ Column outOfServiceDate already exists
+2025-08-23T21:46:19.453298192Z ✅ Column outOfServiceReason already exists
+2025-08-23T21:46:19.453300362Z ✅ Column returnToServiceVerified already exists
+2025-08-23T21:46:19.453309952Z ✅ Column returnToServiceVerifiedAt already exists
+2025-08-23T21:46:19.453316682Z ✅ Column returnToServiceVerifiedBy already exists
+2025-08-23T21:46:19.453320072Z ✅ Column returnToServiceNotes already exists
+2025-08-23T21:46:19.453328612Z ✅ Column image already exists
+2025-08-23T21:46:19.453336942Z ✅ Column createdAt already exists
+2025-08-23T21:46:19.453339492Z ✅ Column updatedAt already exists
+2025-08-23T21:46:19.453362953Z ✅ Column listId already exists
+2025-08-23T21:46:19.453869212Z Final columns in inventory_items: [
+2025-08-23T21:46:19.453875982Z   'id',
+2025-08-23T21:46:19.453877882Z   'companyId',
+2025-08-23T21:46:19.453879572Z   'itemType',
+2025-08-23T21:46:19.453881222Z   'nickname',
+2025-08-23T21:46:19.453882942Z   'labId',
+2025-08-23T21:46:19.453884572Z   'make',
+2025-08-23T21:46:19.453886212Z   'model',
+2025-08-23T21:46:19.453889332Z   'serialNumber',
+2025-08-23T21:46:19.453891062Z   'condition',
+2025-08-23T21:46:19.453892812Z   'dateReceived',
+2025-08-23T21:46:19.453894502Z   'datePlacedInService',
+2025-08-23T21:46:19.453896192Z   'location',
+2025-08-23T21:46:19.453897832Z   'calibrationDate',
+2025-08-23T21:46:19.453899462Z   'nextCalibrationDue',
+2025-08-23T21:46:19.453901142Z   'calibrationInterval',
+2025-08-23T21:46:19.453903873Z   'calibrationIntervalType',
+2025-08-23T21:46:19.453905582Z   'calibrationMethod',
+2025-08-23T21:46:19.453907262Z   'maintenanceDate',
+2025-08-23T21:46:19.453908873Z   'maintenanceDue',
+2025-08-23T21:46:19.453910473Z   'maintenanceInterval',
+2025-08-23T21:46:19.453912123Z   'maintenanceIntervalType',
+2025-08-23T21:46:19.453913793Z   'isOutsourced',
+2025-08-23T21:46:19.453915443Z   'isOutOfService',
+2025-08-23T21:46:19.453917073Z   'outOfServiceDate',
+2025-08-23T21:46:19.453918783Z   'outOfServiceReason',
+2025-08-23T21:46:19.453920463Z   'notes',
+2025-08-23T21:46:19.453922123Z   'image',
+2025-08-23T21:46:19.453923773Z   'createdAt',
+2025-08-23T21:46:19.453925413Z   'updatedAt',
+2025-08-23T21:46:19.453927043Z   'calibrationTemplate',
+2025-08-23T21:46:19.453928683Z   'calibrationInstructions',
+2025-08-23T21:46:19.453930323Z   'maintenanceTemplate',
+2025-08-23T21:46:19.453931993Z   'maintenanceInstructions',
+2025-08-23T21:46:19.453933643Z   'listId',
+2025-08-23T21:46:19.453935293Z   'returnToServiceVerified',
+2025-08-23T21:46:19.453936913Z   'returnToServiceVerifiedAt',
+2025-08-23T21:46:19.453938543Z   'returnToServiceVerifiedBy',
+2025-08-23T21:46:19.453940233Z   'returnToServiceNotes'
+2025-08-23T21:46:19.453941913Z ]
+2025-08-23T21:46:19.454781208Z Existing columns in lists: [
+2025-08-23T21:46:19.454791928Z   'id',
+2025-08-23T21:46:19.454794178Z   'companyId',
+2025-08-23T21:46:19.454795958Z   'name',
+2025-08-23T21:46:19.454797618Z   'color',
+2025-08-23T21:46:19.454799218Z   'textColor',
+2025-08-23T21:46:19.454800898Z   'createdAt',
+2025-08-23T21:46:19.454802858Z   'updatedAt'
+2025-08-23T21:46:19.454804639Z ]
+2025-08-23T21:46:19.454813039Z ✅ Column color already exists in lists
+2025-08-23T21:46:19.454814909Z ✅ Column textColor already exists in lists
+2025-08-23T21:46:20.48030581Z ==> Your service is live 🎉
+2025-08-23T21:46:20.523878704Z ==> 
+2025-08-23T21:46:20.55923953Z ==> ///////////////////////////////////////////////////////////
+2025-08-23T21:46:20.590468746Z ==> 
+2025-08-23T21:46:20.620281782Z ==> Available at your primary URL https://inventory-manager-d2we.onrender.com
+2025-08-23T21:46:20.653192587Z ==> 
+2025-08-23T21:46:20.681075483Z ==> ///////////////////////////////////////////////////////////
