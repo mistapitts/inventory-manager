@@ -344,29 +344,32 @@
 
               <div class="inventory-main-content">
                 <div class="inventory-table-container">
-                  <!-- Fixed toolbar (never scrolls) -->
-                  <div class="inventory-table-header">
-                    <h3 class="inventory-table-title">Inventory</h3>
-                    <div class="table-header-controls">
-                      <div class="column-customizer">
-                        <button
-                          class="column-customizer-btn"
-                          id="columnCustomizerBtn"
-                          title="Edit Lists and Columns"
-                        >
-                          <i class="fas fa-columns"></i> Edit Lists and Columns
-                        </button>
-                      </div>
-                      
-                      <span class="toolbar-gap"></span>
-                      
-                      <!-- Compact legend on the right -->
-                      <div class="toolbar-legend" id="toolbarLegend">
-                        <span class="legend-label">Legend:</span>
-                        <span class="badge badge-oos">OOS</span>
-                        <span class="chip chip-outsourced">Outsourced</span>
-                        <span class="chip chip-lab" id="chipLab">Lab</span>
-                      </div>
+                  <h3 class="inventory-table-title">Inventory</h3>
+                  
+                  <!-- Inventory toolbar -->
+                  <div id="inventory-toolbar" class="inventory-toolbar">
+                    <button id="btnEditLists" class="btn btn-primary btn-icon-left">
+                      <span class="icon-doc"></span>
+                      Edit Lists and Columns
+                    </button>
+
+                    <div class="spacer"></div>
+
+                    <label class="toolbar-check">
+                      <input id="chkShowOOS" type="checkbox" />
+                      <span>Show Out of Service</span>
+                    </label>
+
+                    <div class="toolbar-legend">
+                      <span class="legend-label">Legend:</span>
+                      <span class="badge-oos">OOS</span>
+                      <span class="chip-outsourced">Outsourced</span>
+                      <span id="legendLab" class="chip-lab">Lab</span>
+                    </div>
+                  </div>
+
+                  <!-- keep a real gap between toolbar and table (no overlap tricks) -->
+                  <div class="inventory-toolbar-gap" aria-hidden="true"></div>
 
                         <div class="column-customizer-menu" id="columnCustomizerMenu">
                           <!-- Lists Section -->
@@ -469,11 +472,7 @@
                       </div>
                     </div>
                   </div>
-                  
-                  <!-- NEW: real separator in the page gap -->
-                  <div class="toolbar-divider"></div>
 
-                  <!-- NEW wrapper so CSS can control seam/overlap properly -->
                   <div class="inventory-table-wrap">
                     <table class="inventory-table" id="inventoryTable">
                       <thead id="inventory-thead">
@@ -1147,6 +1146,6 @@
     </div>
 
     <div id="menu-portal-root"></div>
-    <script src="/app.js?v=menufix-portal-1"></script>
+    <script src="/app.js?v=toolbar-polish-1"></script>
   </body>
 </html>

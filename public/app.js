@@ -1181,6 +1181,16 @@ function hexToRgba(hex, alpha = 0.2) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+// ---- Vector eye icon helper ----
+function eyeSvg() {
+  // Clean outline eye (optimized heroicons style)
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"></path>
+      <circle cx="12" cy="12" r="3.2"></circle>
+    </svg>`;
+}
+
 // ---- Single source of truth for Actions cell ----
 function buildActionsCell(item) {
   const td = document.createElement('td');
@@ -1188,9 +1198,19 @@ function buildActionsCell(item) {
 
   td.innerHTML = `
     <div class="actions-stack" data-item-id="${item.id}">
-      <button class="pill-btn view" data-action="view">👁️&nbsp;View</button>
-      <button class="icon-btn add" data-action="quick-add">+</button>
-      <button class="icon-btn more" data-action="menu" aria-expanded="false">⋮</button>
+      <button class="btn-view" data-action="view" data-id="${item.id}">
+        ${eyeSvg()} <span>View</span>
+      </button>
+      <button class="icon-btn" data-action="quick-add" data-id="${item.id}" aria-label="Quick add">+</button>
+      <button class="icon-btn more" data-action="menu" data-id="${item.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋮</button>
+
+      <div class="action-menu" role="menu" aria-hidden="true">
+        <button class="menu-item" data-action="edit" role="menuitem">✏️ Edit</button>
+        <button class="menu-item" data-action="return" role="menuitem">↩️ Return to Service</button>
+        <button class="menu-item" data-action="oos" role="menuitem">⛔ Mark Out of Service</button>
+        <hr class="menu-sep" />
+        <button class="menu-item danger" data-action="delete" role="menuitem">🗑️ Delete</button>
+      </div>
     </div>
   `;
   return td;
@@ -1366,7 +1386,7 @@ document.addEventListener('click', (e) => {
   const stack = btn.closest('.actions-stack');
   if (!stack) return;
 
-  const itemId = stack.dataset.itemId;
+  const itemId = stack.dataset.itemId || btn.dataset.id;
   const item = window.inventoryItems?.find(x => String(x.id) === String(itemId));
   if (!item) return;
 

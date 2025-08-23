@@ -1036,17 +1036,56 @@ td.actions-cell::after {
   content: none !important; 
 }
 
-/* --- Toolbar/Table gap (no overlap) --- */
-.inventory-toolbar { 
-  margin-bottom: 14px; 
-  border-bottom-left-radius: 10px; 
-  border-bottom-right-radius: 10px; 
+/* --- Inventory toolbar card --- */
+.inventory-toolbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  background:#191f35;                    /* match your panel tone */
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
+  overflow:visible !important;            /* never show a tiny scrollbar */
+}
+.inventory-toolbar .spacer{ flex:1 1 auto; }
+
+.inventory-toolbar-gap{
+  height:14px;                            /* the space you asked to keep */
 }
 
-.toolbar-divider { 
-  height: 1px; 
-  margin: -6px 8px 14px 8px; 
-  background: color-mix(in oklab, #fff 8%, transparent); 
+/* Toolbar bits */
+.toolbar-check{
+  display:flex; align-items:center; gap:8px;
+  color:#cfd6ff; font-size:14px; user-select:none;
+}
+.toolbar-check input{ width:16px; height:16px; }
+
+.toolbar-legend{
+  display:flex; align-items:center; gap:8px;
+  color:#98a2c9; font-size:12px; white-space:nowrap;
+  flex-shrink:0;                          /* prevents legend-induced scrollbar */
+}
+.toolbar-legend .legend-label{ opacity:.8 }
+
+/* Chips/badges already exist, just make sure they don't cause overflow */
+.badge-oos,
+.chip-outsourced,
+.chip-lab{ flex-shrink:0 }
+
+/* View pill with clean vector eye */
+.btn-view{
+  display:inline-flex; align-items:center; gap:6px;
+  background:#1b2340; border:1px solid rgba(255,255,255,.08);
+  color:#e7ebff; padding:6px 10px; border-radius:10px;
+  font-weight:600; font-size:12.5px; cursor:pointer;
+}
+.btn-view:hover{ background:#222b4e; }
+
+/* SVG icon sizing (also used in other tiny buttons if you reuse) */
+.btn-view svg,
+.btn-icon svg{
+  width:16px; height:16px; display:block;
 }
 
 /* --- Table wrapper and rows --- */
