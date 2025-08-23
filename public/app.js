@@ -3648,3 +3648,124 @@ async function downloadFile(fileName, fileType) {
     showToast(`Failed to download file: ${error.message}`, 'error');
   }
 }
+
+// ===== OUT OF SERVICE API FUNCTIONS =====
+// These functions provide the interface between the frontend and backend OOS functionality
+
+/**
+ * Mark an item as out of service
+ * @param {string} id - Item ID
+ * @param {Object} params - Parameters
+ * @param {string} params.reason - Required reason for marking OOS
+ * @param {string} [params.notes] - Optional notes
+ * @param {string} [params.at] - Optional date (defaults to today)
+ * @returns {Promise<Object>} Updated item
+ */
+async function apiMarkOutOfService(id, { reason, notes, at }) {
+  if (!reason || !reason.trim()) {
+    throw new Error('Reason is required');
+  }
+
+  const response = await fetch(`/api/inventory/${id}/out-of-service`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify({ reason: reason.trim(), notes, at })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${response.status}: Failed to mark item out of service`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Return an item to service
+ * @param {string} id - Item ID
+ * @param {Object} params - Parameters
+ * @param {boolean} [params.verified] - Whether the return is verified
+ * @param {string} [params.verifiedBy] - Who verified the return
+ * @param {string} [params.notes] - Optional notes
+ * @param {string} [params.at] - Optional date (defaults to now)
+ * @returns {Promise<Object>} Updated item
+ */
+async function apiReturnToService(id, { verified, verifiedBy, notes, at }) {
+  const response = await fetch(`/api/inventory/${id}/return-to-service`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify({ verified, verifiedBy, notes, at })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${response.status}: Failed to return item to service`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch inventory items with optional OOS filtering
+ * @param {Object} [options] - Options
+ * @param {boolean} [options.includeOOS] - Whether to include out-of-service items (default: true)
+ * @param {string} [options.listId] - Optional list filter
+ * @returns {Promise<Object>} Items response
+ */
+async function apiFetchItems({ includeOOS, listId } = {}) {
+  const params = new URLSearchParams();
+  
+  if (includeOOS !== undefined) {
+    params.append('includeOOS', includeOOS.toString());
+  }
+  
+  if (listId && listId !== 'all') {
+    params.append('listId', listId);
+  }
+
+  const url = `/api/inventory${params.toString() ? '?' + params.toString() : ''}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${getAuthToken()}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch items`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch summary statistics
+ * @returns {Promise<Object>} Stats response with totalItems, activeItems, dueThisMonth, maintenanceDue
+ */
+async function apiFetchSummary() {
+  const response = await fetch('/api/inventory/stats/overview', {
+    headers: {
+      'Authorization': `Bearer ${getAuthToken()}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch summary`);
+  }
+
+  return await response.json();
+}
+
+// Make functions globally available for ChatGPT's frontend code
+window.apiMarkOutOfService = apiMarkOutOfService;
+window.apiReturnToService = apiReturnToService;
+window.apiFetchItems = apiFetchItems;
+window.apiFetchSummary = apiFetchSummary;

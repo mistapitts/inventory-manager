@@ -19,7 +19,7 @@ const storage = multer_1.default.diskStorage({
         cb(null, config_1.default.paths.uploadDocsDir);
     },
     filename(_req, file, cb) {
-        const safeBase = path_1.default.basename(file.originalname).replace(/[^\w.\-()+ ]/g, '_');
+        const safeBase = path_1.default.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
         const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
         cb(null, storedName);
     },
@@ -29,19 +29,19 @@ const upload = (0, multer_1.default)({
     limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
     fileFilter: (_req, file, cb) => {
         const ok = [
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'image/png',
-            'image/jpeg',
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "image/png",
+            "image/jpeg"
         ].includes(file.mimetype);
         if (ok) {
             cb(null, true);
         }
         else {
-            cb(new Error('Unsupported file type'));
+            cb(new Error("Unsupported file type"));
         }
-    },
+    }
 });
 // Lists: get all lists for current user's company
 router.get('/lists', auth_1.authenticateToken, async (req, res) => {
@@ -247,14 +247,15 @@ router.get('/', auth_1.authenticateToken, async (req, res) => {
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Build query parameters
+        // Build WHERE clause based on parameters
         const params = [user.companyId];
         let where = 'companyId = ?';
-        // Only exclude OOS items when explicitly requested
-        if (includeOOS !== '1') {
-            where += ' AND (isOutOfService IS NULL OR isOutOfService = 0)';
+        // Handle includeOOS parameter
+        if (includeOOS === 'false') {
+            where += ' AND isOutOfService = 0';
         }
-        // Optional list filtering
+        // If includeOOS is omitted or 'true', return all items (including OOS)
+        // Handle listId filter
         if (listId && listId !== 'all') {
             where += ' AND listId = ?';
             params.push(listId);
@@ -891,59 +892,46 @@ router.patch('/:id/out-of-service', auth_1.authenticateToken, async (req, res) =
     try {
         const itemId = req.params.id;
         const userId = req.user.id;
-        const { outOfServiceDate, reason } = req.body;
+        const { reason, notes, at } = req.body;
+        // Validation: reason is required
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ error: 'Reason is required' });
+        }
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Verify item belongs to user's company
-        const existingItem = await database_1.database.get('SELECT id FROM inventory_items WHERE id = ? AND companyId = ?', [itemId, user.companyId]);
+        // Verify item belongs to user's company and check current status
+        const existingItem = await database_1.database.get('SELECT id, isOutOfService FROM inventory_items WHERE id = ? AND companyId = ?', [itemId, user.companyId]);
         if (!existingItem) {
             return res.status(404).json({ error: 'Item not found' });
         }
-        // Validate and sanitize inputs
-        const sanitizedReason = reason ? reason.trim().substring(0, 500) : null;
-        // Parse and validate date
-        let serviceDate;
-        if (outOfServiceDate) {
-            const parsedDate = new Date(outOfServiceDate);
-            if (isNaN(parsedDate.getTime())) {
-                return res.status(400).json({ error: 'Invalid date format' });
-            }
-            serviceDate = parsedDate.toISOString().slice(0, 10);
+        // Check if item is already OOS
+        if (existingItem.isOutOfService) {
+            return res.status(409).json({ error: 'Item is already out of service' });
         }
-        else {
-            serviceDate = new Date().toISOString().slice(0, 10);
-        }
+        const outOfServiceDate = at || new Date().toISOString().split('T')[0];
         await database_1.database.run(`
-        UPDATE inventory_items 
-        SET isOutOfService = 1, 
-            outOfServiceDate = ?, 
-            outOfServiceReason = ?,
-            returnToServiceVerified = 0,
-            returnToServiceVerifiedAt = NULL,
-            returnToServiceVerifiedBy = NULL,
-            returnToServiceNotes = NULL,
-            updatedAt = datetime('now')
-        WHERE id = ?
-      `, [serviceDate, sanitizedReason, itemId]);
+            UPDATE inventory_items 
+            SET isOutOfService = 1, 
+                outOfServiceDate = ?, 
+                outOfServiceReason = ?,
+                returnToServiceVerified = NULL,
+                returnToServiceVerifiedAt = NULL,
+                returnToServiceVerifiedBy = NULL,
+                returnToServiceNotes = ?,
+                updatedAt = datetime('now')
+            WHERE id = ?
+        `, [outOfServiceDate, reason.trim(), notes || null, itemId]);
+        // Get updated item to return
+        const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
         // Create changelog entry
         await database_1.database.run(`
-        INSERT INTO changelog (
-          id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
-        ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
-      `, [
-            generateId(),
-            itemId,
-            userId,
-            `Marked as out of service: ${sanitizedReason || 'No reason provided'}`,
-        ]);
-        // Return the updated item for UI update
-        const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
-        res.json({
-            message: 'Item marked as out of service',
-            item: updatedItem,
-        });
+            INSERT INTO changelog (
+                id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+            ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
+        `, [generateId(), itemId, userId, `Marked as out of service: ${reason.trim()}`]);
+        res.json(updatedItem);
     }
     catch (error) {
         console.error('Error marking item out of service:', error);
@@ -955,51 +943,47 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
     try {
         const itemId = req.params.id;
         const userId = req.user.id;
-        const { verified, notes } = req.body;
-        // Require verification
-        if (verified !== true) {
-            return res.status(400).json({ error: 'VERIFICATION_REQUIRED' });
-        }
+        const { verified, verifiedBy, notes, at } = req.body;
         const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Verify item belongs to user's company
-        const existingItem = await database_1.database.get('SELECT id FROM inventory_items WHERE id = ? AND companyId = ?', [itemId, user.companyId]);
+        // Verify item belongs to user's company and check current status
+        const existingItem = await database_1.database.get('SELECT id, isOutOfService FROM inventory_items WHERE id = ? AND companyId = ?', [itemId, user.companyId]);
         if (!existingItem) {
             return res.status(404).json({ error: 'Item not found' });
         }
-        // Sanitize notes
-        const sanitizedNotes = notes ? notes.trim().substring(0, 500) : null;
+        // Check if item is not OOS
+        if (!existingItem.isOutOfService) {
+            return res.status(409).json({ error: 'Item is not out of service' });
+        }
+        const returnDate = at || new Date().toISOString();
+        const isVerified = !!verified;
+        const verifiedAt = isVerified ? returnDate : null;
+        const verifiedByUser = isVerified ? (verifiedBy || 'System') : null;
         await database_1.database.run(`
-        UPDATE inventory_items 
-        SET isOutOfService = 0, 
-            outOfServiceDate = NULL, 
-            outOfServiceReason = NULL,
-            returnToServiceVerified = 1,
-            returnToServiceVerifiedAt = datetime('now'),
-            returnToServiceVerifiedBy = ?,
-            returnToServiceNotes = ?,
-            updatedAt = datetime('now')
-        WHERE id = ?
-      `, [user.email || userId, sanitizedNotes, itemId]);
-        // Create changelog entry
-        await database_1.database.run(`
-        INSERT INTO changelog (
-          id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
-        ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
-      `, [
-            generateId(),
-            itemId,
-            userId,
-            `Returned to service${sanitizedNotes ? ` - ${sanitizedNotes}` : ''}`,
-        ]);
-        // Return the updated item for UI update
+            UPDATE inventory_items 
+            SET isOutOfService = 0,
+                outOfServiceDate = NULL,
+                returnToServiceVerified = ?,
+                returnToServiceVerifiedAt = ?,
+                returnToServiceVerifiedBy = ?,
+                returnToServiceNotes = ?,
+                updatedAt = datetime('now')
+            WHERE id = ?
+        `, [isVerified ? 1 : 0, verifiedAt, verifiedByUser, notes || null, itemId]);
+        // Get updated item to return
         const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
-        res.json({
-            message: 'Item returned to service',
-            item: updatedItem,
-        });
+        // Create changelog entry
+        const logMessage = isVerified
+            ? `Returned to service (verified by ${verifiedByUser})`
+            : 'Returned to service';
+        await database_1.database.run(`
+            INSERT INTO changelog (
+                id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+            ) VALUES (?, ?, ?, 'status_changed', 'details', NULL, ?, datetime('now'))
+        `, [generateId(), itemId, userId, logMessage]);
+        res.json(updatedItem);
     }
     catch (error) {
         console.error('Error returning item to service:', error);
@@ -1251,32 +1235,29 @@ router.get('/stats/overview', auth_1.authenticateToken, async (req, res) => {
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Get total items (including out-of-service)
+        // Get total items (all items)
         const totalItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ?', [user.companyId]);
-        // Get items due for calibration this month
+        // Get active items (not out of service)
+        const activeItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService = 0', [user.companyId]);
+        // Get items due for calibration this month (only active items)
         const dueThisMonth = await database_1.database.get(`
             SELECT COUNT(*) as count FROM inventory_items 
-            WHERE companyId = ? AND isOutOfService != 1 
+            WHERE companyId = ? AND isOutOfService = 0 
             AND nextCalibrationDue <= date('now', '+1 month')
             AND nextCalibrationDue >= date('now')
         `, [user.companyId]);
-        // Get items due for maintenance this month
+        // Get items due for maintenance this month (only active items)
         const maintenanceDue = await database_1.database.get(`
             SELECT COUNT(*) as count FROM inventory_items 
-            WHERE companyId = ? AND isOutOfService != 1 
+            WHERE companyId = ? AND isOutOfService = 0 
             AND maintenanceDue <= date('now', '+1 month')
             AND maintenanceDue >= date('now')
         `, [user.companyId]);
-        // Get out of service count
-        const outOfService = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService = 1', [user.companyId]);
-        // Get active items count (non-out-of-service)
-        const activeItems = await database_1.database.get('SELECT COUNT(*) as count FROM inventory_items WHERE companyId = ? AND isOutOfService != 1', [user.companyId]);
         res.json({
             totalItems: totalItems.count,
             activeItems: activeItems.count,
             dueThisMonth: dueThisMonth.count,
             maintenanceDue: maintenanceDue.count,
-            outOfService: outOfService.count,
         });
     }
     catch (error) {

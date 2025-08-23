@@ -55,7 +55,7 @@ const PORT = Number(process.env.PORT) || config_1.default.env.port;
 app.set('trust proxy', 1);
 // Security headers
 app.use((0, helmet_1.default)({
-    crossOriginResourcePolicy: { policy: 'cross-origin' }, // allows file downloads
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allows file downloads
 }));
 // CORS: secure configuration with allow-list (production-focused)
 app.use((0, cors_1.default)({
@@ -68,30 +68,30 @@ app.use((0, cors_1.default)({
         if (config_1.default.env.nodeEnv === 'production') {
             if (config_1.corsAllowedOrigins.length === 0) {
                 // If no origins specified, default to strict
-                return cb(new Error('CORS: no allowed origins configured for production'));
+                return cb(new Error("CORS: no allowed origins configured for production"));
             }
             if (config_1.corsAllowedOrigins.includes(origin)) {
                 return cb(null, true);
             }
-            return cb(new Error('CORS: origin not allowed'));
+            return cb(new Error("CORS: origin not allowed"));
         }
         // In development, be more permissive
         return cb(null, true);
     },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type"],
     credentials: false,
     maxAge: 600,
 }));
-app.options('*', (0, cors_1.default)()); // preflight
+app.options("*", (0, cors_1.default)()); // preflight
 // Rate limiting for all auth endpoints
 const authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 10 * 60 * 1000, // 10 minutes
     limit: 50, // max 50 requests per window
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: false
 });
-app.use('/api/auth', authLimiter);
+app.use("/api/auth", authLimiter);
 // Directories are now handled by config.ensureBootPaths()
 const PUBLIC_DIR = config_1.default.paths.publicDir;
 const UPLOAD_DIR = config_1.default.paths.uploadDir;
@@ -143,11 +143,11 @@ app.get(/^\/(?!api|uploads).*/, (_req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
     // Map specific errors to clean HTTP status codes
-    if (err && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'FILE_TOO_LARGE' });
+    if (err && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "FILE_TOO_LARGE" });
     }
     if (err && /Unsupported file/.test(err.message)) {
-        return res.status(415).json({ error: 'UNSUPPORTED_MEDIA_TYPE' });
+        return res.status(415).json({ error: "UNSUPPORTED_MEDIA_TYPE" });
     }
     console.error('Error:', err);
     return res.status(500).json({ error: 'SERVER_ERROR' });
