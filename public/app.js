@@ -4022,13 +4022,27 @@ function setupOOSFormHandlers() {
   }
 }
 
-// ChatGPT's robust action delegation system
+// ChatGPT's robust action delegation system with dynamic positioning
 function toggleActionMenuForCell(cellEl) {
   document.querySelectorAll('.actions-cell .action-menu.open')
     .forEach(m => { if (!cellEl.contains(m)) m.classList.remove('open'); });
 
   const menu = cellEl.querySelector('.action-menu');
-  if (menu) menu.classList.toggle('open');
+  if (menu) {
+    if (menu.classList.contains('open')) {
+      menu.classList.remove('open');
+    } else {
+      // Calculate position relative to the button
+      const button = cellEl.querySelector('[data-action="more"]');
+      const rect = button.getBoundingClientRect();
+      
+      // Position menu below and to the right of the button
+      menu.style.top = (rect.bottom + 5) + 'px';
+      menu.style.right = (window.innerWidth - rect.right) + 'px';
+      
+      menu.classList.add('open');
+    }
+  }
 }
 
 // Delegation for the three dark buttons + menu items

@@ -2404,6 +2404,12 @@ body {
   z-index: 5;
 }
 
+/* When action menu is open, boost the entire actions cell z-index */
+.inventory-table td:last-child:has(.action-menu.open),
+.inventory-table td.actions:has(.action-menu.open) {
+  z-index: 10000;
+}
+
 .inventory-table th:last-child {
   background: var(--bg-secondary);
   z-index: 15; /* Higher than other sticky headers */
@@ -3100,16 +3106,17 @@ body {
 /* The menu container (rendered once per row) */
 .actions-cell .action-menu {
   display: none;                 /* ← hidden by default */
-  position: absolute;
-  right: 0;
-  top: 36px;
+  position: fixed;               /* Use fixed positioning to escape stacking contexts */
+  right: 20px;                   /* Position from viewport edge */
+  top: auto;                     /* Will be set by JavaScript */
   min-width: 220px;
   background: #0f1424;
   border: 1px solid #2b3152;
   border-radius: 10px;
   padding: 6px;
-  z-index: 9999; /* Higher z-index to appear above other rows */
+  z-index: 99999;                /* Extremely high z-index */
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  transform: translateY(0);      /* Create new stacking context */
 }
 
 /* Visible state */
