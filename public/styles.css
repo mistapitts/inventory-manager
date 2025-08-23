@@ -706,7 +706,7 @@ tr.row-oos * {
 
 /* --- INVENTORY: toolbar + table seam ---------------------------- */
 
-/* The toolbar row above the table */
+/* ---------- Toolbar: real gap and divider ---------- */
 .inventory-table-header {
   display: flex;
   gap: 12px;
@@ -715,11 +715,9 @@ tr.row-oos * {
   background: var(--card-bg, #121829);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
-  /* use padding instead of overlap for cleaner look */
-  margin-bottom: 16px;
+  margin-bottom: 14px;            /* REAL GAP */
+  overflow: visible !important;    /* no tiny scrollbar */
   position: relative;
-  z-index: 2;
-  overflow: visible !important;         /* kill the tiny scrollbar */
 }
 
 .toolbar-gap { 
@@ -765,24 +763,22 @@ tr.row-oos * {
   color: var(--lab-chip-fg, #cfe1ff);
 }
 
-/* Container that wraps the table (head + body) */
+/* ---------- Table wrapper (no overlap) ---------- */
 .inventory-table-wrap {
   position: relative;
   z-index: 1;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
-  overflow: visible;                    /* so dropdowns are not clipped */
+  overflow: visible;              /* let dropdowns show */
+  background: var(--card-bg, #121829);
 }
 
-/* Visual separator line between toolbar and table */
-.inventory-table-wrap::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 16px;
-  right: 16px;
+/* Thin divider line that sits *outside* the toolbar, in the page gap */
+.toolbar-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background: color-mix(in oklab, rgba(255,255,255,0.08) 70%, transparent);
+  margin: -10px 8px 14px 8px; /* pulls line close to toolbar, keeps 14px gap total */
+  pointer-events: none;
 }
 
 /* Ensure the table itself doesn't clip menus */
@@ -790,30 +786,50 @@ tr.row-oos * {
   overflow: visible !important;
 }
 
-/* Action cell & menu layering */
-.inventory-table td.actions,
+/* ---------- Actions cell + menu ---------- */
+.inventory-table td.actions, 
 .inventory-table th.actions {
-  position: relative;  /* positioning context for the menu */
-  z-index: 3;
-  background: transparent;
+  position: relative;             /* positioning context for menu */
+  width: 76px;                    /* keep a stable cell width */
+}
+
+.icon-btn.more {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-menu {
   position: absolute;
-  top: 36px; /* below the button */
+  top: 36px;                      /* drop below button */
   right: 8px;
-  z-index: 20;            /* always above table rows */
   min-width: 180px;
-  background: var(--card-bg, #121829);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
   padding: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--card-bg, #121829);
+  border-radius: 10px;
   box-shadow: 0 10px 24px rgba(0,0,0,.35);
-  display: none;               /* default hidden */
+  z-index: 30;
+  display: none;                  /* toggled by .open */
 }
 
 .action-menu.open { 
   display: block; 
+}
+
+.action-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.action-menu button:hover { 
+  background: rgba(255,255,255,0.1); 
 }
 
 /* Icon buttons */
@@ -833,13 +849,12 @@ tr.row-oos * {
   flex-shrink: 0;                /* prevent legend from shrinking */
 }
 
-/* Keep OOS rows visually marked without dimming interactive elements */
+/* Keep OOS rows flagged, but never dim controls */
 .row-oos {
   background-image: linear-gradient(0deg, rgba(255,70,70,0.06), rgba(0,0,0,0));
 }
 
-.row-oos .btn,
-.row-oos .btn-icon,
+.row-oos .icon-btn, 
 .row-oos .action-menu { 
   opacity: 1 !important; 
 }

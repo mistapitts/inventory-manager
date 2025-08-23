@@ -1303,10 +1303,10 @@ async function deleteRecord(recordId, type, itemId) {
 
 function closeAllActionMenus() {
   document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.icon-btn.more[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
 }
 
-function toggleActionMenu(btn, id) {
-  // menu must be inside the same <td class="actions">
+function toggleActionMenu(btn) {
   const cell = btn.closest('td.actions');
   if (!cell) return;
   const menu = cell.querySelector('.action-menu');
@@ -1315,17 +1315,28 @@ function toggleActionMenu(btn, id) {
   const isOpen = menu.classList.contains('open');
   closeAllActionMenus();
   if (!isOpen) {
-    // position already handled by CSS (top/right), just open
     menu.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
   }
 }
 
-// click-away close
+// Event delegation for all action menus
 document.addEventListener('click', (e) => {
-  const onToggle = e.target.closest('[data-action="toggle-actions"]');
-  const inMenu = e.target.closest('.action-menu');
-  if (onToggle || inMenu) return;
-  closeAllActionMenus();
+  const toggleBtn = e.target.closest('.icon-btn.more[data-action="toggle-actions"]');
+  if (toggleBtn) {
+    e.preventDefault();
+    toggleActionMenu(toggleBtn);
+    return;
+  }
+  // Click-away closes menus
+  if (!e.target.closest('.action-menu')) {
+    closeAllActionMenus();
+  }
+});
+
+// Optional: ESC to close
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAllActionMenus();
 });
 
 async function deleteItem(itemId) {
