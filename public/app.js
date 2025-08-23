@@ -1202,6 +1202,25 @@ function hexToRgba(hex, alpha = 0.2) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+// Build actions cell with proper menu structure
+function buildActionsCell() {
+  const td = document.createElement('td');
+  td.className = 'actions';
+  td.innerHTML = `
+    <div class="actions-stack">
+      <button class="btn btn-view" data-action="view">👁️ View</button>
+      <button class="icon-btn add" data-action="quick-add">+</button>
+      <button type="button" class="icon-btn more" data-action="toggle-actions"
+              aria-haspopup="menu" aria-expanded="false">⋯</button>
+      <div class="action-menu" role="menu">
+        <button type="button" data-action="edit">✏️ Edit</button>
+        <button type="button" data-action="return">✅ Return to Service</button>
+        <button type="button" data-action="delete">🗑️ Delete</button>
+      </div>
+    </div>`;
+  return td;
+}
+
 // Update the Lab chip color in the legend
 function updateLegendLabChip(colorHex) {
   const chip = document.getElementById('chipLab');
@@ -1312,31 +1331,26 @@ function toggleActionMenu(btn) {
   const menu = cell.querySelector('.action-menu');
   if (!menu) return;
 
-  const isOpen = menu.classList.contains('open');
+  const wasOpen = menu.classList.contains('open');
   closeAllActionMenus();
-  if (!isOpen) {
+  if (!wasOpen) {
     menu.classList.add('open');
     btn.setAttribute('aria-expanded','true');
   }
 }
 
-// Event delegation for all action menus
 document.addEventListener('click', (e) => {
   const toggleBtn = e.target.closest('.icon-btn.more[data-action="toggle-actions"]');
-  if (toggleBtn) {
-    e.preventDefault();
-    toggleActionMenu(toggleBtn);
-    return;
+  if (toggleBtn) { 
+    e.preventDefault(); 
+    toggleActionMenu(toggleBtn); 
+    return; 
   }
-  // Click-away closes menus
-  if (!e.target.closest('.action-menu')) {
-    closeAllActionMenus();
-  }
+  if (!e.target.closest('.action-menu')) closeAllActionMenus();   // click-away
 });
 
-// Optional: ESC to close
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeAllActionMenus();
+document.addEventListener('keydown', (e) => { 
+  if (e.key === 'Escape') closeAllActionMenus(); 
 });
 
 async function deleteItem(itemId) {

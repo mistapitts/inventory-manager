@@ -706,18 +706,17 @@ tr.row-oos * {
 
 /* --- INVENTORY: toolbar + table seam ---------------------------- */
 
-/* ---------- Toolbar: real gap and divider ---------- */
+/* ---------- Toolbar: real gap, no overlap ---------- */
 .inventory-table-header {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
   padding: 10px 14px;
   background: var(--card-bg, #121829);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
-  margin-bottom: 14px;            /* REAL GAP */
-  overflow: visible !important;    /* no tiny scrollbar */
-  position: relative;
+  margin-bottom: 14px;           /* REAL GAP BELOW */
+  overflow: visible !important;
 }
 
 .toolbar-gap { 
@@ -773,11 +772,11 @@ tr.row-oos * {
   background: var(--card-bg, #121829);
 }
 
-/* Thin divider line that sits *outside* the toolbar, in the page gap */
+/* The divider sits in the page gap, not inside the toolbar */
 .toolbar-divider {
   height: 1px;
   background: color-mix(in oklab, rgba(255,255,255,0.08) 70%, transparent);
-  margin: -10px 8px 14px 8px; /* pulls line close to toolbar, keeps 14px gap total */
+  margin: -6px 8px 14px 8px;     /* pull line close to toolbar, keep ~14px total gap */
   pointer-events: none;
 }
 
@@ -787,24 +786,32 @@ tr.row-oos * {
 }
 
 /* ---------- Actions cell + menu ---------- */
-.inventory-table td.actions, 
-.inventory-table th.actions {
-  position: relative;             /* positioning context for menu */
-  width: 76px;                    /* keep a stable cell width */
+.inventory-table td.actions,
+.inventory-table th.actions { 
+  position: relative; 
+  width: 76px; 
+}
+
+.actions-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
 }
 
 .icon-btn.more {
-  width: 36px;
+  width: 36px; 
   height: 36px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
+  display: inline-flex; 
+  align-items: center; 
   justify-content: center;
+  border-radius: 8px;
 }
 
+/* Dropdown menu anchored to the actions cell */
 .action-menu {
   position: absolute;
-  top: 36px;                      /* drop below button */
+  top: 36px;                     /* directly under the ⋯ button */
   right: 8px;
   min-width: 180px;
   padding: 6px;
@@ -812,8 +819,8 @@ tr.row-oos * {
   background: var(--card-bg, #121829);
   border-radius: 10px;
   box-shadow: 0 10px 24px rgba(0,0,0,.35);
-  z-index: 30;
-  display: none;                  /* toggled by .open */
+  z-index: 40;
+  display: none;                 /* toggle .open in JS */
 }
 
 .action-menu.open { 
@@ -821,15 +828,14 @@ tr.row-oos * {
 }
 
 .action-menu button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
+  width: 100%; 
+  text-align: left; 
+  padding: 8px 10px; 
   border-radius: 8px;
 }
 
-.action-menu button:hover { 
-  background: rgba(255,255,255,0.1); 
+.action-menu button:hover {
+  background: color-mix(in oklab, var(--card-bg, #121829) 60%, white 8%);
 }
 
 /* Icon buttons */
@@ -849,7 +855,7 @@ tr.row-oos * {
   flex-shrink: 0;                /* prevent legend from shrinking */
 }
 
-/* Keep OOS rows flagged, but never dim controls */
+/* OOS rows still highlighted, but never dim controls */
 .row-oos {
   background-image: linear-gradient(0deg, rgba(255,70,70,0.06), rgba(0,0,0,0));
 }
