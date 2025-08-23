@@ -3951,9 +3951,15 @@ function buildActionsMenuHTML(item) {
 function renderActionsCell(item) {
   return `
     <div class="actions-cell" data-id="${item.id}">
-      <button class="action-btn" data-action="view" data-id="${item.id}">👁️ View</button>
-      <button class="action-btn" data-action="quick-add" data-id="${item.id}">＋</button>
-      <button class="action-btn" data-action="more" data-id="${item.id}">⋮</button>
+      <button class="action-btn" data-action="view" data-id="${item.id}">
+        <i class="fas fa-eye"></i> View
+      </button>
+      <button class="action-btn action-btn-plus" data-action="quick-add" data-id="${item.id}" title="Add Calibration/Maintenance Record">
+        <i class="fas fa-plus"></i>
+      </button>
+      <button class="action-menu-button" data-action="more" data-id="${item.id}" title="More actions">
+        <i class="fas fa-ellipsis-v"></i>
+      </button>
       ${buildActionsMenuHTML(item)}
     </div>
   `;

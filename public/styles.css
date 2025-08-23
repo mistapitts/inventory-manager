@@ -3081,27 +3081,34 @@ body {
 .actions-cell {
   position: relative;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Dark buttons that should always be visible */
-.actions-cell .action-btn {
+.actions-cell .action-btn,
+.actions-cell .action-btn-plus,
+.actions-cell .action-menu-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: 32px; /* Ensure consistent height */
+  vertical-align: middle;
 }
 
 /* The menu container (rendered once per row) */
 .actions-cell .action-menu {
   display: none;                 /* ← hidden by default */
   position: absolute;
-  right: 8px;
+  right: 0;
   top: 36px;
   min-width: 220px;
   background: #0f1424;
   border: 1px solid #2b3152;
   border-radius: 10px;
   padding: 6px;
-  z-index: 1000;
+  z-index: 9999; /* Higher z-index to appear above other rows */
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
@@ -3139,17 +3146,23 @@ body {
 
 /* Ensure action menus always render above rows */
 .table-col-actions,
-.table-col-actions .action-menu,
-.table-col-actions * {
+.actions-cell,
+td.actions {
   position: relative;
-  z-index: 9999;
+  z-index: 1;
 }
 
 /* Make sure table wrappers don't clip menus */
 .inventory-table-wrap,
 .table-scroll,
-.table-container {
+.table-container,
+.inventory-table {
   overflow: visible !important;
+}
+
+/* Ensure action column has proper overflow */
+td.actions {
+  overflow: visible;
 }
 
 /* Legend & toolbar helpers (no scrollbars) */
