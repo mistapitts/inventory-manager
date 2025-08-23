@@ -1262,8 +1262,8 @@ function enhanceFileUploadsForEdit(item) {
       fileInfo.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
                     <i class="fas fa-file-alt" style="color: var(--accent-primary);"></i>
-                    <span style="color: var(--text-primary); font-weight: 500;">
-                        ${path.split('/').pop()} 
+                    <span class="file-display" style="color: var(--text-primary); font-weight: 500;" title="${path.split('/').pop()}">
+                        ${truncateFileName(path.split('/').pop())} 
                     </span>
                     <button type="button" onclick="downloadFile('${path}', '${field}')" 
                             style="background: var(--accent-primary); color: white; border: none; 
