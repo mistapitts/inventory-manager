@@ -909,6 +909,9 @@ async function loadInventoryItems() {
       
       // Display the filtered items
       displayInventoryItems(visibleItems);
+      
+      // Debug actions column after rendering
+      setTimeout(debugActionsColumn, 100);
     } else {
       console.error('Failed to load inventory:', response.status, response.statusText);
     }
@@ -1202,23 +1205,22 @@ function hexToRgba(hex, alpha = 0.2) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// Build actions cell with proper menu structure
-function buildActionsCell() {
-  const td = document.createElement('td');
-  td.className = 'actions';
-  td.innerHTML = `
-    <div class="actions-stack">
-      <button class="btn btn-view" data-action="view">👁️ View</button>
-      <button class="icon-btn add" data-action="quick-add">+</button>
-      <button type="button" class="icon-btn more" data-action="toggle-actions"
-              aria-haspopup="menu" aria-expanded="false">⋯</button>
-      <div class="action-menu" role="menu">
-        <button type="button" data-action="edit">✏️ Edit</button>
-        <button type="button" data-action="return">✅ Return to Service</button>
-        <button type="button" data-action="delete">🗑️ Delete</button>
+function buildActionsCellHtml() {
+  return `
+    <td class="actions">
+      <div class="actions-stack">
+        <button class="btn btn-view" data-action="view">👁️ View</button>
+        <button class="icon-btn add" data-action="quick-add">+</button>
+        <button class="icon-btn more" type="button"
+                data-action="toggle-actions"
+                aria-haspopup="menu" aria-expanded="false">⋯</button>
+        <div class="action-menu" role="menu">
+          <button type="button" data-action="edit">✏️ Edit</button>
+          <button type="button" data-action="return">✅ Return to Service</button>
+          <button type="button" data-action="delete">🗑️ Delete</button>
+        </div>
       </div>
-    </div>`;
-  return td;
+    </td>`;
 }
 
 // Update the Lab chip color in the legend
@@ -1335,23 +1337,56 @@ function toggleActionMenu(btn) {
   closeAllActionMenus();
   if (!wasOpen) {
     menu.classList.add('open');
-    btn.setAttribute('aria-expanded','true');
+    btn.setAttribute('aria-expanded', 'true');
   }
 }
 
-document.addEventListener('click', (e) => {
+/* Delegation on the table wrapper so dynamic rows work */
+const tableWrap = document.querySelector('.inventory-table-wrap') || document;
+tableWrap.addEventListener('click', (e) => {
   const toggleBtn = e.target.closest('.icon-btn.more[data-action="toggle-actions"]');
   if (toggleBtn) { 
     e.preventDefault(); 
     toggleActionMenu(toggleBtn); 
     return; 
   }
-  if (!e.target.closest('.action-menu')) closeAllActionMenus();   // click-away
+
+  /* Click-away close when not clicking inside a menu */
+  if (!e.target.closest('.action-menu')) closeAllActionMenus();
+
+  /* Optional: hook menu actions (edit/return/delete) */
+  const menuActionBtn = e.target.closest('.action-menu [data-action]');
+  if (menuActionBtn) {
+    const action = menuActionBtn.getAttribute('data-action');
+    // TODO: route to your existing handlers:
+    // if (action === 'edit') openEditModal(rowId) ...
+    closeAllActionMenus();
+  }
 });
 
 document.addEventListener('keydown', (e) => { 
   if (e.key === 'Escape') closeAllActionMenus(); 
 });
+
+function debugActionsColumn() {
+  const rows = document.querySelectorAll('.inventory-table tbody tr');
+  console.log('[diag] rows:', rows.length);
+  const dots = document.querySelectorAll('.icon-btn.more');
+  console.log('[diag] ⋯ buttons:', dots.length);
+  if (!dots.length) {
+    console.warn('[diag] No ⋯ buttons found. Check row renderer includes buildActionsCellHtml().');
+  } else {
+    const b = dots[0];
+    const cs = getComputedStyle(b);
+    console.log('[diag] first ⋯ display:', cs.display, 'visibility:', cs.visibility, 'opacity:', cs.opacity);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(debugActionsColumn, 100);      // after initial render
+});
+
+/* Call debugActionsColumn() at the end of your loadInventoryItems() as well */
 
 async function deleteItem(itemId) {
   if (!confirm('Delete this item and all associated records? This cannot be undone.')) return;

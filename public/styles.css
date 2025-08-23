@@ -865,6 +865,86 @@ tr.row-oos * {
   opacity: 1 !important; 
 }
 
+/* ---- Actions column hardening ---- */
+.inventory-table td.actions,
+.inventory-table th.actions { 
+  position: relative; 
+  width: 76px; 
+}
+
+.actions-stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Show the ⋯ button as a normal icon button */
+.icon-btn.more {
+  width: 36px; 
+  height: 36px;
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center;
+  border-radius: 8px; 
+  cursor: pointer;
+  opacity: 1 !important;               /* defeat any dimming */
+  pointer-events: auto !important;      /* defeat any overlays */
+}
+
+/* The dropdown menu */
+.action-menu {
+  position: absolute;
+  top: 36px;            /* directly below ⋯ */
+  right: 8px;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--card-bg, #121829);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  z-index: 40;
+  display: none;
+}
+
+.action-menu.open { 
+  display: block; 
+}
+
+.action-menu button {
+  width: 100%; 
+  text-align: left; 
+  padding: 8px 10px; 
+  border-radius: 8px;
+}
+
+.action-menu button:hover {
+  background: color-mix(in oklab, var(--card-bg, #121829) 60%, white 8%);
+}
+
+/* Ensure wrappers never clip the menu */
+.inventory-table-wrap,
+.inventory-table { 
+  overflow: visible !important; 
+}
+
+/* OOS rows never dim or block controls */
+.row-oos .icon-btn, 
+.row-oos .action-menu { 
+  opacity: 1 !important; 
+}
+
+.row-oos .actions-stack, 
+.row-oos .actions * { 
+  pointer-events: auto !important; 
+}
+
+/* Last-resort: nothing transparent sits above actions */
+td.actions, 
+td.actions * { 
+  z-index: 1; 
+}
+
 /* Menu items styling */
 .menu-item {
   display: block;
