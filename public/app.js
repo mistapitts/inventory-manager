@@ -2302,7 +2302,7 @@ function displayItemDetails(data) {
         </div>`;
 
   // Create Service Log section
-  const serviceLogSection = createServiceLogSection(item);
+  const serviceLogSection = createServiceLogSection({ ...item, changelog });
 
   content.innerHTML = `
         ${topGridHtml}
