@@ -916,20 +916,31 @@ router.patch('/:id/out-of-service', auth_1.authenticateToken, async (req, res) =
         if (existingItem.isOutOfService) {
             return res.status(409).json({ error: 'Item is already out of service' });
         }
+        // Update item status only
         await database_1.database.run(`
             UPDATE inventory_items 
             SET isOutOfService = 1, 
                 outOfServiceDate = ?, 
                 outOfServiceReason = ?,
-                outOfServiceReportedBy = ?,
-                outOfServiceNotes = ?,
                 returnToServiceVerified = NULL,
                 returnToServiceVerifiedAt = NULL,
                 returnToServiceVerifiedBy = NULL,
                 returnToServiceNotes = NULL,
                 updatedAt = datetime('now')
             WHERE id = ?
-        `, [date, reason.trim(), reportedBy.trim(), notes || null, itemId]);
+        `, [date, reason.trim(), itemId]);
+        // Store detailed service information in changelog
+        const serviceData = {
+            date,
+            reason: reason.trim(),
+            reportedBy: reportedBy.trim(),
+            notes: notes || null
+        };
+        await database_1.database.run(`
+            INSERT INTO changelog (
+                id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+            ) VALUES (?, ?, ?, 'service_out', 'service_log', NULL, ?, datetime('now'))
+        `, [generateId(), itemId, userId, JSON.stringify(serviceData)]);
         // Get updated item to return
         const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
         // Create changelog entry
@@ -974,18 +985,29 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
         if (!existingItem.isOutOfService) {
             return res.status(409).json({ error: 'Item is not out of service' });
         }
+        // Update item status only
         await database_1.database.run(`
             UPDATE inventory_items 
             SET isOutOfService = 0,
-                returnToServiceDate = ?,
-                returnToServiceResolvedBy = ?,
                 returnToServiceVerified = 1,
                 returnToServiceVerifiedAt = ?,
                 returnToServiceVerifiedBy = ?,
                 returnToServiceNotes = ?,
                 updatedAt = datetime('now')
             WHERE id = ?
-        `, [date, resolvedBy.trim(), date, verifiedBy.trim(), notes || null, itemId]);
+        `, [date, verifiedBy.trim(), notes || null, itemId]);
+        // Store detailed service information in changelog
+        const serviceData = {
+            date,
+            resolvedBy: resolvedBy.trim(),
+            verifiedBy: verifiedBy.trim(),
+            notes: notes || null
+        };
+        await database_1.database.run(`
+            INSERT INTO changelog (
+                id, itemId, userId, action, fieldName, oldValue, newValue, timestamp
+            ) VALUES (?, ?, ?, 'service_return', 'service_log', NULL, ?, datetime('now'))
+        `, [generateId(), itemId, userId, JSON.stringify(serviceData)]);
         // Get updated item to return
         const updatedItem = await database_1.database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
         // Create changelog entry
