@@ -831,6 +831,11 @@ async function loadInventoryItems() {
   try {
     displayInventoryItems(visibleItems);
     logStep('loadInventoryItems:rendered');
+    
+    // Re-apply search if active
+    if (searchState.isActive && searchState.query.length >= 2) {
+      setTimeout(() => performSearch(searchState.query), 100);
+    }
   } catch (e) {
     console.error('[INV] displayInventoryItems error', e);
   }
@@ -5168,7 +5173,261 @@ function getItemStatus(item) {
   return statuses.length > 0 ? statuses.join(', ') : 'In Service';
 }
 
-// Initialize export functionality when DOM is loaded
+// Search Functionality
+let searchState = {
+  query: '',
+  matches: [],
+  currentMatchIndex: -1,
+  isActive: false
+};
+
+function initializeSearch() {
+  const searchInput = document.getElementById('searchInventory');
+  const searchPrevBtn = document.getElementById('searchPrevBtn');
+  const searchNextBtn = document.getElementById('searchNextBtn');
+  
+  if (!searchInput) return;
+  
+  // Search as you type
+  searchInput.addEventListener('input', handleSearchInput);
+  
+  // Navigation buttons
+  if (searchPrevBtn) {
+    searchPrevBtn.addEventListener('click', () => navigateToMatch(-1));
+  }
+  
+  if (searchNextBtn) {
+    searchNextBtn.addEventListener('click', () => navigateToMatch(1));
+  }
+  
+  // Keyboard shortcuts
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        navigateToMatch(-1); // Shift+Enter = Previous
+      } else {
+        navigateToMatch(1);  // Enter = Next
+      }
+    } else if (e.key === 'Escape') {
+      clearSearch();
+      searchInput.blur();
+    }
+  });
+}
+
+function handleSearchInput(e) {
+  const query = e.target.value.trim();
+  searchState.query = query;
+  
+  if (query.length === 0) {
+    clearSearch();
+    return;
+  }
+  
+  if (query.length < 2) {
+    // Don't search for single characters
+    hideSearchPopup();
+    return;
+  }
+  
+  performSearch(query);
+}
+
+function performSearch(query) {
+  // Clear previous highlights
+  clearHighlights();
+  
+  const tableBody = document.getElementById('inventoryTableBody');
+  if (!tableBody) return;
+  
+  const rows = Array.from(tableBody.querySelectorAll('tr:not(.empty-row)'));
+  const matches = [];
+  
+  // Search through all visible rows
+  rows.forEach((row, rowIndex) => {
+    const cells = row.querySelectorAll('td');
+    let rowHasMatch = false;
+    
+    cells.forEach((cell, cellIndex) => {
+      // Skip action column and status column
+      if (cellIndex === 0 || cell.classList.contains('actions')) return;
+      
+      const cellText = cell.textContent || '';
+      const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+      
+      if (regex.test(cellText)) {
+        rowHasMatch = true;
+        
+        // Highlight matches in this cell
+        const highlightedHTML = cellText.replace(regex, '<span class="search-highlight">$1</span>');
+        
+        // Store original content if not already stored
+        if (!cell.hasAttribute('data-original-content')) {
+          cell.setAttribute('data-original-content', cell.innerHTML);
+        }
+        
+        cell.innerHTML = highlightedHTML;
+        
+        // Add to matches array
+        const highlightSpans = cell.querySelectorAll('.search-highlight');
+        highlightSpans.forEach(span => {
+          matches.push({
+            element: span,
+            row: row,
+            rowIndex: rowIndex,
+            cellIndex: cellIndex
+          });
+        });
+      }
+    });
+    
+    // Show/hide row based on match
+    if (rowHasMatch) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Update search state
+  searchState.matches = matches;
+  searchState.currentMatchIndex = matches.length > 0 ? 0 : -1;
+  searchState.isActive = true;
+  
+  // Update UI
+  updateSearchUI();
+  
+  // Highlight current match and scroll to it
+  if (matches.length > 0) {
+    highlightCurrentMatch();
+    scrollToCurrentMatch();
+  }
+}
+
+function clearSearch() {
+  searchState.query = '';
+  searchState.matches = [];
+  searchState.currentMatchIndex = -1;
+  searchState.isActive = false;
+  
+  clearHighlights();
+  showAllRows();
+  hideSearchPopup();
+}
+
+function clearHighlights() {
+  // Restore original content for all cells with highlights
+  const highlightedCells = document.querySelectorAll('td[data-original-content]');
+  highlightedCells.forEach(cell => {
+    cell.innerHTML = cell.getAttribute('data-original-content');
+    cell.removeAttribute('data-original-content');
+  });
+}
+
+function showAllRows() {
+  const tableBody = document.getElementById('inventoryTableBody');
+  if (!tableBody) return;
+  
+  const rows = tableBody.querySelectorAll('tr:not(.empty-row)');
+  rows.forEach(row => {
+    row.style.display = '';
+  });
+}
+
+function navigateToMatch(direction) {
+  if (searchState.matches.length === 0) return;
+  
+  // Update current match index
+  searchState.currentMatchIndex += direction;
+  
+  // Wrap around
+  if (searchState.currentMatchIndex >= searchState.matches.length) {
+    searchState.currentMatchIndex = 0;
+  } else if (searchState.currentMatchIndex < 0) {
+    searchState.currentMatchIndex = searchState.matches.length - 1;
+  }
+  
+  highlightCurrentMatch();
+  scrollToCurrentMatch();
+  updateSearchUI();
+}
+
+function highlightCurrentMatch() {
+  // Remove current-match class from all highlights
+  const allHighlights = document.querySelectorAll('.search-highlight');
+  allHighlights.forEach(highlight => {
+    highlight.classList.remove('current-match');
+  });
+  
+  // Add current-match class to current highlight
+  if (searchState.currentMatchIndex >= 0 && searchState.matches[searchState.currentMatchIndex]) {
+    const currentMatch = searchState.matches[searchState.currentMatchIndex];
+    currentMatch.element.classList.add('current-match');
+  }
+}
+
+function scrollToCurrentMatch() {
+  if (searchState.currentMatchIndex >= 0 && searchState.matches[searchState.currentMatchIndex]) {
+    const currentMatch = searchState.matches[searchState.currentMatchIndex];
+    const row = currentMatch.row;
+    
+    // Scroll the row into view
+    row.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }
+}
+
+function updateSearchUI() {
+  const searchCount = document.getElementById('searchCount');
+  const searchPopup = document.getElementById('searchResultsPopup');
+  const searchPrevBtn = document.getElementById('searchPrevBtn');
+  const searchNextBtn = document.getElementById('searchNextBtn');
+  
+  if (!searchCount || !searchPopup) return;
+  
+  const matchCount = searchState.matches.length;
+  const currentIndex = searchState.currentMatchIndex + 1;
+  
+  if (matchCount === 0) {
+    searchCount.textContent = 'No matches';
+  } else {
+    searchCount.textContent = `${currentIndex} of ${matchCount} matches`;
+  }
+  
+  // Show/hide popup
+  if (searchState.isActive && searchState.query.length >= 2) {
+    searchPopup.style.display = 'flex';
+  } else {
+    searchPopup.style.display = 'none';
+  }
+  
+  // Enable/disable navigation buttons
+  if (searchPrevBtn) {
+    searchPrevBtn.disabled = matchCount === 0;
+  }
+  
+  if (searchNextBtn) {
+    searchNextBtn.disabled = matchCount === 0;
+  }
+}
+
+function hideSearchPopup() {
+  const searchPopup = document.getElementById('searchResultsPopup');
+  if (searchPopup) {
+    searchPopup.style.display = 'none';
+  }
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Initialize search and export functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   setupExportModalHandlers();
+  initializeSearch();
 });

@@ -373,6 +373,30 @@
               <span>Inventory</span>
             </div>
                             <div class="top-actions">
+                  <div class="search-container">
+                    <div class="search-box">
+                      <i class="fas fa-search"></i>
+                      <label for="searchInventory" class="visually-hidden">Search inventory</label>
+                      <input
+                        type="text"
+                        id="searchInventory"
+                        name="searchInventory"
+                        placeholder="Search inventory..."
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="search-results-popup" id="searchResultsPopup" style="display: none;">
+                      <span class="search-count" id="searchCount">0 matches</span>
+                      <div class="search-navigation">
+                        <button class="search-nav-btn" id="searchPrevBtn" title="Previous match">
+                          <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button class="search-nav-btn" id="searchNextBtn" title="Next match">
+                          <i class="fas fa-chevron-down"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <button class="add-item-btn" id="addItemBtn">
                     <i class="fas fa-plus"></i>
                     Add Item
@@ -385,17 +409,6 @@
                     <i class="fas fa-download"></i>
                     Export Inventory
                   </button>
-                  <div class="search-box">
-                <i class="fas fa-search"></i>
-                <label for="searchInventory" class="visually-hidden">Search inventory</label>
-                <input
-                  type="text"
-                  id="searchInventory"
-                  name="searchInventory"
-                  placeholder="Search inventory..."
-                  autocomplete="off"
-                />
-              </div>
             </div>
           </header>
 
