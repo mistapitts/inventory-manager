@@ -4168,15 +4168,17 @@ td.actions {
   border-bottom: 1px solid var(--border-color);
 }
 
-/* Edit Lists Container (outside toolbar) */
-.edit-lists-container {
+/* Inventory Sidebar (where old legend was) */
+.inventory-sidebar {
   position: relative;
   display: flex;
-  justify-content: flex-end;
-  padding: 0 24px 12px 24px;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 280px;
+  padding-left: 20px;
 }
 
-.edit-lists-container .column-customizer-btn {
+.inventory-sidebar .column-customizer-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -4188,14 +4190,15 @@ td.actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
-.edit-lists-container .column-customizer-btn:hover {
+.inventory-sidebar .column-customizer-btn:hover {
   background: var(--bg-tertiary);
   border-color: var(--accent-primary);
 }
 
-.edit-lists-container .column-customizer-btn i {
+.inventory-sidebar .column-customizer-btn i {
   color: var(--accent-primary);
 }
 
@@ -4224,8 +4227,15 @@ td.actions {
     justify-content: center;
   }
   
-  .edit-lists-container {
-    padding: 0 16px 12px 16px;
+  .inventory-content-wrapper {
+    flex-direction: column;
+  }
+  
+  .inventory-sidebar {
+    min-width: auto;
+    padding-left: 0;
+    align-items: center;
+    margin-top: 16px;
   }
 }
 

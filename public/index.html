@@ -412,41 +412,7 @@
             </div>
           </header>
 
-          <!-- Edit Lists Button (outside toolbar) -->
-          <div class="edit-lists-container">
-            <button
-              class="column-customizer-btn"
-              id="columnCustomizerBtn"
-              title="Edit Lists and Columns"
-            >
-              <i class="fas fa-columns"></i> Edit Lists and Columns
-            </button>
-            <div class="column-customizer-menu" id="columnCustomizerMenu">
-              <!-- Lists Section -->
-              <div class="column-customizer-header">
-                <h4>Lists</h4>
-              </div>
-              <div class="lists-container">
-                <div class="lists-show-hide" id="listsShowHide"></div>
-                <div class="lists-actions">
-                  <button class="btn btn-secondary btn-sm" id="listsShowAllBtn">
-                    <i class="fas fa-eye"></i> Show All Lists
-                  </button>
-                  <button class="btn btn-primary btn-sm" id="addListInlineBtn">
-                    <i class="fas fa-plus"></i> Add List
-                  </button>
-                </div>
-              </div>
 
-              <!-- Columns Section -->
-              <div class="column-customizer-header">
-                <h4>Columns</h4>
-              </div>
-              <div class="columns-container">
-                <div class="columns-show-hide" id="columnsShowHide"></div>
-              </div>
-            </div>
-          </div>
 
           <div class="content-area">
             <!-- Welcome Message (shown when no items) -->
@@ -501,7 +467,7 @@
 
             <!-- Inventory List (shown when items exist) -->
             <div class="inventory-section" id="inventorySection" style="display: none">
-              <!-- Main content area with legend on the right -->
+              <!-- Main content area with edit button on the right -->
               <div class="inventory-content-wrapper">
                 <!-- Left side content -->
                 <div class="inventory-main-content">
@@ -517,6 +483,41 @@
                   </div>
                 </div>
 
+                <!-- Edit Lists Button positioned where old legend was -->
+                <div class="inventory-sidebar">
+                  <button
+                    class="column-customizer-btn"
+                    id="columnCustomizerBtn"
+                    title="Edit Lists and Columns"
+                  >
+                    <i class="fas fa-columns"></i> Edit Lists and Columns
+                  </button>
+                  <div class="column-customizer-menu" id="columnCustomizerMenu">
+                    <!-- Lists Section -->
+                    <div class="column-customizer-header">
+                      <h4>Lists</h4>
+                    </div>
+                    <div class="lists-container">
+                      <div class="lists-show-hide" id="listsShowHide"></div>
+                      <div class="lists-actions">
+                        <button class="btn btn-secondary btn-sm" id="listsShowAllBtn">
+                          <i class="fas fa-eye"></i> Show All Lists
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="addListInlineBtn">
+                          <i class="fas fa-plus"></i> Add List
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Columns Section -->
+                    <div class="column-customizer-header">
+                      <h4>Columns</h4>
+                    </div>
+                    <div class="columns-container">
+                      <div class="columns-show-hide" id="columnsShowHide"></div>
+                    </div>
+                  </div>
+                </div>
 
               </div>
 
