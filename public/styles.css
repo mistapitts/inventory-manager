@@ -3937,7 +3937,8 @@ td.actions {
   flex-direction: column;
   gap: 4px;
   align-items: center;
-  min-height: 20px;
+  min-height: 44px; /* Height to accommodate 2 stacked chips */
+  justify-content: center;
 }
 
 .status-chips .chip {
@@ -3945,4 +3946,14 @@ td.actions {
   padding: 2px 6px;
   white-space: nowrap;
   width: fit-content;
+}
+
+/* Ensure consistent row height across all inventory table rows */
+.inventory-table tbody tr {
+  min-height: 60px; /* Accommodate stacked chips + padding */
+}
+
+.inventory-table tbody td {
+  vertical-align: middle;
+  min-height: 44px; /* Match status-chips min-height */
 }
