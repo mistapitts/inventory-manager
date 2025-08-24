@@ -409,8 +409,55 @@
                     <i class="fas fa-download"></i>
                     Export Inventory
                   </button>
+                  <div class="toolbar-legend" id="toolbarLegend">
+                    <div class="legend-item">
+                      <span class="chip chip-oos">OOS</span>
+                      <span class="legend-label">Out of Service</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="chip chip-outsourced">OSC</span>
+                      <span class="legend-label">Outsourced</span>
+                    </div>
+                    <div class="legend-lists" id="toolbarLegendLists"></div>
+                  </div>
             </div>
           </header>
+
+          <!-- Edit Lists Button (outside toolbar) -->
+          <div class="edit-lists-container">
+            <button
+              class="column-customizer-btn"
+              id="columnCustomizerBtn"
+              title="Edit Lists and Columns"
+            >
+              <i class="fas fa-columns"></i> Edit Lists and Columns
+            </button>
+            <div class="column-customizer-menu" id="columnCustomizerMenu">
+              <!-- Lists Section -->
+              <div class="column-customizer-header">
+                <h4>Lists</h4>
+              </div>
+              <div class="lists-container">
+                <div class="lists-show-hide" id="listsShowHide"></div>
+                <div class="lists-actions">
+                  <button class="btn btn-secondary btn-sm" id="listsShowAllBtn">
+                    <i class="fas fa-eye"></i> Show All Lists
+                  </button>
+                  <button class="btn btn-primary btn-sm" id="addListInlineBtn">
+                    <i class="fas fa-plus"></i> Add List
+                  </button>
+                </div>
+              </div>
+
+              <!-- Columns Section -->
+              <div class="column-customizer-header">
+                <h4>Columns</h4>
+              </div>
+              <div class="columns-container">
+                <div class="columns-show-hide" id="columnsShowHide"></div>
+              </div>
+            </div>
+          </div>
 
           <div class="content-area">
             <!-- Welcome Message (shown when no items) -->
@@ -481,14 +528,7 @@
                   </div>
                 </div>
 
-                <!-- Legend positioned on the right side -->
-                <div class="inventory-legend" id="inventoryLegend">
 
-                  <div class="legend-lists-section">
-                    <h4>List Colors</h4>
-                    <div class="legend-lists" id="legendLists"></div>
-                  </div>
-                </div>
               </div>
 
               <div class="inventory-main-content">
@@ -496,114 +536,7 @@
                   <!-- Fixed toolbar (never scrolls) -->
                   <div class="inventory-table-header">
                     <h3 class="inventory-table-title">Inventory</h3>
-                    <div class="table-header-controls">
-                      <div class="column-customizer">
-                        <button
-                          class="column-customizer-btn"
-                          id="columnCustomizerBtn"
-                          title="Edit Lists and Columns"
-                        >
-                          <i class="fas fa-columns"></i> Edit Lists and Columns
-                        </button>
-                        <div class="column-customizer-menu" id="columnCustomizerMenu">
-                          <!-- Lists Section -->
-                          <div class="column-customizer-header">
-                            <h4>Lists</h4>
-                            <button class="reset-columns-btn" id="listsShowAllBtn">Show All</button>
-                          </div>
-                          <div class="list-options" id="listOptions"></div>
-                          <div class="menu-footer">
-                            <button class="reset-columns-btn" id="addListInlineBtn">
-                              + Add List
-                            </button>
-                          </div>
 
-                          <!-- Columns Section -->
-                          <div class="column-customizer-header">
-                            <h4>Visible Columns</h4>
-                            <button class="reset-columns-btn" onclick="resetColumnVisibility()">
-                              Reset All
-                            </button>
-                          </div>
-                          <div class="column-options">
-                            <label class="column-option">
-                              <input type="checkbox" data-column="itemType" checked /> Item Type
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="nickname" checked /> Nickname
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="labId" checked /> Lab ID
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="make" checked /> Make
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="model" checked /> Model
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="serialNumber" checked /> Serial #
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="condition" checked /> Condition
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="dateReceived" checked /> Date
-                              Received
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="datePlacedInService" checked /> In
-                              Service
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="location" checked /> Location
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="calibrationType" checked /> Cal
-                              Type
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="calibrationDate" checked /> Last
-                              Cal
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="nextCalibrationDue" checked />
-                              Next Cal Due
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="calibrationInterval" checked />
-                              Cal Interval
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="calibrationMethod" checked /> Cal
-                              Method/Company
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="maintenanceDate" checked /> Last
-                              Maintenance
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="maintenanceDue" checked />
-                              Maintenance Due
-                            </label>
-                            <label class="column-option">
-                              <input type="checkbox" data-column="notes" checked /> Notes
-                            </label>
-                          </div>
-
-                          <!-- OOS Visibility Section -->
-                          <div class="column-customizer-header">
-                            <h4>Out of Service</h4>
-                          </div>
-                          <div class="mt-3" id="oos-visibility-block">
-                            <label class="column-option">
-                              <input type="checkbox" id="drawerShowOOS" checked />
-                              Show Out of Service items
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
 
                   <!-- Only this part scrolls -->

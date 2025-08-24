@@ -4108,6 +4108,112 @@ td.actions {
   flex-wrap: wrap;
 }
 
+/* Toolbar Legend Styling */
+.toolbar-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: 20px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.toolbar-legend .legend-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.toolbar-legend .legend-lists {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 400px; /* Limit width to encourage wrapping after 4 items */
+}
+
+.toolbar-legend .legend-lists .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-legend .legend-lists .legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-legend .legend-lists .legend-name {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Edit Lists Container (outside toolbar) */
+.edit-lists-container {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px 12px 24px;
+}
+
+.edit-lists-container .column-customizer-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-lists-container .column-customizer-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+}
+
+.edit-lists-container .column-customizer-btn i {
+  color: var(--accent-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .toolbar-legend {
+    margin-left: 12px;
+    gap: 12px;
+  }
+  
+  .toolbar-legend .legend-lists {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar-legend {
+    margin-left: 0;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .edit-lists-container {
+    padding: 0 16px 12px 16px;
+  }
+}
+
 /* Responsive search */
 @media (max-width: 768px) {
   .search-container {

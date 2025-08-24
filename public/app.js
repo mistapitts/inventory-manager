@@ -2920,19 +2920,20 @@ window.addEventListener('unhandledrejection', function (e) {
 
 // Update the inventory legend with current lists
 function updateInventoryLegend() {
-  const legendLists = document.getElementById('legendLists');
-  if (!legendLists || !window.loadedLists) return;
+  const toolbarLegendLists = document.getElementById('toolbarLegendLists');
+  if (!toolbarLegendLists || !window.loadedLists) return;
 
-  legendLists.innerHTML = '';
+  toolbarLegendLists.innerHTML = '';
 
+  // Show up to 4 list items per row, then wrap
   window.loadedLists.forEach((list) => {
     const legendItem = document.createElement('div');
-    legendItem.className = 'legend-list-item';
+    legendItem.className = 'legend-item';
     legendItem.innerHTML = `
-            <div class="legend-list-color" style="background-color: ${list.color}"></div>
-            <span>${list.name}</span>
-        `;
-    legendLists.appendChild(legendItem);
+      <div class="legend-color" style="background-color: ${list.color}"></div>
+      <span class="legend-name">${list.name}</span>
+    `;
+    toolbarLegendLists.appendChild(legendItem);
   });
 }
 
@@ -4064,7 +4065,7 @@ function renderStatusCell(item) {
   
   // Add Outsourced chip if outsourced
   if (item?.isOutsourced === 1 || item?.isOutsourced === true) {
-    chips.push('<span class="chip chip-outsourced">Outsourced</span>');
+    chips.push('<span class="chip chip-outsourced">OSC</span>');
   }
   
   return `<div class="status-chips">${chips.join('')}</div>`;

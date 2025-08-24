@@ -69,7 +69,8 @@
   - Store info in item notes
   - Set calibration/maintenance dates to "N/A"
 - **Priority**: HIGH
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED
+
 
 ## 📊 **Phase 4: Data Export & Management**
 
@@ -82,7 +83,8 @@
   - Columns auto-fit to text content
   - Aesthetically pleasing template (if possible)
 - **Priority**: MEDIUM
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED
+
 
 ### 8. 🔄 Item Duplication System
 
@@ -105,7 +107,8 @@
   - Real-time updates as user types (no need to hit enter)
   - Search across relevant fields
 - **Priority**: MEDIUM
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED
+
 
 ## 🧪 **Phase 6: Testing & Business Model**
 
