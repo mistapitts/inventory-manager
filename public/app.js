@@ -1202,6 +1202,16 @@ function editItem(itemId) {
   form.querySelector('#maintenanceInterval').value = item.maintenanceInterval || '';
   form.querySelector('#maintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
 
+  // Set maintenance checkbox and show/hide fields
+  const hasMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
+  const maintenanceCheckbox = form.querySelector('#useMaintenance');
+  const maintenanceFields = form.querySelector('#maintenanceFields');
+  
+  if (maintenanceCheckbox && maintenanceFields) {
+    maintenanceCheckbox.checked = !!hasMaintenance;
+    maintenanceFields.style.display = hasMaintenance ? 'block' : 'none';
+  }
+
   // Enhanced file upload areas for edit mode
   enhanceFileUploadsForEdit(item);
   
@@ -1212,8 +1222,12 @@ function editItem(itemId) {
   try {
     form.removeEventListener('submit', handleAddItem);
   } catch {}
-  // Change submit handler to PUT
-  form.onsubmit = async (e) => {
+  
+  // Remove any existing onsubmit handler
+  form.onsubmit = null;
+  
+  // Create a new submit handler for edit mode
+  const editSubmitHandler = async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector('.btn-primary');
     const btnText = submitBtn.querySelector('.btn-text');
@@ -1262,6 +1276,10 @@ function editItem(itemId) {
     const submitText = form.querySelector('.btn-primary .btn-text');
     if (submitText) submitText.textContent = 'Add Item';
   };
+  
+  // Store reference and attach the edit submit handler
+  form._editSubmitHandler = editSubmitHandler;
+  form.addEventListener('submit', editSubmitHandler);
 }
 
 function markOutOfService(itemId) {
@@ -1425,8 +1443,44 @@ function resetFileUploadAreas() {
 
 function hideAddItemModal() {
   const modal = document.getElementById('addItemModal');
+  const form = document.getElementById('addItemForm');
+  
   modal.classList.remove('show');
-  document.getElementById('addItemForm').reset();
+  form.reset();
+  
+  // Clean up edit mode if it was active
+  if (form.dataset.editing) {
+    // Restore form to add mode
+    form.onsubmit = null;
+    delete form.dataset.editing;
+    delete form.dataset.itemId;
+    
+    // Restore original title and button text
+    const titleEl = document.querySelector('#addItemModal .modal-header h2');
+    if (titleEl) titleEl.textContent = 'Add New Inventory Item';
+    
+    const submitBtn = form.querySelector('.btn-primary .btn-text');
+    if (submitBtn) submitBtn.textContent = 'Add Item';
+    
+    // Remove edit submit handler if it exists
+    if (form._editSubmitHandler) {
+      form.removeEventListener('submit', form._editSubmitHandler);
+      delete form._editSubmitHandler;
+    }
+    
+    // Restore original submit handler
+    try {
+      form.addEventListener('submit', handleAddItem);
+    } catch {}
+  }
+  
+  // Reset maintenance fields visibility
+  const maintenanceCheckbox = document.getElementById('useMaintenance');
+  const maintenanceFields = document.getElementById('maintenanceFields');
+  if (maintenanceCheckbox && maintenanceFields) {
+    maintenanceCheckbox.checked = false;
+    maintenanceFields.style.display = 'none';
+  }
 }
 
 // Handle calibration type change
