@@ -50,6 +50,8 @@ function ensureBootPaths() {
   ensureDirSync(PATHS.uploadDir);
   ensureDirSync(PATHS.uploadDocsDir);
   ensureDirSync(PATHS.qrcodeDir);
+  // Ensure logos directory exists
+  ensureDirSync(path.join(PATHS.uploadDir, "logos"));
   
   // Note: Don't create the DB file - let SQLite create it when it connects
   // This prevents permission issues and ensures proper SQLite initialization

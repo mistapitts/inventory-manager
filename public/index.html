@@ -561,7 +561,7 @@
                     </div>
                   </div>
                   
-                  <!-- Company Logo -->
+                  <!-- Company Logo & Color Settings Row -->
                   <div class="company-card">
                     <div class="company-card-header">
                       <h3><i class="fas fa-image"></i> Company Logo</h3>
@@ -586,25 +586,10 @@
                     </div>
                   </div>
                   
-                  <!-- User Management -->
-                  <div class="company-card company-users-card">
-                    <div class="company-card-header">
-                      <h3><i class="fas fa-users"></i> Company Users</h3>
-                      <button class="btn btn-primary btn-sm" id="inviteUserBtn">
-                        <i class="fas fa-user-plus"></i> Invite User
-                      </button>
-                    </div>
-                    <div class="company-card-content">
-                      <div class="users-list" id="companyUsersList">
-                        <!-- Users will be populated here -->
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Company Settings -->
+                  <!-- Company Color Settings -->
                   <div class="company-card">
                     <div class="company-card-header">
-                      <h3><i class="fas fa-cogs"></i> Company Settings</h3>
+                      <h3><i class="fas fa-palette"></i> Company Color Settings</h3>
                     </div>
                     <div class="company-card-content">
                       <div class="form-group">
@@ -618,6 +603,21 @@
                       <button class="btn btn-secondary" disabled>
                         <i class="fas fa-save"></i> Save Settings (Coming Soon)
                       </button>
+                    </div>
+                  </div>
+                  
+                  <!-- User Management -->
+                  <div class="company-card company-users-card">
+                    <div class="company-card-header">
+                      <h3><i class="fas fa-users"></i> Company Users</h3>
+                      <button class="btn btn-primary btn-sm" id="inviteUserBtn">
+                        <i class="fas fa-user-plus"></i> Invite User
+                      </button>
+                    </div>
+                    <div class="company-card-content">
+                      <div class="users-list" id="companyUsersList">
+                        <!-- Users will be populated here -->
+                      </div>
                     </div>
                   </div>
                   
@@ -693,27 +693,7 @@
                       </form>
                     </div>
                   </div>
-                  
-                  <!-- Theme Settings -->
-                  <div class="settings-card">
-                    <div class="settings-card-header">
-                      <h3><i class="fas fa-palette"></i> Theme Settings</h3>
-                      <p>Customize the appearance</p>
-                    </div>
-                    <div class="settings-card-content">
-                      <div class="form-group">
-                        <label>Theme</label>
-                        <select id="themeSelect" class="input">
-                          <option value="dark">Dark Theme (Default)</option>
-                          <option value="light">Light Theme (Coming Soon)</option>
-                          <option value="blue">Blue Theme (Coming Soon)</option>
-                        </select>
-                      </div>
-                      <button class="btn btn-secondary" disabled>
-                        <i class="fas fa-paint-brush"></i> Apply Theme (Coming Soon)
-                      </button>
-                    </div>
-                  </div>
+
                   
                   <!-- Company Settings (Company Owner only) -->
                   <div class="settings-card" id="companySettingsCard" style="display: none;">
