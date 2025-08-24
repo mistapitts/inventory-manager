@@ -21,6 +21,7 @@ export class Database {
   private async init(): Promise<void> {
     await this.createTables();
     await this.addMissingColumns();
+    await this.addMissingCompanyColumns();
     await this.createAdminUser();
   }
 
@@ -47,6 +48,15 @@ export class Database {
         name TEXT NOT NULL,
         logo TEXT,
         theme TEXT,
+        phone TEXT,
+        email TEXT,
+        website TEXT,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        zipCode TEXT,
+        country TEXT DEFAULT 'United States',
+        description TEXT,
         isActive BOOLEAN DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -294,6 +304,51 @@ export class Database {
       await this.addMissingListColumns();
     } catch (error) {
       console.error('❌ Error in addMissingColumns:', error);
+    }
+  }
+
+  private async addMissingCompanyColumns(): Promise<void> {
+    try {
+      // Check if companies table exists
+      const tableExists = await this.get(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='companies'",
+      );
+      if (!tableExists) {
+        console.log('Table companies does not exist yet, will be created with full schema');
+        return;
+      }
+
+      // Get all existing columns
+      const columns = await this.all('PRAGMA table_info(companies)');
+      const columnNames = columns.map((col: any) => col.name);
+
+      console.log('Existing columns in companies:', columnNames);
+
+      // Define company contact columns
+      const companyColumns = [
+        { name: 'phone', type: 'TEXT' },
+        { name: 'email', type: 'TEXT' },
+        { name: 'website', type: 'TEXT' },
+        { name: 'address', type: 'TEXT' },
+        { name: 'city', type: 'TEXT' },
+        { name: 'state', type: 'TEXT' },
+        { name: 'zipCode', type: 'TEXT' },
+        { name: 'country', type: 'TEXT DEFAULT "United States"' },
+        { name: 'description', type: 'TEXT' },
+      ];
+
+      for (const column of companyColumns) {
+        if (!columnNames.includes(column.name)) {
+          try {
+            await this.run(`ALTER TABLE companies ADD COLUMN ${column.name} ${column.type}`);
+            console.log(`✅ Added column ${column.name} to companies table`);
+          } catch (error: any) {
+            console.error(`❌ Error adding column ${column.name} to companies:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error in addMissingCompanyColumns:', error);
     }
   }
 
