@@ -5,6 +5,7 @@ import path from 'path';
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
+import { config } from '../config';
 
 const router = Router();
 
@@ -214,7 +215,8 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
 // Configure multer for logo uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/logos/');
+    const logoDir = path.join(config.paths.uploadDir, 'logos');
+    cb(null, logoDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -228,11 +230,20 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Check if file is an image
-    if (file.mimetype.startsWith('image/')) {
+    // Accept common image formats
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error(`Unsupported file type: ${file.mimetype}. Please use JPG, PNG, GIF, WEBP, or SVG.`));
     }
   }
 });
