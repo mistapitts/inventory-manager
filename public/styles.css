@@ -4108,8 +4108,8 @@ td.actions {
   flex-wrap: wrap;
 }
 
-/* Toolbar Legend Styling */
-.toolbar-legend {
+/* Table Header Legend Styling */
+.table-header-legend {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -4121,41 +4121,51 @@ td.actions {
   flex-wrap: wrap;
 }
 
-.toolbar-legend .legend-item {
+.table-header-legend .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
 }
 
-.toolbar-legend .legend-label {
+.table-header-legend .legend-label {
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-.toolbar-legend .legend-lists {
+.table-header-legend .legend-lists {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   max-width: 400px; /* Limit width to encourage wrapping after 4 items */
 }
 
-.toolbar-legend .legend-lists .legend-item {
+.table-header-legend .legend-lists .legend-item {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.toolbar-legend .legend-lists .legend-color {
+.table-header-legend .legend-lists .legend-color {
   width: 12px;
   height: 12px;
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.toolbar-legend .legend-lists .legend-name {
+.table-header-legend .legend-lists .legend-name {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+/* Update inventory table header to accommodate legend */
+.inventory-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* Edit Lists Container (outside toolbar) */
@@ -4191,20 +4201,25 @@ td.actions {
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
-  .toolbar-legend {
+  .table-header-legend {
     margin-left: 12px;
     gap: 12px;
   }
   
-  .toolbar-legend .legend-lists {
+  .table-header-legend .legend-lists {
     gap: 8px;
   }
 }
 
 @media (max-width: 768px) {
-  .toolbar-legend {
+  .inventory-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .table-header-legend {
     margin-left: 0;
-    margin-top: 8px;
     width: 100%;
     justify-content: center;
   }

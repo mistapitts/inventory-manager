@@ -2920,10 +2920,10 @@ window.addEventListener('unhandledrejection', function (e) {
 
 // Update the inventory legend with current lists
 function updateInventoryLegend() {
-  const toolbarLegendLists = document.getElementById('toolbarLegendLists');
-  if (!toolbarLegendLists || !window.loadedLists) return;
+  const tableHeaderLegendLists = document.getElementById('tableHeaderLegendLists');
+  if (!tableHeaderLegendLists || !window.loadedLists) return;
 
-  toolbarLegendLists.innerHTML = '';
+  tableHeaderLegendLists.innerHTML = '';
 
   // Show up to 4 list items per row, then wrap
   window.loadedLists.forEach((list) => {
@@ -2933,7 +2933,7 @@ function updateInventoryLegend() {
       <div class="legend-color" style="background-color: ${list.color}"></div>
       <span class="legend-name">${list.name}</span>
     `;
-    toolbarLegendLists.appendChild(legendItem);
+    tableHeaderLegendLists.appendChild(legendItem);
   });
 }
 

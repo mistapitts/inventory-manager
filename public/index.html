@@ -409,17 +409,6 @@
                     <i class="fas fa-download"></i>
                     Export Inventory
                   </button>
-                  <div class="toolbar-legend" id="toolbarLegend">
-                    <div class="legend-item">
-                      <span class="chip chip-oos">OOS</span>
-                      <span class="legend-label">Out of Service</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="chip chip-outsourced">OSC</span>
-                      <span class="legend-label">Outsourced</span>
-                    </div>
-                    <div class="legend-lists" id="toolbarLegendLists"></div>
-                  </div>
             </div>
           </header>
 
@@ -536,7 +525,17 @@
                   <!-- Fixed toolbar (never scrolls) -->
                   <div class="inventory-table-header">
                     <h3 class="inventory-table-title">Inventory</h3>
-
+                    <div class="table-header-legend" id="tableHeaderLegend">
+                      <div class="legend-item">
+                        <span class="chip chip-oos">OOS</span>
+                        <span class="legend-label">Out of Service</span>
+                      </div>
+                      <div class="legend-item">
+                        <span class="chip chip-outsourced">OSC</span>
+                        <span class="legend-label">Outsourced</span>
+                      </div>
+                      <div class="legend-lists" id="tableHeaderLegendLists"></div>
+                    </div>
                   </div>
 
                   <!-- Only this part scrolls -->
