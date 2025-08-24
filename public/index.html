@@ -1231,6 +1231,529 @@
       </div>
     </div>
 
+    <!-- NEW Add Item Modal (Dedicated) -->
+    <div class="modal-overlay" id="newAddItemModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add New Inventory Item</h2>
+          <button class="modal-close" id="closeNewAddItemModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form class="add-item-form" id="newAddItemForm">
+          <div class="form-sections">
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h3>Basic Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newItemType">Item Type *</label>
+                  <input
+                    type="text"
+                    id="newItemType"
+                    name="itemType"
+                    required
+                    placeholder="e.g., Scale, Caliper, Vibration Analyzer"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="newNickname">Nickname</label>
+                  <input
+                    type="text"
+                    id="newNickname"
+                    name="nickname"
+                    placeholder="e.g., Main Lab Scale"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newListId">List</label>
+                  <select id="newListId" name="listId">
+                    <option value="">No lists available</option>
+                  </select>
+                  <button
+                    type="button"
+                    id="newCreateListFromForm"
+                    class="btn-secondary"
+                    style="margin-top: 8px; display: none"
+                  >
+                    <i class="fas fa-plus"></i> Create New List
+                  </button>
+                </div>
+                <div class="form-group">
+                  <!-- spacer -->
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newLabId">Lab ID/Number</label>
+                  <input type="text" id="newLabId" name="labId" placeholder="e.g., LAB-001" />
+                </div>
+                <div class="form-group">
+                  <label for="newMake">Make *</label>
+                  <input
+                    type="text"
+                    id="newMake"
+                    name="make"
+                    required
+                    placeholder="e.g., Mettler Toledo"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newModel">Model *</label>
+                  <input type="text" id="newModel" name="model" required placeholder="e.g., XS205" />
+                </div>
+                <div class="form-group">
+                  <label for="newSerialNumber">Serial Number *</label>
+                  <input
+                    type="text"
+                    id="newSerialNumber"
+                    name="serialNumber"
+                    required
+                    placeholder="e.g., SN123456"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newCondition">Condition When Received *</label>
+                  <select id="newCondition" name="condition" required>
+                    <option value="">Select Condition</option>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <!-- Empty div for spacing -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Dates and Location -->
+            <div class="form-section">
+              <h3>Dates and Location</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newDateReceived">Date Received *</label>
+                  <input type="date" id="newDateReceived" name="dateReceived" required />
+                </div>
+                <div class="form-group">
+                  <label for="newDatePlacedInService">Date Placed in Service *</label>
+                  <input type="date" id="newDatePlacedInService" name="datePlacedInService" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="newLocation">Location *</label>
+                <input
+                  type="text"
+                  id="newLocation"
+                  name="location"
+                  required
+                  placeholder="e.g., Main Lab, Field Truck #1, Lab 3 - Bench 2"
+                />
+              </div>
+            </div>
+
+            <!-- Calibration Information -->
+            <div class="form-section">
+              <h3>Calibration Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newCalibrationType">Calibration Type *</label>
+                  <select id="newCalibrationType" name="calibrationType" required>
+                    <option value="">Select Type</option>
+                    <option value="in_house">In-House</option>
+                    <option value="outsourced">Outsourced</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="newCalibrationDate">Last Calibration Date *</label>
+                  <input type="date" id="newCalibrationDate" name="calibrationDate" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="newNextCalibrationDue">Next Calibration Due *</label>
+                  <input type="date" id="newNextCalibrationDue" name="nextCalibrationDue" required />
+                </div>
+                <div class="form-group">
+                  <label for="newCalibrationInterval">Calibration Interval *</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="newCalibrationInterval"
+                      name="calibrationInterval"
+                      required
+                      min="1"
+                      max="365"
+                      value="12"
+                    />
+                    <select id="newCalibrationIntervalType" name="calibrationIntervalType" required>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="newCalibrationMethod" id="newCalibrationMethodLabel">Calibration Method *</label>
+                <input
+                  type="text"
+                  id="newCalibrationMethod"
+                  name="calibrationMethod"
+                  required
+                  placeholder="e.g., ASTM D4753"
+                />
+              </div>
+            </div>
+
+            <!-- Maintenance Information -->
+            <div class="form-section">
+              <h3>Maintenance Information</h3>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="newUseMaintenance" name="useMaintenance" />
+                  <span class="checkmark"></span>
+                  Include maintenance tracking for this item
+                </label>
+              </div>
+
+              <div id="newMaintenanceFields" style="display: none">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="newMaintenanceDate">Last Maintenance Date</label>
+                    <input type="date" id="newMaintenanceDate" name="maintenanceDate" />
+                  </div>
+                  <div class="form-group">
+                    <label for="newMaintenanceDue">Next Maintenance Due</label>
+                    <input type="date" id="newMaintenanceDue" name="maintenanceDue" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="newMaintenanceInterval">Maintenance Interval</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="newMaintenanceInterval"
+                      name="maintenanceInterval"
+                      min="1"
+                      max="365"
+                      value="6"
+                    />
+                    <select id="newMaintenanceIntervalType" name="maintenanceIntervalType">
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="form-section">
+              <h3>Additional Information</h3>
+              <div class="form-group">
+                <label for="newNotes">Notes</label>
+                <textarea
+                  id="newNotes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Additional notes about this item..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <label class="checkbox-label duplicate-checkbox">
+              <input type="checkbox" id="newDuplicateAfterAdd" name="duplicateAfterAdd" />
+              <span class="checkmark"></span>
+              Duplicate this item after creating
+            </label>
+            <div class="action-buttons">
+              <button type="button" class="btn-secondary" id="newCancelAddItem">Cancel</button>
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">Add Item</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Item Modal (Dedicated) -->
+    <div class="modal-overlay" id="editItemModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Inventory Item</h2>
+          <button class="modal-close" id="closeEditItemModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form class="edit-item-form" id="editItemForm">
+          <div class="form-sections">
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h3>Basic Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editItemType">Item Type *</label>
+                  <input
+                    type="text"
+                    id="editItemType"
+                    name="itemType"
+                    required
+                    placeholder="e.g., Scale, Caliper, Vibration Analyzer"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="editNickname">Nickname</label>
+                  <input
+                    type="text"
+                    id="editNickname"
+                    name="nickname"
+                    placeholder="e.g., Main Lab Scale"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editListId">List</label>
+                  <select id="editListId" name="listId">
+                    <option value="">No lists available</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <!-- spacer -->
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editLabId">Lab ID/Number</label>
+                  <input type="text" id="editLabId" name="labId" placeholder="e.g., LAB-001" />
+                </div>
+                <div class="form-group">
+                  <label for="editMake">Make *</label>
+                  <input
+                    type="text"
+                    id="editMake"
+                    name="make"
+                    required
+                    placeholder="e.g., Mettler Toledo"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editModel">Model *</label>
+                  <input type="text" id="editModel" name="model" required placeholder="e.g., XS205" />
+                </div>
+                <div class="form-group">
+                  <label for="editSerialNumber">Serial Number *</label>
+                  <input
+                    type="text"
+                    id="editSerialNumber"
+                    name="serialNumber"
+                    required
+                    placeholder="e.g., SN123456"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editCondition">Condition When Received *</label>
+                  <select id="editCondition" name="condition" required>
+                    <option value="">Select Condition</option>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <!-- Empty div for spacing -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Dates and Location -->
+            <div class="form-section">
+              <h3>Dates and Location</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editDateReceived">Date Received *</label>
+                  <input type="date" id="editDateReceived" name="dateReceived" required />
+                </div>
+                <div class="form-group">
+                  <label for="editDatePlacedInService">Date Placed in Service *</label>
+                  <input type="date" id="editDatePlacedInService" name="datePlacedInService" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="editLocation">Location *</label>
+                <input
+                  type="text"
+                  id="editLocation"
+                  name="location"
+                  required
+                  placeholder="e.g., Main Lab, Field Truck #1, Lab 3 - Bench 2"
+                />
+              </div>
+            </div>
+
+            <!-- Calibration Information -->
+            <div class="form-section">
+              <h3>Calibration Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editCalibrationType">Calibration Type *</label>
+                  <select id="editCalibrationType" name="calibrationType" required>
+                    <option value="">Select Type</option>
+                    <option value="in_house">In-House</option>
+                    <option value="outsourced">Outsourced</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="editCalibrationDate">Last Calibration Date *</label>
+                  <input type="date" id="editCalibrationDate" name="calibrationDate" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="editNextCalibrationDue">Next Calibration Due *</label>
+                  <input type="date" id="editNextCalibrationDue" name="nextCalibrationDue" required />
+                </div>
+                <div class="form-group">
+                  <label for="editCalibrationInterval">Calibration Interval *</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="editCalibrationInterval"
+                      name="calibrationInterval"
+                      required
+                      min="1"
+                      max="365"
+                      value="12"
+                    />
+                    <select id="editCalibrationIntervalType" name="calibrationIntervalType" required>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="editCalibrationMethod" id="editCalibrationMethodLabel">Calibration Method *</label>
+                <input
+                  type="text"
+                  id="editCalibrationMethod"
+                  name="calibrationMethod"
+                  required
+                  placeholder="e.g., ASTM D4753"
+                />
+              </div>
+            </div>
+
+            <!-- Maintenance Information -->
+            <div class="form-section">
+              <h3>Maintenance Information</h3>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editUseMaintenance" name="useMaintenance" />
+                  <span class="checkmark"></span>
+                  Include maintenance tracking for this item
+                </label>
+              </div>
+
+              <div id="editMaintenanceFields" style="display: none">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="editMaintenanceDate">Last Maintenance Date</label>
+                    <input type="date" id="editMaintenanceDate" name="maintenanceDate" />
+                  </div>
+                  <div class="form-group">
+                    <label for="editMaintenanceDue">Next Maintenance Due</label>
+                    <input type="date" id="editMaintenanceDue" name="maintenanceDue" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="editMaintenanceInterval">Maintenance Interval</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="editMaintenanceInterval"
+                      name="maintenanceInterval"
+                      min="1"
+                      max="365"
+                      value="6"
+                    />
+                    <select id="editMaintenanceIntervalType" name="maintenanceIntervalType">
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="form-section">
+              <h3>Additional Information</h3>
+              <div class="form-group">
+                <label for="editNotes">Notes</label>
+                <textarea
+                  id="editNotes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Additional notes about this item..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <div class="action-buttons">
+              <button type="button" class="btn-secondary" id="editCancelItem">Cancel</button>
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">Save Changes</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Duplicate Item Modal -->
     <div class="modal-overlay" id="duplicateItemModal">
       <div class="modal-content">

@@ -669,7 +669,8 @@ function handleNavigation(route) {
 
 // Add item button handler
 document.getElementById('addItemBtn').addEventListener('click', function () {
-  showAddItemModal();
+  showNewAddItemModal();
+  populateNewAddListDropdown();
 });
 
 // Calibration type change handler
@@ -1149,136 +1150,8 @@ function viewItem(itemId) {
 }
 
 function editItem(itemId) {
-  // Open the existing Add Item modal prefilled for this item
-  const item = window.inventoryItems?.find((it) => it.id === itemId);
-  if (!item) {
-    showToast('Item not found in list. Try refreshing.', 'error');
-    return;
-  }
-  showAddItemModal();
-  const form = document.getElementById('addItemForm');
-  // Update modal title and button text for edit mode
-  const titleEl = document.querySelector('#addItemModal .modal-header h2');
-  if (titleEl) titleEl.textContent = 'Edit Inventory Item';
-  const submitBtn = form.querySelector('.btn-primary .btn-text');
-  if (submitBtn) submitBtn.textContent = 'Save Changes';
-  form.dataset.editing = 'true';
-  form.dataset.itemId = itemId;
-  form.querySelector('#itemType').value = item.itemType || '';
-  form.querySelector('#nickname').value = item.nickname || '';
-  form.querySelector('#labId').value = item.labId || '';
-  form.querySelector('#make').value = item.make || '';
-  form.querySelector('#model').value = item.model || '';
-  form.querySelector('#serialNumber').value = item.serialNumber || '';
-  form.querySelector('#condition').value = item.condition || 'new';
-  form.querySelector('#dateReceived').value = item.dateReceived
-    ? item.dateReceived.split('T')[0]
-    : '';
-  form.querySelector('#datePlacedInService').value = item.datePlacedInService
-    ? item.datePlacedInService.split('T')[0]
-    : '';
-  form.querySelector('#location').value = item.location || '';
-  form.querySelector('#calibrationDate').value = item.calibrationDate
-    ? item.calibrationDate.split('T')[0]
-    : '';
-  form.querySelector('#nextCalibrationDue').value = item.nextCalibrationDue
-    ? item.nextCalibrationDue.split('T')[0]
-    : '';
-  form.querySelector('#calibrationInterval').value = item.calibrationInterval || 12;
-  form.querySelector('#calibrationIntervalType').value = item.calibrationIntervalType || 'months';
-  form.querySelector('#calibrationMethod').value = item.calibrationMethod || '';
-
-  // Set calibration type and trigger change event to update method label
-  const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
-  form.querySelector('#calibrationType').value = calibrationType;
-  handleCalibrationTypeChange(); // Update the form labels
-
-  form.querySelector('#maintenanceDate').value = item.maintenanceDate
-    ? item.maintenanceDate.split('T')[0]
-    : '';
-  form.querySelector('#maintenanceDue').value = item.maintenanceDue
-    ? item.maintenanceDue.split('T')[0]
-    : '';
-  form.querySelector('#maintenanceInterval').value = item.maintenanceInterval || '';
-  form.querySelector('#maintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
-
-  // Set maintenance checkbox and show/hide fields
-  const hasMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
-  const maintenanceCheckbox = form.querySelector('#useMaintenance');
-  const maintenanceFields = form.querySelector('#maintenanceFields');
-  
-  if (maintenanceCheckbox && maintenanceFields) {
-    maintenanceCheckbox.checked = !!hasMaintenance;
-    maintenanceFields.style.display = hasMaintenance ? 'block' : 'none';
-  }
-
-  // Enhanced file upload areas for edit mode
-  enhanceFileUploadsForEdit(item);
-  
-  // Re-setup auto-calculation for the edit form (since event listeners may need refreshing)
-  setupDateAutoCalculation();
-
-  // Clean up any existing handlers before setting up edit mode
-  try {
-    form.removeEventListener('submit', handleAddItem);
-  } catch {}
-  
-  // Remove any existing edit handler
-  if (form._editSubmitHandler) {
-    try {
-      form.removeEventListener('submit', form._editSubmitHandler);
-    } catch {}
-    delete form._editSubmitHandler;
-  }
-  
-  // Remove any existing onsubmit handler
-  form.onsubmit = null;
-  
-  // Create a new submit handler for edit mode
-  const editSubmitHandler = async (e) => {
-    e.preventDefault();
-    const submitBtn = form.querySelector('.btn-primary');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoader = submitBtn.querySelector('.btn-loader');
-    btnText.style.display = 'none';
-    btnLoader.style.display = 'block';
-    try {
-      const data = Object.fromEntries(new FormData(form).entries());
-      const resp = await fetch(`/api/inventory/${itemId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify(data),
-      });
-      if (resp.ok) {
-        showToast('Item updated', 'success');
-        
-        // Clear cache to force fresh data fetch with updated item data
-        _itemsCache = [];
-        await loadInventoryItems();
-        
-        // Close modal (this will handle cleanup)
-        hideAddItemModal();
-      } else {
-        const err = await resp.json().catch(() => ({}));
-        showToast(err.error || 'Failed to update item', 'error');
-      }
-    } catch (error) {
-      // Keep form in edit mode if there's an error
-      console.error('Error updating item:', error);
-      btnText.style.display = 'block';
-      btnLoader.style.display = 'none';
-      // Don't reset the form - keep it in edit mode
-      return;
-    }
-
-    // Only reset button state on successful update (modal cleanup handles the rest)
-    btnText.style.display = 'block';
-    btnLoader.style.display = 'none';
-  };
-  
-  // Store reference and attach the edit submit handler
-  form._editSubmitHandler = editSubmitHandler;
-  form.addEventListener('submit', editSubmitHandler);
+  // Open the dedicated Edit Item modal
+  showEditItemModal(itemId);
 }
 
 function markOutOfService(itemId) {
@@ -5902,6 +5775,414 @@ function setupDateCalculationForFields(lastDateId, nextDateId, intervalId, inter
   intervalTypeInput.addEventListener('change', calculateNextDate);
 }
 
+// ===== NEW SEPARATE FORM HANDLERS =====
+
+// New Add Item Modal Functions
+function showNewAddItemModal() {
+  const modal = document.getElementById('newAddItemModal');
+  const form = document.getElementById('newAddItemForm');
+  
+  // Reset form
+  form.reset();
+  
+  // Set default dates
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('newDateReceived').value = today;
+  document.getElementById('newDatePlacedInService').value = today;
+  document.getElementById('newCalibrationDate').value = today;
+  
+  // Set default calibration due date (1 year from today)
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  document.getElementById('newNextCalibrationDue').value = nextYear.toISOString().split('T')[0];
+  
+  // Set default maintenance due date (6 months from today)
+  const nextMaintenance = new Date();
+  nextMaintenance.setMonth(nextMaintenance.getMonth() + 6);
+  document.getElementById('newMaintenanceDue').value = nextMaintenance.toISOString().split('T')[0];
+  
+  // Setup auto-calculation
+  setupNewAddFormAutoCalculation();
+  
+  // Show modal
+  modal.classList.add('show');
+}
+
+function hideNewAddItemModal() {
+  const modal = document.getElementById('newAddItemModal');
+  const form = document.getElementById('newAddItemForm');
+  
+  modal.classList.remove('show');
+  form.reset();
+  
+  // Reset maintenance fields visibility
+  const maintenanceCheckbox = document.getElementById('newUseMaintenance');
+  const maintenanceFields = document.getElementById('newMaintenanceFields');
+  if (maintenanceCheckbox && maintenanceFields) {
+    maintenanceCheckbox.checked = false;
+    maintenanceFields.style.display = 'none';
+  }
+}
+
+async function handleNewAddItemSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const formData = new FormData(form);
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoader = submitBtn.querySelector('.btn-loader');
+  const duplicateAfter = document.getElementById('newDuplicateAfterAdd').checked;
+  
+  // Show loading state
+  btnText.style.display = 'none';
+  btnLoader.style.display = 'block';
+  submitBtn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/inventory', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: formData,
+    });
+    
+    if (response.ok) {
+      const newItem = await response.json();
+      hideNewAddItemModal();
+      
+      // Clear cache and refresh inventory
+      _itemsCache = [];
+      await loadInventoryItems();
+      await loadInventoryStats();
+      
+      showToast('Item added successfully!', 'success');
+      
+      // Handle duplication if requested
+      if (duplicateAfter && newItem) {
+        setTimeout(() => {
+          showDuplicateModal(newItem);
+        }, 500);
+      }
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to add item', 'error');
+    }
+  } catch (error) {
+    console.error('Error adding item:', error);
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+// Edit Item Modal Functions
+function showEditItemModal(itemId) {
+  const item = window.inventoryItems?.find((it) => it.id === itemId);
+  if (!item) {
+    showToast('Item not found in list. Try refreshing.', 'error');
+    return;
+  }
+  
+  const modal = document.getElementById('editItemModal');
+  const form = document.getElementById('editItemForm');
+  
+  // Store item ID for submission
+  form.dataset.itemId = itemId;
+  
+  // Populate form fields
+  document.getElementById('editItemType').value = item.itemType || '';
+  document.getElementById('editNickname').value = item.nickname || '';
+  document.getElementById('editLabId').value = item.labId || '';
+  document.getElementById('editMake').value = item.make || '';
+  document.getElementById('editModel').value = item.model || '';
+  document.getElementById('editSerialNumber').value = item.serialNumber || '';
+  document.getElementById('editCondition').value = item.condition || 'new';
+  document.getElementById('editDateReceived').value = item.dateReceived ? item.dateReceived.split('T')[0] : '';
+  document.getElementById('editDatePlacedInService').value = item.datePlacedInService ? item.datePlacedInService.split('T')[0] : '';
+  document.getElementById('editLocation').value = item.location || '';
+  document.getElementById('editCalibrationDate').value = item.calibrationDate ? item.calibrationDate.split('T')[0] : '';
+  document.getElementById('editNextCalibrationDue').value = item.nextCalibrationDue ? item.nextCalibrationDue.split('T')[0] : '';
+  document.getElementById('editCalibrationInterval').value = item.calibrationInterval || 12;
+  document.getElementById('editCalibrationIntervalType').value = item.calibrationIntervalType || 'months';
+  document.getElementById('editCalibrationMethod').value = item.calibrationMethod || '';
+  
+  // Set calibration type
+  const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
+  document.getElementById('editCalibrationType').value = calibrationType;
+  handleEditCalibrationTypeChange();
+  
+  // Set maintenance fields
+  document.getElementById('editMaintenanceDate').value = item.maintenanceDate ? item.maintenanceDate.split('T')[0] : '';
+  document.getElementById('editMaintenanceDue').value = item.maintenanceDue ? item.maintenanceDue.split('T')[0] : '';
+  document.getElementById('editMaintenanceInterval').value = item.maintenanceInterval || '';
+  document.getElementById('editMaintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
+  
+  // Set maintenance checkbox and show/hide fields
+  const hasMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
+  const maintenanceCheckbox = document.getElementById('editUseMaintenance');
+  const maintenanceFields = document.getElementById('editMaintenanceFields');
+  
+  if (maintenanceCheckbox && maintenanceFields) {
+    maintenanceCheckbox.checked = !!hasMaintenance;
+    maintenanceFields.style.display = hasMaintenance ? 'block' : 'none';
+  }
+  
+  document.getElementById('editNotes').value = item.notes || '';
+  
+  // Populate list dropdown
+  populateEditListDropdown(item.listId);
+  
+  // Setup auto-calculation
+  setupEditFormAutoCalculation();
+  
+  // Show modal
+  modal.classList.add('show');
+}
+
+function hideEditItemModal() {
+  const modal = document.getElementById('editItemModal');
+  const form = document.getElementById('editItemForm');
+  
+  modal.classList.remove('show');
+  form.reset();
+  delete form.dataset.itemId;
+  
+  // Reset maintenance fields visibility
+  const maintenanceCheckbox = document.getElementById('editUseMaintenance');
+  const maintenanceFields = document.getElementById('editMaintenanceFields');
+  if (maintenanceCheckbox && maintenanceFields) {
+    maintenanceCheckbox.checked = false;
+    maintenanceFields.style.display = 'none';
+  }
+}
+
+async function handleEditItemSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const itemId = form.dataset.itemId;
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoader = submitBtn.querySelector('.btn-loader');
+  
+  // Show loading state
+  btnText.style.display = 'none';
+  btnLoader.style.display = 'block';
+  submitBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`/api/inventory/${itemId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json', 
+        Authorization: `Bearer ${authToken}` 
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (response.ok) {
+      showToast('Item updated successfully!', 'success');
+      hideEditItemModal();
+      
+      // Clear cache and refresh inventory
+      _itemsCache = [];
+      await loadInventoryItems();
+      await loadInventoryStats();
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to update item', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating item:', error);
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+// Helper functions for the new forms
+function handleEditCalibrationTypeChange() {
+  const calibrationType = document.getElementById('editCalibrationType').value;
+  const calibrationMethodLabel = document.getElementById('editCalibrationMethodLabel');
+  const calibrationMethodInput = document.getElementById('editCalibrationMethod');
+
+  if (calibrationType === 'outsourced') {
+    calibrationMethodLabel.textContent = 'Calibration Company *';
+    calibrationMethodInput.placeholder = 'e.g., ABC Calibration Services';
+  } else {
+    calibrationMethodLabel.textContent = 'Calibration Method *';
+    calibrationMethodInput.placeholder = 'e.g., ASTM D4753';
+  }
+}
+
+function handleNewCalibrationTypeChange() {
+  const calibrationType = document.getElementById('newCalibrationType').value;
+  const calibrationMethodLabel = document.getElementById('newCalibrationMethodLabel');
+  const calibrationMethodInput = document.getElementById('newCalibrationMethod');
+
+  if (calibrationType === 'outsourced') {
+    calibrationMethodLabel.textContent = 'Calibration Company *';
+    calibrationMethodInput.placeholder = 'e.g., ABC Calibration Services';
+  } else {
+    calibrationMethodLabel.textContent = 'Calibration Method *';
+    calibrationMethodInput.placeholder = 'e.g., ASTM D4753';
+  }
+}
+
+function populateEditListDropdown(selectedListId) {
+  const listSelect = document.getElementById('editListId');
+  if (!listSelect) return;
+  
+  listSelect.innerHTML = '<option value="">Select a list</option>';
+  
+  if (window.loadedLists && window.loadedLists.length > 0) {
+    window.loadedLists.forEach(list => {
+      const option = document.createElement('option');
+      option.value = list.id;
+      option.textContent = list.name;
+      if (list.id === selectedListId) {
+        option.selected = true;
+      }
+      listSelect.appendChild(option);
+    });
+  }
+}
+
+function populateNewAddListDropdown() {
+  const listSelect = document.getElementById('newListId');
+  if (!listSelect) return;
+  
+  listSelect.innerHTML = '<option value="">Select a list</option>';
+  
+  if (window.loadedLists && window.loadedLists.length > 0) {
+    window.loadedLists.forEach(list => {
+      const option = document.createElement('option');
+      option.value = list.id;
+      option.textContent = list.name;
+      listSelect.appendChild(option);
+    });
+  }
+}
+
+// Auto-calculation setup for new forms
+function setupNewAddFormAutoCalculation() {
+  setupDateCalculationForFields('newCalibrationDate', 'newNextCalibrationDue', 'newCalibrationInterval', 'newCalibrationIntervalType');
+  setupDateCalculationForFields('newMaintenanceDate', 'newMaintenanceDue', 'newMaintenanceInterval', 'newMaintenanceIntervalType');
+}
+
+function setupEditFormAutoCalculation() {
+  setupDateCalculationForFields('editCalibrationDate', 'editNextCalibrationDue', 'editCalibrationInterval', 'editCalibrationIntervalType');
+  setupDateCalculationForFields('editMaintenanceDate', 'editMaintenanceDue', 'editMaintenanceInterval', 'editMaintenanceIntervalType');
+}
+
+// Setup event listeners for new forms
+function setupNewFormEventListeners() {
+  // New Add Item Modal
+  const newAddItemModal = document.getElementById('newAddItemModal');
+  const closeNewAddItemModal = document.getElementById('closeNewAddItemModal');
+  const newCancelAddItem = document.getElementById('newCancelAddItem');
+  const newAddItemForm = document.getElementById('newAddItemForm');
+  const newUseMaintenance = document.getElementById('newUseMaintenance');
+  const newMaintenanceFields = document.getElementById('newMaintenanceFields');
+  const newCalibrationType = document.getElementById('newCalibrationType');
+
+  if (closeNewAddItemModal) {
+    closeNewAddItemModal.addEventListener('click', hideNewAddItemModal);
+  }
+
+  if (newCancelAddItem) {
+    newCancelAddItem.addEventListener('click', hideNewAddItemModal);
+  }
+
+  if (newAddItemForm) {
+    newAddItemForm.addEventListener('submit', handleNewAddItemSubmit);
+  }
+
+  if (newUseMaintenance && newMaintenanceFields) {
+    newUseMaintenance.addEventListener('change', function () {
+      newMaintenanceFields.style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) {
+        const maintenanceInputs = newMaintenanceFields.querySelectorAll('input, select');
+        maintenanceInputs.forEach((input) => {
+          if (input.type === 'date') {
+            input.value = '';
+          } else if (input.type === 'number') {
+            input.value = input.getAttribute('value') || '';
+          }
+        });
+      }
+    });
+  }
+
+  if (newCalibrationType) {
+    newCalibrationType.addEventListener('change', handleNewCalibrationTypeChange);
+  }
+
+  // Edit Item Modal
+  const editItemModal = document.getElementById('editItemModal');
+  const closeEditItemModal = document.getElementById('closeEditItemModal');
+  const editCancelItem = document.getElementById('editCancelItem');
+  const editItemForm = document.getElementById('editItemForm');
+  const editUseMaintenance = document.getElementById('editUseMaintenance');
+  const editMaintenanceFields = document.getElementById('editMaintenanceFields');
+  const editCalibrationType = document.getElementById('editCalibrationType');
+
+  if (closeEditItemModal) {
+    closeEditItemModal.addEventListener('click', hideEditItemModal);
+  }
+
+  if (editCancelItem) {
+    editCancelItem.addEventListener('click', hideEditItemModal);
+  }
+
+  if (editItemForm) {
+    editItemForm.addEventListener('submit', handleEditItemSubmit);
+  }
+
+  if (editUseMaintenance && editMaintenanceFields) {
+    editUseMaintenance.addEventListener('change', function () {
+      editMaintenanceFields.style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) {
+        const maintenanceInputs = editMaintenanceFields.querySelectorAll('input, select');
+        maintenanceInputs.forEach((input) => {
+          if (input.type === 'date') {
+            input.value = '';
+          } else if (input.type === 'number') {
+            input.value = input.getAttribute('value') || '';
+          }
+        });
+      }
+    });
+  }
+
+  if (editCalibrationType) {
+    editCalibrationType.addEventListener('change', handleEditCalibrationTypeChange);
+  }
+
+  // Close modals when clicking outside
+  [newAddItemModal, editItemModal].forEach((modal) => {
+    if (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === this) {
+          if (this.id === 'newAddItemModal') {
+            hideNewAddItemModal();
+          } else if (this.id === 'editItemModal') {
+            hideEditItemModal();
+          }
+        }
+      });
+    }
+  });
+}
+
 // Initialize search, export, and duplicate functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   setupExportModalHandlers();
@@ -5909,4 +6190,5 @@ document.addEventListener('DOMContentLoaded', function() {
   setupDuplicateFormHandlers();
   updateAddItemFormHandler();
   setupDateAutoCalculation();
+  setupNewFormEventListeners(); // Add new form event listeners
 });
