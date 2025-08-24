@@ -995,6 +995,20 @@ body {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  position: relative;
+}
+
+/* Fixed border overlay for action column */
+.inventory-table-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 160px; /* Position at the left edge of the action column */
+  bottom: 0;
+  width: 2px;
+  background: rgba(112, 128, 255, 0.4);
+  z-index: 20; /* Above everything else */
+  pointer-events: none; /* Don't interfere with interactions */
 }
 
 /* Table title inside the header */
@@ -2427,7 +2441,6 @@ body {
   position: sticky;
   right: 0;
   background: #0a0f1a; /* Darker than default --bg-secondary for distinction */
-  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Stronger, persistent border */
   z-index: 5;
   padding: 8px 12px; /* Reduced padding */
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Add subtle shadow for depth */
@@ -2442,14 +2455,11 @@ body {
 .inventory-table th:last-child {
   background: #0a0f1a; /* Match darker background */
   z-index: 15; /* Higher than other sticky headers */
-  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Ensure header has same border */
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Match shadow */
 }
 
 .inventory-table td:last-child {
   background: #0a0f1a; /* Match darker background */
   overflow: visible !important; /* Ensure dropdowns are not cut off */
-  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Ensure cells have persistent border */
 }
 
 /* Table headers */
