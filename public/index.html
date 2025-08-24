@@ -565,12 +565,12 @@
                       </div>
                       <div class="form-group">
                         <label>Email</label>
-                        <input type="email" id="profileEmail" class="input" readonly />
+                        <input type="email" id="profileEmail" class="input" readonly autocomplete="username" />
                         <small class="form-help">Email cannot be changed</small>
                       </div>
                       <div class="form-group">
                         <label>Role</label>
-                        <input type="text" id="profileRole" class="input" readonly />
+                        <input type="text" id="profileRole" class="input" readonly autocomplete="off" />
                       </div>
                       <button class="btn btn-primary" id="saveProfileBtn">
                         <i class="fas fa-save"></i> Save Changes
@@ -585,21 +585,26 @@
                       <p>Update your account password</p>
                     </div>
                     <div class="settings-card-content">
-                      <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" id="currentPassword" class="input" />
-                      </div>
-                      <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPassword" class="input" />
-                      </div>
-                      <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" id="confirmPassword" class="input" />
-                      </div>
-                      <button class="btn btn-primary" id="changePasswordBtn">
-                        <i class="fas fa-key"></i> Change Password
-                      </button>
+                      <form id="changePasswordForm" autocomplete="off">
+                        <!-- Hidden username field for password managers -->
+                        <input type="email" id="hiddenUsername" style="display: none;" autocomplete="username" />
+                        
+                        <div class="form-group">
+                          <label>Current Password</label>
+                          <input type="password" id="currentPassword" class="input" autocomplete="current-password" />
+                        </div>
+                        <div class="form-group">
+                          <label>New Password</label>
+                          <input type="password" id="newPassword" class="input" autocomplete="new-password" />
+                        </div>
+                        <div class="form-group">
+                          <label>Confirm New Password</label>
+                          <input type="password" id="confirmPassword" class="input" autocomplete="new-password" />
+                        </div>
+                        <button type="button" class="btn btn-primary" id="changePasswordBtn">
+                          <i class="fas fa-key"></i> Change Password
+                        </button>
+                      </form>
                     </div>
                   </div>
                   
