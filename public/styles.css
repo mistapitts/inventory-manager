@@ -2427,9 +2427,10 @@ body {
   position: sticky;
   right: 0;
   background: #0a0f1a; /* Darker than default --bg-secondary for distinction */
-  border-left: 1px solid rgba(112, 128, 255, 0.2); /* Subtle left border */
+  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Stronger, persistent border */
   z-index: 5;
   padding: 8px 12px; /* Reduced padding */
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Add subtle shadow for depth */
 }
 
 /* When action menu is open, boost the entire actions cell z-index */
@@ -2441,11 +2442,14 @@ body {
 .inventory-table th:last-child {
   background: #0a0f1a; /* Match darker background */
   z-index: 15; /* Higher than other sticky headers */
+  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Ensure header has same border */
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Match shadow */
 }
 
 .inventory-table td:last-child {
   background: #0a0f1a; /* Match darker background */
   overflow: visible !important; /* Ensure dropdowns are not cut off */
+  border-left: 2px solid rgba(112, 128, 255, 0.4) !important; /* Ensure cells have persistent border */
 }
 
 /* Table headers */
