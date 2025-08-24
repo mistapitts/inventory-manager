@@ -5514,7 +5514,7 @@ function populateDuplicateForm(item) {
   document.getElementById('dupNotes').value = item.notes || '';
   
   // List selection
-  populateListDropdown('dupListId', item.listId);
+  populateListDropdownForDuplicate('dupListId', item.listId);
   
   // Clear the duplicate checkbox
   document.getElementById('duplicateAfterDuplicate').checked = false;
@@ -5536,6 +5536,22 @@ function calculateNextDate(startDate, interval, intervalType) {
   }
   
   return date.toISOString().split('T')[0];
+}
+
+function populateListDropdownForDuplicate(selectId, selectedListId) {
+  const listSelect = document.getElementById(selectId);
+  if (!listSelect) return;
+  
+  // Use the globally stored lists from loadListsIntoSelectors
+  const lists = window.loadedLists || [];
+  
+  if (lists.length === 0) {
+    listSelect.innerHTML = '<option value="">No lists available</option>';
+  } else {
+    listSelect.innerHTML = lists.map(l => 
+      `<option value="${l.id}" ${l.id === selectedListId ? 'selected' : ''}>${l.name}</option>`
+    ).join('');
+  }
 }
 
 function setupDuplicateFormHandlers() {
