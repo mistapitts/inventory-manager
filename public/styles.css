@@ -340,6 +340,31 @@ body {
   margin-top: 16px;
 }
 
+.employee-notice {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.employee-notice p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.employee-notice i {
+  color: var(--accent-primary);
+  margin-right: 6px;
+}
+
+.employee-notice strong {
+  color: var(--text-primary);
+}
+
 /* Registration Container */
 .register-container {
   background: var(--bg-secondary);
