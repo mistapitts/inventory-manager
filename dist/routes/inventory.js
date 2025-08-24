@@ -933,6 +933,7 @@ router.patch('/:id/out-of-service', auth_1.authenticateToken, async (req, res) =
         const serviceData = {
             date,
             reason: reason.trim(),
+            reportedBy: reportedBy.trim(),
             notes: notes || null
         };
         await database_1.database.run(`

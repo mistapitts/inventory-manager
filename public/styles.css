@@ -3730,18 +3730,170 @@ td.actions {
   .company-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .company-section {
     padding: 16px;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .company-card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+}
+
+/* Invite Confirmation Styles */
+.invite-confirm-container {
+  background: var(--bg-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.invite-confirm-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.company-welcome {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.company-welcome i {
+  font-size: 3rem;
+  color: var(--accent-primary);
+  margin-bottom: 15px;
+}
+
+.company-welcome h2 {
+  margin: 0 0 10px 0;
+  color: var(--text-primary);
+  font-size: 1.8rem;
+}
+
+.company-welcome p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.invite-info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 25px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-md);
+}
+
+.invite-info-card h3 {
+  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invite-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.detail-row span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.invite-confirm-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-md);
+}
+
+.invite-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.invite-actions .btn {
+  flex: 1;
+  padding: 12px 20px;
+  font-weight: 500;
+}
+
+.invite-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.invite-footer p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.invite-footer i {
+  color: var(--accent-primary);
+}
+
+/* Responsive invite confirmation */
+@media (max-width: 768px) {
+  .invite-confirm-container {
+    padding: 16px;
+  }
+  
+  .company-welcome {
+    padding: 20px;
+  }
+  
+  .invite-info-card,
+  .invite-confirm-form {
+    padding: 20px;
+  }
+  
+  .invite-actions {
+    flex-direction: column;
   }
 }

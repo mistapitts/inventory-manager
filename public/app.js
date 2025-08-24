@@ -17,6 +17,14 @@ const rememberMeCheckbox = document.getElementById('rememberMe');
 
 // Check if user is already logged in
 document.addEventListener('DOMContentLoaded', function () {
+  // Check for invite code in URL first
+  const urlParams = new URLSearchParams(window.location.search);
+  const inviteCode = urlParams.get('invite');
+  if (inviteCode) {
+    handleInviteLink(inviteCode);
+    return; // Don't proceed with normal auth check
+  }
+  
   checkAuthStatus();
   setupEventListeners();
   // Handle deep links like /item/:id
@@ -4850,5 +4858,154 @@ async function handleLogoRemove() {
   } catch (error) {
     console.error('Error removing logo:', error);
     showToast('Network error. Please try again.', 'error');
+  }
+}
+
+// Invite Link Handling
+async function handleInviteLink(inviteCode) {
+  try {
+    // Validate invite code and get details
+    const response = await fetch(`/api/auth/validate-invite/${inviteCode}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      // Show invite confirmation page with pre-filled data
+      showInviteConfirmation(data.invite, inviteCode);
+    } else {
+      // Invalid or expired invite
+      showToast(data.error || 'Invalid or expired invitation', 'error');
+      showLoginForm();
+    }
+  } catch (error) {
+    console.error('Error validating invite:', error);
+    showToast('Failed to validate invitation', 'error');
+    showLoginForm();
+  }
+}
+
+function showInviteConfirmation(inviteData, inviteCode) {
+  // Hide other containers
+  document.getElementById('loginContainer').style.display = 'none';
+  document.getElementById('registerContainer').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  
+  // Show invite confirmation
+  const container = document.getElementById('inviteConfirmContainer');
+  container.style.display = 'flex';
+  
+  // Populate invite details
+  document.getElementById('companyWelcomeText').textContent = `Join ${inviteData.companyName} on Inventory Manager`;
+  document.getElementById('inviteFullName').textContent = `${inviteData.firstName} ${inviteData.lastName}`;
+  document.getElementById('inviteEmail').textContent = inviteData.email;
+  document.getElementById('inviteRole').textContent = formatRole(inviteData.role);
+  document.getElementById('inviteCompany').textContent = inviteData.companyName;
+  document.getElementById('confirmInviteCode').value = inviteCode;
+  
+  // Setup form handlers
+  setupInviteConfirmationHandlers();
+}
+
+function formatRole(role) {
+  const roleMap = {
+    'company_owner': 'Company Owner',
+    'company_manager': 'Company Manager', 
+    'region_manager': 'Region Manager',
+    'lab_manager': 'Lab Manager',
+    'user': 'User',
+    'viewer': 'Viewer'
+  };
+  return roleMap[role] || role;
+}
+
+function setupInviteConfirmationHandlers() {
+  // Password toggle
+  const toggleBtn = document.getElementById('toggleConfirmPassword');
+  const passwordInput = document.getElementById('confirmPassword');
+  
+  if (toggleBtn && passwordInput) {
+    toggleBtn.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      const icon = this.querySelector('i');
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+    });
+  }
+  
+  // Form submission
+  const form = document.getElementById('inviteConfirmForm');
+  if (form) {
+    form.addEventListener('submit', handleInviteConfirmation);
+  }
+  
+  // Cancel button
+  const cancelBtn = document.getElementById('cancelInviteBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to cancel this invitation?')) {
+        // Clear URL and go to login
+        window.history.replaceState({}, document.title, window.location.pathname);
+        showLoginForm();
+      }
+    });
+  }
+}
+
+async function handleInviteConfirmation(event) {
+  event.preventDefault();
+  
+  const form = event.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoader = submitBtn.querySelector('.btn-loader');
+  
+  // Show loading state
+  btnText.style.display = 'none';
+  btnLoader.style.display = 'block';
+  submitBtn.disabled = true;
+  
+  try {
+    const inviteCode = document.getElementById('confirmInviteCode').value;
+    const password = document.getElementById('confirmPassword').value;
+    
+    const response = await fetch('/api/auth/accept-invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inviteCode,
+        password
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      // Account created successfully
+      authToken = data.token;
+      currentUser = data.user;
+      
+      // Store auth data
+      localStorage.setItem('authToken', authToken);
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      
+      // Clear URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      showToast('Account created successfully! Welcome to the team!', 'success');
+      showDashboard();
+    } else {
+      showToast(data.error || 'Failed to create account', 'error');
+    }
+  } catch (error) {
+    console.error('Error accepting invitation:', error);
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
   }
 }

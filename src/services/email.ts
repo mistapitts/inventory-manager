@@ -163,13 +163,13 @@ class EmailService {
             
             <p>To get started:</p>
             <ol>
-              <li>Click the button below or visit the registration page</li>
-              <li>Enter your invite code: <strong>${inviteCode}</strong></li>
-              <li>Complete your account setup</li>
+              <li>Click the button below to accept your invitation</li>
+              <li>Choose a secure password for your account</li>
+              <li>Start managing inventory with your team!</li>
             </ol>
             
             <div style="text-align: center;">
-              <a href="${inviteLink}" class="button">Join ${companyName}</a>
+              <a href="${inviteLink}" class="button">Accept Invitation</a>
             </div>
             
             <p><strong>Note:</strong> This invitation will expire in 7 days.</p>
@@ -195,8 +195,8 @@ class EmailService {
       
       To get started:
       1. Visit: ${inviteLink}
-      2. Enter your invite code: ${inviteCode}
-      3. Complete your account setup
+      2. Choose a secure password for your account
+      3. Start managing inventory with your team!
       
       This invitation expires in 7 days.
       

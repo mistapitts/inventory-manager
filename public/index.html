@@ -178,6 +178,80 @@
         </form>
       </div>
 
+      <!-- Invite Confirmation Page -->
+      <div class="invite-confirm-container" id="inviteConfirmContainer" style="display: none">
+        <div class="invite-confirm-header">
+          <div class="company-welcome">
+            <i class="fas fa-building"></i>
+            <h2>You're Invited!</h2>
+            <p id="companyWelcomeText">Join [Company Name] on Inventory Manager</p>
+          </div>
+        </div>
+
+        <div class="invite-info-card">
+          <h3>Account Details</h3>
+          <div class="invite-details">
+            <div class="detail-row">
+              <label>Name:</label>
+              <span id="inviteFullName">[Name]</span>
+            </div>
+            <div class="detail-row">
+              <label>Email:</label>
+              <span id="inviteEmail">[Email]</span>
+            </div>
+            <div class="detail-row">
+              <label>Role:</label>
+              <span id="inviteRole">[Role]</span>
+            </div>
+            <div class="detail-row">
+              <label>Company:</label>
+              <span id="inviteCompany">[Company]</span>
+            </div>
+          </div>
+        </div>
+
+        <form class="invite-confirm-form" id="inviteConfirmForm">
+          <input type="hidden" id="confirmInviteCode" />
+          
+          <div class="form-group">
+            <label for="confirmPassword">Choose Your Password</label>
+            <div class="input-wrapper">
+              <i class="fas fa-lock"></i>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="password"
+                required
+                placeholder="Enter a secure password"
+                minlength="6"
+              />
+              <button type="button" class="toggle-password" id="toggleConfirmPassword">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small class="form-help">Minimum 6 characters</small>
+          </div>
+
+          <div class="invite-actions">
+            <button type="button" class="btn btn-secondary" id="cancelInviteBtn">
+              <i class="fas fa-times"></i> Cancel Invitation
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <span class="btn-text">
+                <i class="fas fa-check"></i> Accept & Create Account
+              </span>
+              <div class="btn-loader" style="display: none">
+                <div class="spinner"></div>
+              </div>
+            </button>
+          </div>
+        </form>
+
+        <div class="invite-footer">
+          <p><i class="fas fa-shield-alt"></i> Your information is secure and will only be used for account creation.</p>
+        </div>
+      </div>
+
       <!-- Dashboard (hidden until login) -->
       <div class="dashboard" id="dashboard" style="display: none">
         <nav class="sidebar">
