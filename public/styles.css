@@ -995,11 +995,11 @@ body {
   overflow: hidden; /* Ensures background respects radius */
 }
 
-/* Top scrollbar for table navigation */
+/* Top scrollbar for table navigation - zoom responsive */
 .table-scrollbar-top {
   overflow-x: auto;
   overflow-y: hidden;
-  height: 12px;
+  height: 0.75rem; /* Scales with zoom level */
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   position: relative;
@@ -1014,9 +1014,9 @@ body {
   min-width: 100%;
 }
 
-/* Custom scrollbar styling for top scrollbar */
+/* Custom scrollbar styling for top scrollbar - zoom responsive */
 .table-scrollbar-top::-webkit-scrollbar {
-  height: 10px;
+  height: 0.75rem; /* Scales with zoom level */
 }
 
 .table-scrollbar-top::-webkit-scrollbar-track {
@@ -1026,8 +1026,9 @@ body {
 
 .table-scrollbar-top::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 6px;
-  border: 2px solid var(--bg-secondary);
+  border-radius: 0.375rem; /* Proportional to scrollbar height */
+  border: 0.125rem solid var(--bg-secondary); /* Proportional border */
+  min-width: 2rem; /* Minimum thumb size for better visibility */
 }
 
 .table-scrollbar-top::-webkit-scrollbar-thumb:hover {
@@ -1049,24 +1050,24 @@ body {
   scrollbar-color: var(--border-color) var(--bg-secondary);
 }
 
-/* Responsive adjustments for scrollbar */
+/* Responsive adjustments for scrollbar - zoom responsive */
 @media (max-width: 768px) {
   .table-scrollbar-top {
-    height: 12px; /* Compact but still touchable on mobile */
+    height: 0.875rem; /* Slightly larger for touch but still scales */
   }
 
   .table-scrollbar-top::-webkit-scrollbar {
-    height: 12px;
+    height: 0.875rem;
   }
 }
 
 @media (max-width: 480px) {
   .table-scrollbar-top {
-    height: 14px; /* Slightly larger on small mobile devices */
+    height: 1rem; /* Larger on small devices but still scales */
   }
 
   .table-scrollbar-top::-webkit-scrollbar {
-    height: 14px;
+    height: 1rem;
   }
 }
 
