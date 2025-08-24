@@ -3406,7 +3406,7 @@ function showEditListModal(listId, name, color, textColor) {
   const modal = document.getElementById('editListModal');
   if (modal) {
     // Set form values
-    document.getElementById('editListId').value = listId;
+    document.getElementById('editListIdHidden').value = listId;
     document.getElementById('editListName').value = name;
     document.getElementById('editCustomColor').value = color;
     document.getElementById('editCustomTextColor').value = textColor;
@@ -4539,7 +4539,7 @@ function setupSettingsEventListeners() {
     changePasswordBtn.addEventListener('click', async () => {
       const currentPassword = document.getElementById('currentPassword').value;
       const newPassword = document.getElementById('newPassword').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
+      const confirmPassword = document.getElementById('confirmNewPassword').value;
 
       if (!currentPassword || !newPassword || !confirmPassword) {
         showToast('All password fields are required', 'error');
@@ -4571,7 +4571,7 @@ function setupSettingsEventListeners() {
           // Clear password fields
           document.getElementById('currentPassword').value = '';
           document.getElementById('newPassword').value = '';
-          document.getElementById('confirmPassword').value = '';
+          document.getElementById('confirmNewPassword').value = '';
         } else {
           const error = await response.json();
           showToast(error.message || 'Failed to change password', 'error');
