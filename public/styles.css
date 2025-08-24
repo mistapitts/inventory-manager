@@ -998,18 +998,7 @@ body {
   position: relative;
 }
 
-/* Fixed border overlay for action column */
-.inventory-table-scroll-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 160px; /* Position at the left edge of the action column */
-  bottom: 0;
-  width: 2px;
-  background: rgba(112, 128, 255, 0.4);
-  z-index: 20; /* Above everything else */
-  pointer-events: none; /* Don't interfere with interactions */
-}
+
 
 /* Table title inside the header */
 .inventory-table-title {
@@ -2443,7 +2432,7 @@ body {
   background: #0a0f1a; /* Darker than default --bg-secondary for distinction */
   z-index: 5;
   padding: 8px 12px; /* Reduced padding */
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Add subtle shadow for depth */
+  box-shadow: -2px 0 0 0 rgba(112, 128, 255, 0.4), -4px 0 4px rgba(0, 0, 0, 0.1); /* Border via box-shadow + depth shadow */
 }
 
 /* When action menu is open, boost the entire actions cell z-index */
