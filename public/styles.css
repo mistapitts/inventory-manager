@@ -3922,3 +3922,27 @@ td.actions {
     flex-direction: column;
   }
 }
+
+/* Status Column Styling */
+.status-column {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.status-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  min-height: 20px;
+}
+
+.status-chips .chip {
+  font-size: 10px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  width: fit-content;
+}

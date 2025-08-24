@@ -990,6 +990,7 @@ function createInventoryRow(item) {
   const calType = item.isOutsourced === 1 ? 'Outsourced' : 'In-House';
 
   row.innerHTML = `
+        <td class="column-status status-column">${renderStatusCell(item)}</td>
         <td class="column-itemType">${item.itemType || 'N/A'}</td>
         <td class="column-nickname">${renderNicknameCell(item)}</td>
         <td class="column-labId">${item.labId || 'N/A'}</td>
@@ -999,7 +1000,6 @@ function createInventoryRow(item) {
         <td class="column-condition">${item.condition || 'N/A'}</td>
         <td class="column-dateReceived">${dateReceived}</td>
         <td class="column-location">${item.location || 'N/A'}</td>
-        <td class="column-calibrationType">${calType}</td>
         <td class="column-calibrationDate">${lastCal}</td>
         <td class="column-nextCalibrationDue">${nextCalDue}</td>
         <td class="column-calibrationInterval">${calInterval}</td>
@@ -4049,12 +4049,7 @@ function truncateFileName(fileName, maxLength = 50) {
 }
 
 // --- Render nickname cell with OOS chip
-function renderNicknameCell(item) {
-  const name = (item?.nickname ?? item?.name ?? '').trim() || '—';
-  const safeName = typeof escapeHtml === 'function' ? escapeHtml(name) : name.replace(/[<>&"']/g, (m) => ({
-    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
-  }[m]));
-  
+function renderStatusCell(item) {
   const chips = [];
   
   // Add OOS chip if out of service
@@ -4067,14 +4062,14 @@ function renderNicknameCell(item) {
     chips.push('<span class="chip chip-outsourced">Outsourced</span>');
   }
   
-  if (chips.length > 0) {
-    return `
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span>${safeName}</span>
-        ${chips.join('')}
-      </div>
-    `;
-  }
+  return `<div class="status-chips">${chips.join('')}</div>`;
+}
+
+function renderNicknameCell(item) {
+  const name = (item?.nickname ?? item?.name ?? '').trim() || '—';
+  const safeName = typeof escapeHtml === 'function' ? escapeHtml(name) : name.replace(/[<>&"']/g, (m) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
+  }[m]));
   
   return `<span>${safeName}</span>`;
 }
