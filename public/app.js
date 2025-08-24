@@ -593,9 +593,11 @@ function handleNavigation(route) {
       const invSec = document.getElementById('inventorySection');
       const calSec = document.getElementById('calendarSection');
       const settingsSec1 = document.getElementById('settingsSection');
+      const companySec1 = document.getElementById('companySection');
       if (invSec) invSec.style.display = 'block';
       if (calSec) calSec.style.display = 'none';
       if (settingsSec1) settingsSec1.style.display = 'none';
+      if (companySec1) companySec1.style.display = 'none';
       loadInventoryItems();
       break;
     case '#calendar':
@@ -604,8 +606,10 @@ function handleNavigation(route) {
       const calSec2 = document.getElementById('calendarSection');
       const invSec2 = document.getElementById('inventorySection');
       const settingsSec2 = document.getElementById('settingsSection');
+      const companySec3 = document.getElementById('companySection');
       if (invSec2) invSec2.style.display = 'none';
       if (settingsSec2) settingsSec2.style.display = 'none';
+      if (companySec3) companySec3.style.display = 'none';
       if (calSec2) {
         calSec2.style.display = 'block';
         loadCalendarView();
@@ -615,14 +619,31 @@ function handleNavigation(route) {
       breadcrumb.textContent = 'Reports';
       // TODO: Load reports view
       break;
+    case '#company':
+      breadcrumb.textContent = 'My Company';
+      // Show company section, hide others
+      const companySec = document.getElementById('companySection');
+      const invSec3 = document.getElementById('inventorySection');
+      const calSec3 = document.getElementById('calendarSection');
+      const settingsSec3 = document.getElementById('settingsSection');
+      if (invSec3) invSec3.style.display = 'none';
+      if (calSec3) calSec3.style.display = 'none';
+      if (settingsSec3) settingsSec3.style.display = 'none';
+      if (companySec) {
+        companySec.style.display = 'block';
+        loadCompanyPage();
+      }
+      break;
     case '#settings':
       breadcrumb.textContent = 'Settings';
       // Show settings section, hide others
       const settingsSec = document.getElementById('settingsSection');
-      const invSec3 = document.getElementById('inventorySection');
-      const calSec3 = document.getElementById('calendarSection');
-      if (invSec3) invSec3.style.display = 'none';
-      if (calSec3) calSec3.style.display = 'none';
+      const invSec4 = document.getElementById('inventorySection');
+      const calSec4 = document.getElementById('calendarSection');
+      const companySec2 = document.getElementById('companySection');
+      if (invSec4) invSec4.style.display = 'none';
+      if (calSec4) calSec4.style.display = 'none';
+      if (companySec2) companySec2.style.display = 'none';
       if (settingsSec) {
         settingsSec.style.display = 'block';
         loadSettingsPage();
@@ -4461,5 +4482,373 @@ function setupSettingsEventListeners() {
         showToast('Network error. Please try again.', 'error');
       }
     });
+  }
+}
+
+// My Company Page Functionality
+async function loadCompanyPage() {
+  try {
+    // Get current user and company info
+    const response = await fetch('/api/company/info', {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      populateCompanyInfo(data.company);
+      populateCompanyUsers(data.users || []);
+      setupCompanyEventListeners();
+    } else {
+      showToast('Failed to load company information', 'error');
+    }
+  } catch (error) {
+    console.error('Error loading company page:', error);
+    showToast('Failed to load company page', 'error');
+  }
+}
+
+function populateCompanyInfo(company) {
+  const content = document.getElementById('companyInfoContent');
+  if (!content) return;
+  
+  if (!company) {
+    content.innerHTML = `
+      <div class="company-info-empty">
+        <p>No company information available. Please contact your administrator.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  content.innerHTML = `
+    <div class="company-info-display">
+      <div class="company-info-row">
+        <div class="company-info-field">
+          <div class="company-info-label">Company Name</div>
+          <div class="company-info-value">${company.name || 'Not specified'}</div>
+        </div>
+        <div class="company-info-field">
+          <div class="company-info-label">Phone</div>
+          <div class="company-info-value ${!company.phone ? 'company-info-empty' : ''}">${company.phone || 'Not specified'}</div>
+        </div>
+      </div>
+      
+      <div class="company-info-row">
+        <div class="company-info-field">
+          <div class="company-info-label">Email</div>
+          <div class="company-info-value ${!company.email ? 'company-info-empty' : ''}">${company.email || 'Not specified'}</div>
+        </div>
+        <div class="company-info-field">
+          <div class="company-info-label">Website</div>
+          <div class="company-info-value ${!company.website ? 'company-info-empty' : ''}">${company.website || 'Not specified'}</div>
+        </div>
+      </div>
+      
+      <div class="company-info-field">
+        <div class="company-info-label">Address</div>
+        <div class="company-info-value ${!company.address ? 'company-info-empty' : ''}">${company.address || 'Not specified'}</div>
+      </div>
+      
+      <div class="company-info-row">
+        <div class="company-info-field">
+          <div class="company-info-label">City</div>
+          <div class="company-info-value ${!company.city ? 'company-info-empty' : ''}">${company.city || 'Not specified'}</div>
+        </div>
+        <div class="company-info-field">
+          <div class="company-info-label">State</div>
+          <div class="company-info-value ${!company.state ? 'company-info-empty' : ''}">${company.state || 'Not specified'}</div>
+        </div>
+        <div class="company-info-field">
+          <div class="company-info-label">ZIP Code</div>
+          <div class="company-info-value ${!company.zipCode ? 'company-info-empty' : ''}">${company.zipCode || 'Not specified'}</div>
+        </div>
+      </div>
+      
+      <div class="company-info-field">
+        <div class="company-info-label">Country</div>
+        <div class="company-info-value">${company.country || 'United States'}</div>
+      </div>
+      
+      ${company.description ? `
+        <div class="company-info-field">
+          <div class="company-info-label">Description</div>
+          <div class="company-info-value">${company.description}</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  
+  // Update logo display
+  const logoImg = document.getElementById('companyLogoImg');
+  const noLogoPlaceholder = document.getElementById('noLogoPlaceholder');
+  const removeLogoBtn = document.getElementById('removeLogoBtn');
+  
+  if (company.logo) {
+    logoImg.src = company.logo;
+    logoImg.style.display = 'block';
+    noLogoPlaceholder.style.display = 'none';
+    removeLogoBtn.style.display = 'inline-block';
+  } else {
+    logoImg.style.display = 'none';
+    noLogoPlaceholder.style.display = 'block';
+    removeLogoBtn.style.display = 'none';
+  }
+}
+
+function populateCompanyUsers(users) {
+  const usersList = document.getElementById('companyUsersList');
+  if (!usersList) return;
+  
+  if (!users || users.length === 0) {
+    usersList.innerHTML = '<p class="company-info-empty">No users found.</p>';
+    return;
+  }
+  
+  usersList.innerHTML = users.map(user => `
+    <div class="user-item">
+      <div class="user-info">
+        <div class="user-name">${user.firstName} ${user.lastName}</div>
+        <div class="user-email">${user.email}</div>
+      </div>
+      <div class="user-actions">
+        <span class="user-role">${user.role.replace('_', ' ')}</span>
+        ${user.role !== 'company_owner' ? `
+          <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')">
+            <i class="fas fa-edit"></i>
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function setupCompanyEventListeners() {
+  // Edit company button
+  const editCompanyBtn = document.getElementById('editCompanyBtn');
+  if (editCompanyBtn) {
+    editCompanyBtn.addEventListener('click', showEditCompanyModal);
+  }
+  
+  // Logo upload button
+  const uploadLogoBtn = document.getElementById('uploadLogoBtn');
+  const logoFileInput = document.getElementById('logoFileInput');
+  if (uploadLogoBtn && logoFileInput) {
+    uploadLogoBtn.addEventListener('click', () => logoFileInput.click());
+    logoFileInput.addEventListener('change', handleLogoUpload);
+  }
+  
+  // Remove logo button
+  const removeLogoBtn = document.getElementById('removeLogoBtn');
+  if (removeLogoBtn) {
+    removeLogoBtn.addEventListener('click', handleLogoRemove);
+  }
+  
+  // Invite user button
+  const inviteUserBtn = document.getElementById('inviteUserBtn');
+  if (inviteUserBtn) {
+    inviteUserBtn.addEventListener('click', showInviteUserModal);
+  }
+  
+  // Edit company form
+  const editCompanyForm = document.getElementById('form-edit-company');
+  if (editCompanyForm) {
+    editCompanyForm.addEventListener('submit', handleEditCompanySubmit);
+  }
+  
+  // Invite user form
+  const inviteUserForm = document.getElementById('form-invite-user');
+  if (inviteUserForm) {
+    inviteUserForm.addEventListener('submit', handleInviteUserSubmit);
+  }
+}
+
+async function showEditCompanyModal() {
+  try {
+    // Get current company data
+    const response = await fetch('/api/company/info', {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const company = data.company;
+      
+      // Populate form fields
+      document.getElementById('edit-company-name').value = company.name || '';
+      document.getElementById('edit-company-phone').value = company.phone || '';
+      document.getElementById('edit-company-email').value = company.email || '';
+      document.getElementById('edit-company-website').value = company.website || '';
+      document.getElementById('edit-company-address').value = company.address || '';
+      document.getElementById('edit-company-city').value = company.city || '';
+      document.getElementById('edit-company-state').value = company.state || '';
+      document.getElementById('edit-company-zip').value = company.zipCode || '';
+      document.getElementById('edit-company-country').value = company.country || 'United States';
+      document.getElementById('edit-company-description').value = company.description || '';
+      
+      // Show modal
+      document.getElementById('modal-edit-company').classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Error loading company data for editing:', error);
+    showToast('Failed to load company data', 'error');
+  }
+}
+
+function showInviteUserModal() {
+  // Clear form
+  document.getElementById('form-invite-user').reset();
+  // Show modal
+  document.getElementById('modal-invite-user').classList.remove('hidden');
+}
+
+async function handleEditCompanySubmit(e) {
+  e.preventDefault();
+  
+  const formData = {
+    name: document.getElementById('edit-company-name').value.trim(),
+    phone: document.getElementById('edit-company-phone').value.trim(),
+    email: document.getElementById('edit-company-email').value.trim(),
+    website: document.getElementById('edit-company-website').value.trim(),
+    address: document.getElementById('edit-company-address').value.trim(),
+    city: document.getElementById('edit-company-city').value.trim(),
+    state: document.getElementById('edit-company-state').value.trim(),
+    zipCode: document.getElementById('edit-company-zip').value.trim(),
+    country: document.getElementById('edit-company-country').value.trim(),
+    description: document.getElementById('edit-company-description').value.trim(),
+  };
+  
+  if (!formData.name) {
+    showToast('Company name is required', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/company/update', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    if (response.ok) {
+      showToast('Company information updated successfully', 'success');
+      closeModal('modal-edit-company');
+      loadCompanyPage(); // Refresh the page
+    } else {
+      const error = await response.json();
+      showToast(error.message || 'Failed to update company information', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating company:', error);
+    showToast('Network error. Please try again.', 'error');
+  }
+}
+
+async function handleInviteUserSubmit(e) {
+  e.preventDefault();
+  
+  const formData = {
+    email: document.getElementById('invite-user-email').value.trim(),
+    firstName: document.getElementById('invite-user-first-name').value.trim(),
+    lastName: document.getElementById('invite-user-last-name').value.trim(),
+    role: document.getElementById('invite-user-role').value,
+  };
+  
+  if (!formData.email || !formData.firstName || !formData.lastName || !formData.role) {
+    showToast('All fields are required', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/company/invite-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      showToast(`Invitation sent to ${formData.email}`, 'success');
+      closeModal('modal-invite-user');
+      loadCompanyPage(); // Refresh the page
+    } else {
+      const error = await response.json();
+      showToast(error.message || 'Failed to send invitation', 'error');
+    }
+  } catch (error) {
+    console.error('Error sending invitation:', error);
+    showToast('Network error. Please try again.', 'error');
+  }
+}
+
+async function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file', 'error');
+    return;
+  }
+  
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image must be smaller than 5MB', 'error');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('logo', file);
+  
+  try {
+    const response = await fetch('/api/company/upload-logo', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      },
+      body: formData
+    });
+    
+    if (response.ok) {
+      showToast('Logo uploaded successfully', 'success');
+      loadCompanyPage(); // Refresh to show new logo
+    } else {
+      const error = await response.json();
+      showToast(error.message || 'Failed to upload logo', 'error');
+    }
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    showToast('Network error. Please try again.', 'error');
+  }
+}
+
+async function handleLogoRemove() {
+  if (!confirm('Are you sure you want to remove the company logo?')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/company/remove-logo', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    });
+    
+    if (response.ok) {
+      showToast('Logo removed successfully', 'success');
+      loadCompanyPage(); // Refresh to hide logo
+    } else {
+      const error = await response.json();
+      showToast(error.message || 'Failed to remove logo', 'error');
+    }
+  } catch (error) {
+    console.error('Error removing logo:', error);
+    showToast('Network error. Please try again.', 'error');
   }
 }
