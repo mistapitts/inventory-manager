@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
     cb(null, config.paths.uploadDocsDir);
   },
   filename(_req: Request, file: Express.Multer.File, cb: (error: any, filename: string) => void) {
-    const safeBase = path.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
+    const safeBase = path.basename(file.originalname).replace(/[^\w.\-()+ ]/g, '_');
     const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
     cb(null, storedName);
   },
@@ -34,18 +34,18 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
   fileFilter: (_req, file, cb) => {
     const ok = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "image/png",
-      "image/jpeg"
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/png',
+      'image/jpeg',
     ].includes(file.mimetype);
     if (ok) {
       cb(null, true);
     } else {
-      cb(new Error("Unsupported file type"));
+      cb(new Error('Unsupported file type'));
     }
-  }
+  },
 });
 
 // Lists: get all lists for current user's company
@@ -1182,9 +1182,9 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
       date,
       reason: reason.trim(),
       reportedBy: reportedBy.trim(),
-      notes: notes || null
+      notes: notes || null,
     };
-    
+
     await database.run(
       `
             INSERT INTO changelog (
@@ -1195,10 +1195,7 @@ router.patch('/:id/out-of-service', authenticateToken, async (req: Request, res:
     );
 
     // Get updated item to return
-    const updatedItem = await database.get(
-      'SELECT * FROM inventory_items WHERE id = ?',
-      [itemId],
-    );
+    const updatedItem = await database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
 
     // Create changelog entry
     await database.run(
@@ -1254,10 +1251,13 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
     }
 
     // Get user info for verification
-    const currentUser = await database.get('SELECT firstName, lastName FROM users WHERE id = ?', [userId]);
-    const verifiedByName = currentUser && currentUser.firstName && currentUser.lastName 
-      ? `${currentUser.firstName} ${currentUser.lastName}` 
-      : 'Unknown User';
+    const currentUser = await database.get('SELECT firstName, lastName FROM users WHERE id = ?', [
+      userId,
+    ]);
+    const verifiedByName =
+      currentUser && currentUser.firstName && currentUser.lastName
+        ? `${currentUser.firstName} ${currentUser.lastName}`
+        : 'Unknown User';
 
     // Update item status only
     await database.run(
@@ -1279,9 +1279,9 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
       date,
       resolvedBy: resolvedBy.trim(),
       verifiedBy: verifiedByName,
-      notes: notes || null
+      notes: notes || null,
     };
-    
+
     await database.run(
       `
             INSERT INTO changelog (
@@ -1292,14 +1292,11 @@ router.patch('/:id/return-to-service', authenticateToken, async (req: Request, r
     );
 
     // Get updated item to return
-    const updatedItem = await database.get(
-      'SELECT * FROM inventory_items WHERE id = ?',
-      [itemId],
-    );
+    const updatedItem = await database.get('SELECT * FROM inventory_items WHERE id = ?', [itemId]);
 
     // Create changelog entry
     const logMessage = `Returned to service (resolved by ${resolvedBy.trim()}, verified by ${verifiedByName})`;
-    
+
     await database.run(
       `
             INSERT INTO changelog (

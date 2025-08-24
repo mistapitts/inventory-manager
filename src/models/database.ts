@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 

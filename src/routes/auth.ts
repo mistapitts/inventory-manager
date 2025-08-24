@@ -343,31 +343,34 @@ function generateId(): string {
 router.get('/validate-invite/:code', async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
-    
+
     if (!code) {
       return res.status(400).json({ error: 'Invite code is required' });
     }
-    
+
     // Get invite details with company info
-    const invite = await database.get(`
+    const invite = await database.get(
+      `
       SELECT ic.*, c.name as companyName 
       FROM invite_codes ic 
       LEFT JOIN companies c ON ic.companyId = c.id 
       WHERE ic.code = ? AND ic.isUsed = 0 AND ic.expiresAt > datetime('now')
-    `, [code]);
-    
+    `,
+      [code],
+    );
+
     if (!invite) {
       return res.status(404).json({ error: 'Invalid or expired invite code' });
     }
-    
-    res.json({ 
+
+    res.json({
       invite: {
         email: invite.email,
         firstName: invite.firstName,
         lastName: invite.lastName,
         role: invite.role,
-        companyName: invite.companyName || 'Unknown Company'
-      }
+        companyName: invite.companyName || 'Unknown Company',
+      },
     });
   } catch (error) {
     console.error('Error validating invite:', error);
@@ -379,34 +382,34 @@ router.get('/validate-invite/:code', async (req: Request, res: Response) => {
 router.post('/accept-invite', async (req: Request, res: Response) => {
   try {
     const { inviteCode, password } = req.body;
-    
+
     if (!inviteCode || !password) {
       return res.status(400).json({ error: 'Invite code and password are required' });
     }
-    
+
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-    
+
     // Validate invite code
     const invite = await database.get(
       'SELECT * FROM invite_codes WHERE code = ? AND isUsed = 0 AND expiresAt > datetime("now")',
       [inviteCode],
     );
-    
+
     if (!invite) {
       return res.status(400).json({ error: 'Invalid or expired invite code' });
     }
-    
+
     // Check if user already exists
     const existingUser = await database.get('SELECT id FROM users WHERE email = ?', [invite.email]);
     if (existingUser) {
       return res.status(400).json({ error: 'An account with this email already exists' });
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
-    
+
     // Create user with pre-filled data from invite
     const userId = generateId();
     await database.run(
@@ -424,13 +427,13 @@ router.post('/accept-invite', async (req: Request, res: Response) => {
         true,
       ],
     );
-    
+
     // Mark invite code as used
     await database.run('UPDATE invite_codes SET isUsed = 1 WHERE id = ?', [invite.id]);
-    
+
     // Generate token
     const token = generateToken(userId);
-    
+
     res.status(201).json({
       token,
       user: {

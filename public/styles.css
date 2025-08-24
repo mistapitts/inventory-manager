@@ -969,10 +969,11 @@ body {
 /* Inventory table container with fixed header and full page scroll */
 .inventory-table-container {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Ensures children respect rounded corners */
   /* Removed max-height for full page scroll */
 }
 
@@ -981,6 +982,7 @@ body {
   background: var(--bg-secondary);
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
+  border-radius: 12px 12px 0 0; /* Match container's top rounded corners */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -990,6 +992,80 @@ body {
   top: 0;
   z-index: 100;
   flex-shrink: 0;
+  overflow: hidden; /* Ensures background respects radius */
+}
+
+/* Top scrollbar for table navigation */
+.table-scrollbar-top {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  /* Hide the scrollbar track but keep functionality */
+}
+
+.table-scrollbar-top .scrollbar-content {
+  height: 1px;
+  /* Width will be set dynamically by JavaScript to match table width */
+  min-width: 100%;
+}
+
+/* Custom scrollbar styling for top scrollbar */
+.table-scrollbar-top::-webkit-scrollbar {
+  height: 12px;
+}
+
+.table-scrollbar-top::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 0;
+}
+
+.table-scrollbar-top::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 6px;
+  border: 2px solid var(--bg-secondary);
+}
+
+.table-scrollbar-top::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+.table-scrollbar-top::-webkit-scrollbar-corner {
+  background: var(--bg-secondary);
+}
+
+/* Hide top scrollbar on mobile and when table doesn't need scrolling */
+.table-scrollbar-top.hidden {
+  display: none !important;
+}
+
+/* Firefox scrollbar styling for top scrollbar */
+.table-scrollbar-top {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+/* Responsive adjustments for scrollbar */
+@media (max-width: 768px) {
+  .table-scrollbar-top {
+    height: 14px; /* Slightly larger on mobile for easier touch interaction */
+  }
+
+  .table-scrollbar-top::-webkit-scrollbar {
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-scrollbar-top {
+    height: 16px; /* Even larger on small mobile devices */
+  }
+
+  .table-scrollbar-top::-webkit-scrollbar {
+    height: 16px;
+  }
 }
 
 /* Table scroll wrapper - ensure horizontal scrollbar is accessible */
@@ -1001,8 +1077,6 @@ body {
   padding-bottom: 20px;
   margin-bottom: -20px; /* Negative margin to maintain spacing */
 }
-
-
 
 /* Table title inside the header */
 .inventory-table-title {
@@ -2433,7 +2507,9 @@ body {
   background: #0a0f1a; /* Darker than default --bg-secondary for distinction */
   z-index: 5;
   padding: 8px 12px; /* Reduced padding */
-  box-shadow: -2px 0 0 0 rgba(112, 128, 255, 0.4), -4px 0 4px rgba(0, 0, 0, 0.1); /* Border via box-shadow + depth shadow */
+  box-shadow:
+    -2px 0 0 0 rgba(112, 128, 255, 0.4),
+    -4px 0 4px rgba(0, 0, 0, 0.1); /* Border via box-shadow + depth shadow */
 }
 
 /* When action menu is open, boost the entire actions cell z-index */
@@ -3096,8 +3172,8 @@ body {
   font-size: 12px;
   line-height: 1;
   font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   white-space: nowrap;
 }
 .chip-oos {
@@ -3114,7 +3190,7 @@ body {
 
 /* --- OOS row tint (no opacity!) --- */
 .row-oos {
-  background: linear-gradient(0deg, rgba(255,64,64,0.08), rgba(255,64,64,0.08));
+  background: linear-gradient(0deg, rgba(255, 64, 64, 0.08), rgba(255, 64, 64, 0.08));
 }
 
 /* Actions cell is a positioning context for the dropdown */
@@ -3139,18 +3215,18 @@ body {
 
 /* The menu container (rendered once per row) */
 .actions-cell .action-menu {
-  display: none;                 /* ← hidden by default */
-  position: fixed;               /* Use fixed positioning to escape stacking contexts */
-  right: 20px;                   /* Position from viewport edge */
-  top: auto;                     /* Will be set by JavaScript */
+  display: none; /* ← hidden by default */
+  position: fixed; /* Use fixed positioning to escape stacking contexts */
+  right: 20px; /* Position from viewport edge */
+  top: auto; /* Will be set by JavaScript */
   min-width: 220px;
   background: #0f1424;
   border: 1px solid #2b3152;
   border-radius: 10px;
   padding: 6px;
-  z-index: 99999;                /* Extremely high z-index */
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-  transform: translateY(0);      /* Create new stacking context */
+  z-index: 99999; /* Extremely high z-index */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transform: translateY(0); /* Create new stacking context */
 }
 
 /* Visible state */
@@ -3207,9 +3283,9 @@ td.actions {
 }
 
 /* Legend & toolbar helpers (no scrollbars) */
-.legend-inline { 
-  flex-shrink: 0; 
-  overflow: visible; 
+.legend-inline {
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 /* OOS modal styles */
@@ -3417,7 +3493,7 @@ td.actions {
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .service-log-header-right {
     flex-direction: column;
     align-items: flex-start;
@@ -3526,7 +3602,7 @@ td.actions {
   .settings-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .settings-section {
     padding: 16px;
   }
@@ -3908,16 +3984,16 @@ td.actions {
   .invite-confirm-container {
     padding: 16px;
   }
-  
+
   .company-welcome {
     padding: 20px;
   }
-  
+
   .invite-info-card,
   .invite-confirm-form {
     padding: 20px;
   }
-  
+
   .invite-actions {
     flex-direction: column;
   }
@@ -3935,7 +4011,7 @@ td.actions {
   position: relative;
 }
 
-.export-option input[type="radio"] {
+.export-option input[type='radio'] {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -3957,7 +4033,7 @@ td.actions {
   background: var(--bg-tertiary);
 }
 
-.export-option input[type="radio"]:checked + label {
+.export-option input[type='radio']:checked + label {
   border-color: var(--accent-primary);
   background: rgba(112, 128, 255, 0.1);
   box-shadow: 0 0 0 1px var(--accent-primary);
@@ -4011,7 +4087,7 @@ td.actions {
   .export-option label {
     padding: 16px;
   }
-  
+
   .option-header {
     gap: 8px;
   }
@@ -4197,7 +4273,7 @@ td.actions {
     margin-left: 12px;
     gap: 12px;
   }
-  
+
   .table-header-legend .legend-lists {
     gap: 8px;
   }
@@ -4209,17 +4285,17 @@ td.actions {
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .table-header-legend {
     margin-left: 0;
     width: 100%;
     justify-content: center;
   }
-  
+
   .inventory-content-wrapper {
     flex-direction: column;
   }
-  
+
   .inventory-sidebar {
     min-width: auto;
     padding-left: 0;
@@ -4234,16 +4310,16 @@ td.actions {
     margin-right: 8px;
     min-width: 200px;
   }
-  
+
   .search-results-popup {
     padding: 6px 8px;
     min-height: 32px;
   }
-  
+
   .search-count {
     font-size: 0.8rem;
   }
-  
+
   .search-nav-btn {
     width: 20px;
     height: 20px;
@@ -4261,7 +4337,7 @@ td.actions {
   gap: 8px;
 }
 
-.duplicate-checkbox input[type="checkbox"] {
+.duplicate-checkbox input[type='checkbox'] {
   margin: 0;
 }
 
@@ -4293,12 +4369,12 @@ td.actions {
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .duplicate-checkbox {
     margin-right: 0;
     justify-content: center;
   }
-  
+
   .action-buttons {
     justify-content: center;
   }

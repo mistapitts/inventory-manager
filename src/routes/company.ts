@@ -1,12 +1,13 @@
-import { Router, type Request, type Response } from 'express';
-import multer from 'multer';
 import path from 'path';
 
+import { Router, type Request, type Response } from 'express';
+import multer from 'multer';
+
+import { config } from '../config';
 import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
-import { UserRole } from '../types';
-import { config } from '../config';
 import { emailService } from '../services/email';
+import { UserRole } from '../types';
 
 const router = Router();
 
@@ -84,10 +85,7 @@ router.get('/info', authenticateToken, async (req: Request, res: Response) => {
     }
 
     // Get company info
-    const company = await database.get(
-      `SELECT * FROM companies WHERE id = ?`,
-      [user.companyId],
-    );
+    const company = await database.get(`SELECT * FROM companies WHERE id = ?`, [user.companyId]);
 
     // Get company users (for user management)
     const users = await database.all(
@@ -117,7 +115,8 @@ router.get('/info', authenticateToken, async (req: Request, res: Response) => {
 router.patch('/update', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { name, phone, email, website, address, city, state, zipCode, country, description } = req.body;
+    const { name, phone, email, website, address, city, state, zipCode, country, description } =
+      req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Company name is required' });
@@ -131,7 +130,9 @@ router.patch('/update', authenticateToken, async (req: Request, res: Response) =
 
     // Check permissions (only company_owner and admin can update)
     if (user.role !== 'company_owner' && user.role !== 'admin') {
-      return res.status(403).json({ error: 'Insufficient permissions to update company information' });
+      return res
+        .status(403)
+        .json({ error: 'Insufficient permissions to update company information' });
     }
 
     // Update company
@@ -141,9 +142,19 @@ router.patch('/update', authenticateToken, async (req: Request, res: Response) =
          city = ?, state = ?, zipCode = ?, country = ?, description = ?,
          updatedAt = datetime('now')
        WHERE id = ?`,
-      [name.trim(), phone || null, email || null, website || null, address || null, 
-       city || null, state || null, zipCode || null, country || 'United States', 
-       description || null, user.companyId],
+      [
+        name.trim(),
+        phone || null,
+        email || null,
+        website || null,
+        address || null,
+        city || null,
+        state || null,
+        zipCode || null,
+        country || 'United States',
+        description || null,
+        user.companyId,
+      ],
     );
 
     res.json({ message: 'Company information updated successfully' });
@@ -170,7 +181,10 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
     }
 
     // Get user's company and inviter info
-    const user = await database.get('SELECT u.companyId, u.role, u.firstName, u.lastName, c.name as companyName FROM users u LEFT JOIN companies c ON u.companyId = c.id WHERE u.id = ?', [userId]);
+    const user = await database.get(
+      'SELECT u.companyId, u.role, u.firstName, u.lastName, c.name as companyName FROM users u LEFT JOIN companies c ON u.companyId = c.id WHERE u.id = ?',
+      [userId],
+    );
     if (!user || !user.companyId) {
       return res.status(400).json({ error: 'User not associated with a company' });
     }
@@ -195,13 +209,23 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
     await database.run(
       `INSERT INTO invite_codes (id, companyId, code, role, email, firstName, lastName, expiresAt, isUsed, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
-      [generateId(), user.companyId, inviteCode, role, email, firstName, lastName, expiresAt.toISOString()],
+      [
+        generateId(),
+        user.companyId,
+        inviteCode,
+        role,
+        email,
+        firstName,
+        lastName,
+        expiresAt.toISOString(),
+      ],
     );
 
     // Send invitation email
     const inviteLink = `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`;
-    const inviterName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
-    
+    const inviterName =
+      user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
+
     const emailSent = await emailService.sendUserInvitation({
       to: email,
       firstName,
@@ -212,12 +236,14 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
       inviterName,
     });
 
-    res.json({ 
-      message: emailSent ? 'Invitation sent successfully' : 'Invitation created (email not configured)',
+    res.json({
+      message: emailSent
+        ? 'Invitation sent successfully'
+        : 'Invitation created (email not configured)',
       inviteCode: emailSent ? undefined : inviteCode, // Only return code if email failed
       expiresAt: expiresAt.toISOString(),
       emailSent,
-      inviteLink: emailSent ? undefined : inviteLink // Only return link if email failed
+      inviteLink: emailSent ? undefined : inviteLink, // Only return link if email failed
     });
   } catch (error) {
     console.error('Error creating user invitation:', error);
@@ -232,9 +258,9 @@ const storage = multer.diskStorage({
     cb(null, logoDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({
@@ -246,57 +272,66 @@ const upload = multer({
     // Accept common image formats
     const allowedMimes = [
       'image/jpeg',
-      'image/jpg', 
+      'image/jpg',
       'image/png',
       'image/gif',
       'image/webp',
-      'image/svg+xml'
+      'image/svg+xml',
     ];
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}. Please use JPG, PNG, GIF, WEBP, or SVG.`));
+      cb(
+        new Error(
+          `Unsupported file type: ${file.mimetype}. Please use JPG, PNG, GIF, WEBP, or SVG.`,
+        ),
+      );
     }
-  }
+  },
 });
 
 // Upload company logo
-router.post('/upload-logo', authenticateToken, upload.single('logo'), async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.id;
-    
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+router.post(
+  '/upload-logo',
+  authenticateToken,
+  upload.single('logo'),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Get user's company
+      const user = await database.get('SELECT companyId, role FROM users WHERE id = ?', [userId]);
+      if (!user || !user.companyId) {
+        return res.status(400).json({ error: 'User not associated with a company' });
+      }
+
+      // Check permissions (only company_owner and admin can upload logo)
+      if (user.role !== 'company_owner' && user.role !== 'admin') {
+        return res.status(403).json({ error: 'Insufficient permissions to upload company logo' });
+      }
+
+      // Update company logo path
+      const logoPath = `/uploads/logos/${req.file.filename}`;
+      await database.run(
+        `UPDATE companies SET logo = ?, updatedAt = datetime('now') WHERE id = ?`,
+        [logoPath, user.companyId],
+      );
+
+      res.json({
+        message: 'Logo uploaded successfully',
+        logoPath,
+      });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      res.status(500).json({ error: 'Failed to upload logo' });
     }
-
-    // Get user's company
-    const user = await database.get('SELECT companyId, role FROM users WHERE id = ?', [userId]);
-    if (!user || !user.companyId) {
-      return res.status(400).json({ error: 'User not associated with a company' });
-    }
-
-    // Check permissions (only company_owner and admin can upload logo)
-    if (user.role !== 'company_owner' && user.role !== 'admin') {
-      return res.status(403).json({ error: 'Insufficient permissions to upload company logo' });
-    }
-
-    // Update company logo path
-    const logoPath = `/uploads/logos/${req.file.filename}`;
-    await database.run(
-      `UPDATE companies SET logo = ?, updatedAt = datetime('now') WHERE id = ?`,
-      [logoPath, user.companyId],
-    );
-
-    res.json({ 
-      message: 'Logo uploaded successfully',
-      logoPath 
-    });
-  } catch (error) {
-    console.error('Error uploading logo:', error);
-    res.status(500).json({ error: 'Failed to upload logo' });
-  }
-});
+  },
+);
 
 // Remove company logo
 router.delete('/remove-logo', authenticateToken, async (req: Request, res: Response) => {

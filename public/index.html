@@ -80,7 +80,10 @@
         <div class="login-footer">
           <p>Don't have an account? <a href="#" id="showRegister">Create Account</a></p>
           <div class="employee-notice">
-            <p><i class="fas fa-info-circle"></i> <strong>Company Employee?</strong> Contact your manager or IT administrator to request access to your organization's inventory system.</p>
+            <p>
+              <i class="fas fa-info-circle"></i> <strong>Company Employee?</strong> Contact your
+              manager or IT administrator to request access to your organization's inventory system.
+            </p>
           </div>
           <p class="support-link">
             <a href="#"><i class="fas fa-question-circle"></i> Need help?</a>
@@ -215,7 +218,7 @@
 
         <form class="invite-confirm-form" id="inviteConfirmForm">
           <input type="hidden" id="confirmInviteCode" />
-          
+
           <div class="form-group">
             <label for="confirmPassword">Choose Your Password</label>
             <div class="input-wrapper">
@@ -240,9 +243,7 @@
               <i class="fas fa-times"></i> Cancel Invitation
             </button>
             <button type="submit" class="btn btn-primary">
-              <span class="btn-text">
-                <i class="fas fa-check"></i> Accept & Create Account
-              </span>
+              <span class="btn-text"> <i class="fas fa-check"></i> Accept & Create Account </span>
               <div class="btn-loader" style="display: none">
                 <div class="spinner"></div>
               </div>
@@ -251,7 +252,10 @@
         </form>
 
         <div class="invite-footer">
-          <p><i class="fas fa-shield-alt"></i> Your information is secure and will only be used for account creation.</p>
+          <p>
+            <i class="fas fa-shield-alt"></i> Your information is secure and will only be used for
+            account creation.
+          </p>
         </div>
       </div>
 
@@ -260,37 +264,41 @@
         <div class="modal-card">
           <h3><i class="fas fa-download"></i> Export Inventory</h3>
           <p class="modal-description">Choose which items to include in your Excel export:</p>
-          
+
           <div class="export-options">
             <div class="export-option">
-              <input type="radio" id="exportAll" name="exportType" value="all" checked>
+              <input type="radio" id="exportAll" name="exportType" value="all" checked />
               <label for="exportAll">
                 <div class="option-content">
                   <div class="option-header">
                     <i class="fas fa-list"></i>
                     <strong>Export All Items</strong>
                   </div>
-                  <p class="option-description">Export all inventory items regardless of current filters or search</p>
+                  <p class="option-description">
+                    Export all inventory items regardless of current filters or search
+                  </p>
                   <span class="item-count" id="allItemsCount">0 items</span>
                 </div>
               </label>
             </div>
-            
+
             <div class="export-option">
-              <input type="radio" id="exportVisible" name="exportType" value="visible">
+              <input type="radio" id="exportVisible" name="exportType" value="visible" />
               <label for="exportVisible">
                 <div class="option-content">
                   <div class="option-header">
                     <i class="fas fa-filter"></i>
                     <strong>Export Visible Items Only</strong>
                   </div>
-                  <p class="option-description">Export only the items currently shown in the table (filtered results)</p>
+                  <p class="option-description">
+                    Export only the items currently shown in the table (filtered results)
+                  </p>
                   <span class="item-count" id="visibleItemsCount">0 items</span>
                 </div>
               </label>
             </div>
           </div>
-          
+
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" data-close="modal-export-inventory">
               <i class="fas fa-times"></i> Cancel
@@ -372,47 +380,45 @@
             <div class="breadcrumb">
               <span>Inventory</span>
             </div>
-                            <div class="top-actions">
-                  <div class="search-container">
-                    <div class="search-box">
-                      <i class="fas fa-search"></i>
-                      <label for="searchInventory" class="visually-hidden">Search inventory</label>
-                      <input
-                        type="text"
-                        id="searchInventory"
-                        name="searchInventory"
-                        placeholder="Search inventory..."
-                        autocomplete="off"
-                      />
-                    </div>
-                    <div class="search-results-popup" id="searchResultsPopup" style="display: none;">
-                      <span class="search-count" id="searchCount">0 matches</span>
-                      <div class="search-navigation">
-                        <button class="search-nav-btn" id="searchPrevBtn" title="Previous match">
-                          <i class="fas fa-chevron-up"></i>
-                        </button>
-                        <button class="search-nav-btn" id="searchNextBtn" title="Next match">
-                          <i class="fas fa-chevron-down"></i>
-                        </button>
-                      </div>
-                    </div>
+            <div class="top-actions">
+              <div class="search-container">
+                <div class="search-box">
+                  <i class="fas fa-search"></i>
+                  <label for="searchInventory" class="visually-hidden">Search inventory</label>
+                  <input
+                    type="text"
+                    id="searchInventory"
+                    name="searchInventory"
+                    placeholder="Search inventory..."
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="search-results-popup" id="searchResultsPopup" style="display: none">
+                  <span class="search-count" id="searchCount">0 matches</span>
+                  <div class="search-navigation">
+                    <button class="search-nav-btn" id="searchPrevBtn" title="Previous match">
+                      <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button class="search-nav-btn" id="searchNextBtn" title="Next match">
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
                   </div>
-                  <button class="add-item-btn" id="addItemBtn">
-                    <i class="fas fa-plus"></i>
-                    Add Item
-                  </button>
-                  <button class="btn btn-primary" id="createListBtn">
-                    <i class="fas fa-list"></i>
-                    Create List
-                  </button>
-                  <button class="btn btn-secondary" id="exportInventoryBtn">
-                    <i class="fas fa-download"></i>
-                    Export Inventory
-                  </button>
+                </div>
+              </div>
+              <button class="add-item-btn" id="addItemBtn">
+                <i class="fas fa-plus"></i>
+                Add Item
+              </button>
+              <button class="btn btn-primary" id="createListBtn">
+                <i class="fas fa-list"></i>
+                Create List
+              </button>
+              <button class="btn btn-secondary" id="exportInventoryBtn">
+                <i class="fas fa-download"></i>
+                Export Inventory
+              </button>
             </div>
           </header>
-
-
 
           <div class="content-area">
             <!-- Welcome Message (shown when no items) -->
@@ -518,7 +524,6 @@
                     </div>
                   </div>
                 </div>
-
               </div>
 
               <div class="inventory-main-content">
@@ -539,14 +544,17 @@
                     </div>
                   </div>
 
+                  <!-- Top scrollbar for horizontal navigation -->
+                  <div class="table-scrollbar-top" id="tableScrollbarTop">
+                    <div class="scrollbar-content"></div>
+                  </div>
+
                   <!-- Only this part scrolls -->
-                  <div class="inventory-table-scroll-wrapper">
+                  <div class="inventory-table-scroll-wrapper" id="inventoryTableScrollWrapper">
                     <table class="inventory-table" id="inventoryTable">
                       <thead>
                         <tr>
-                          <th class="status-column">
-                            
-                          </th>
+                          <th class="status-column"></th>
                           <th class="sortable" data-sort="itemType">
                             Item Type <i class="fas fa-sort"></i>
                           </th>
@@ -612,16 +620,15 @@
 
             <!-- Calendar Section (hidden until calendar nav is selected) -->
             <div class="calendar-section" id="calendarSection" style="display: none"></div>
-            
+
             <!-- My Company Section -->
             <div class="company-section" id="companySection" style="display: none">
               <div class="section-header">
                 <h2>My Company</h2>
               </div>
-              
+
               <div class="company-content">
                 <div class="company-grid">
-                  
                   <!-- Company Information -->
                   <div class="company-card company-info-card">
                     <div class="company-card-header">
@@ -634,7 +641,7 @@
                       <!-- Company info will be populated here -->
                     </div>
                   </div>
-                  
+
                   <!-- Company Logo & Color Settings Row -->
                   <div class="company-card">
                     <div class="company-card-header">
@@ -643,23 +650,38 @@
                     <div class="company-card-content">
                       <div class="logo-upload-area" id="logoUploadArea">
                         <div class="current-logo" id="currentLogo">
-                          <img id="companyLogoImg" src="" alt="Company Logo" style="display: none; max-width: 200px; max-height: 100px; object-fit: contain;" />
+                          <img
+                            id="companyLogoImg"
+                            src=""
+                            alt="Company Logo"
+                            style="
+                              display: none;
+                              max-width: 200px;
+                              max-height: 100px;
+                              object-fit: contain;
+                            "
+                          />
                           <div class="no-logo" id="noLogoPlaceholder">
                             <i class="fas fa-building fa-3x"></i>
                             <p>No logo uploaded</p>
                           </div>
                         </div>
-                        <input type="file" id="logoFileInput" accept="image/*" style="display: none;" />
+                        <input
+                          type="file"
+                          id="logoFileInput"
+                          accept="image/*"
+                          style="display: none"
+                        />
                         <button class="btn btn-primary" id="uploadLogoBtn">
                           <i class="fas fa-upload"></i> Upload Logo
                         </button>
-                        <button class="btn btn-secondary" id="removeLogoBtn" style="display: none;">
+                        <button class="btn btn-secondary" id="removeLogoBtn" style="display: none">
                           <i class="fas fa-trash"></i> Remove Logo
                         </button>
                       </div>
                     </div>
                   </div>
-                  
+
                   <!-- Company Color Settings -->
                   <div class="company-card">
                     <div class="company-card-header">
@@ -679,7 +701,7 @@
                       </button>
                     </div>
                   </div>
-                  
+
                   <!-- User Management -->
                   <div class="company-card company-users-card">
                     <div class="company-card-header">
@@ -694,7 +716,6 @@
                       </div>
                     </div>
                   </div>
-                  
                 </div>
               </div>
             </div>
@@ -704,10 +725,9 @@
               <div class="section-header">
                 <h2>Settings</h2>
               </div>
-              
+
               <div class="settings-content">
                 <div class="settings-grid">
-                  
                   <!-- Profile Settings (Admin/Company Owner only) -->
                   <div class="settings-card" id="profileSettingsCard">
                     <div class="settings-card-header">
@@ -725,19 +745,31 @@
                       </div>
                       <div class="form-group">
                         <label>Email</label>
-                        <input type="email" id="profileEmail" class="input" readonly autocomplete="username" />
+                        <input
+                          type="email"
+                          id="profileEmail"
+                          class="input"
+                          readonly
+                          autocomplete="username"
+                        />
                         <small class="form-help">Email cannot be changed</small>
                       </div>
                       <div class="form-group">
                         <label>Role</label>
-                        <input type="text" id="profileRole" class="input" readonly autocomplete="off" />
+                        <input
+                          type="text"
+                          id="profileRole"
+                          class="input"
+                          readonly
+                          autocomplete="off"
+                        />
                       </div>
                       <button class="btn btn-primary" id="saveProfileBtn">
                         <i class="fas fa-save"></i> Save Changes
                       </button>
                     </div>
                   </div>
-                  
+
                   <!-- Password Settings -->
                   <div class="settings-card" id="passwordSettingsCard">
                     <div class="settings-card-header">
@@ -747,19 +779,39 @@
                     <div class="settings-card-content">
                       <form id="changePasswordForm" autocomplete="off">
                         <!-- Hidden username field for password managers -->
-                        <input type="email" id="hiddenUsername" style="display: none;" autocomplete="username" />
-                        
+                        <input
+                          type="email"
+                          id="hiddenUsername"
+                          style="display: none"
+                          autocomplete="username"
+                        />
+
                         <div class="form-group">
                           <label>Current Password</label>
-                          <input type="password" id="currentPassword" class="input" autocomplete="current-password" />
+                          <input
+                            type="password"
+                            id="currentPassword"
+                            class="input"
+                            autocomplete="current-password"
+                          />
                         </div>
                         <div class="form-group">
                           <label>New Password</label>
-                          <input type="password" id="newPassword" class="input" autocomplete="new-password" />
+                          <input
+                            type="password"
+                            id="newPassword"
+                            class="input"
+                            autocomplete="new-password"
+                          />
                         </div>
                         <div class="form-group">
                           <label>Confirm New Password</label>
-                          <input type="password" id="confirmPassword" class="input" autocomplete="new-password" />
+                          <input
+                            type="password"
+                            id="confirmPassword"
+                            class="input"
+                            autocomplete="new-password"
+                          />
                         </div>
                         <button type="button" class="btn btn-primary" id="changePasswordBtn">
                           <i class="fas fa-key"></i> Change Password
@@ -768,9 +820,8 @@
                     </div>
                   </div>
 
-                  
                   <!-- Company Settings (Company Owner only) -->
-                  <div class="settings-card" id="companySettingsCard" style="display: none;">
+                  <div class="settings-card" id="companySettingsCard" style="display: none">
                     <div class="settings-card-header">
                       <h3><i class="fas fa-building"></i> Company Settings</h3>
                       <p>Manage company information</p>
@@ -785,7 +836,6 @@
                       </button>
                     </div>
                   </div>
-                  
                 </div>
               </div>
             </div>
@@ -796,7 +846,7 @@
 
     <!-- Edit Company Modal -->
     <div id="modal-edit-company" class="modal hidden">
-      <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-card" style="max-width: 600px">
         <h3>Edit Company Information</h3>
         <form id="form-edit-company">
           <div class="form-row">
@@ -809,7 +859,7 @@
               <input type="tel" id="edit-company-phone" class="input" />
             </div>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>Email</label>
@@ -820,12 +870,12 @@
               <input type="url" id="edit-company-website" class="input" placeholder="https://" />
             </div>
           </div>
-          
+
           <div class="form-group">
             <label>Address</label>
             <input type="text" id="edit-company-address" class="input" />
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>City</label>
@@ -840,19 +890,26 @@
               <input type="text" id="edit-company-zip" class="input" />
             </div>
           </div>
-          
+
           <div class="form-group">
             <label>Country</label>
             <input type="text" id="edit-company-country" class="input" value="United States" />
           </div>
-          
+
           <div class="form-group">
             <label>Description</label>
-            <textarea id="edit-company-description" class="textarea" rows="3" placeholder="Brief description of your company..."></textarea>
+            <textarea
+              id="edit-company-description"
+              class="textarea"
+              rows="3"
+              placeholder="Brief description of your company..."
+            ></textarea>
           </div>
-          
+
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" data-close="modal-edit-company">Cancel</button>
+            <button type="button" class="btn btn-secondary" data-close="modal-edit-company">
+              Cancel
+            </button>
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> Save Changes
             </button>
@@ -870,7 +927,7 @@
             <label>Email Address <span class="text-red-400">*</span></label>
             <input type="email" id="invite-user-email" class="input" required />
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>First Name <span class="text-red-400">*</span></label>
@@ -881,7 +938,7 @@
               <input type="text" id="invite-user-last-name" class="input" required />
             </div>
           </div>
-          
+
           <div class="form-group">
             <label>Role <span class="text-red-400">*</span></label>
             <select id="invite-user-role" class="input" required>
@@ -893,9 +950,11 @@
               <option value="viewer">Viewer</option>
             </select>
           </div>
-          
+
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" data-close="modal-invite-user">Cancel</button>
+            <button type="button" class="btn btn-secondary" data-close="modal-invite-user">
+              Cancel
+            </button>
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-paper-plane"></i> Send Invitation
             </button>
@@ -1308,7 +1367,13 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="newModel">Model *</label>
-                  <input type="text" id="newModel" name="model" required placeholder="e.g., XS205" />
+                  <input
+                    type="text"
+                    id="newModel"
+                    name="model"
+                    required
+                    placeholder="e.g., XS205"
+                  />
                 </div>
                 <div class="form-group">
                   <label for="newSerialNumber">Serial Number *</label>
@@ -1348,7 +1413,12 @@
                 </div>
                 <div class="form-group">
                   <label for="newDatePlacedInService">Date Placed in Service *</label>
-                  <input type="date" id="newDatePlacedInService" name="datePlacedInService" required />
+                  <input
+                    type="date"
+                    id="newDatePlacedInService"
+                    name="datePlacedInService"
+                    required
+                  />
                 </div>
               </div>
 
@@ -1385,7 +1455,12 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="newNextCalibrationDue">Next Calibration Due *</label>
-                  <input type="date" id="newNextCalibrationDue" name="nextCalibrationDue" required />
+                  <input
+                    type="date"
+                    id="newNextCalibrationDue"
+                    name="nextCalibrationDue"
+                    required
+                  />
                 </div>
                 <div class="form-group">
                   <label for="newCalibrationInterval">Calibration Interval *</label>
@@ -1409,7 +1484,9 @@
               </div>
 
               <div class="form-group">
-                <label for="newCalibrationMethod" id="newCalibrationMethodLabel">Calibration Method *</label>
+                <label for="newCalibrationMethod" id="newCalibrationMethodLabel"
+                  >Calibration Method *</label
+                >
                 <input
                   type="text"
                   id="newCalibrationMethod"
@@ -1568,7 +1645,13 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="editModel">Model *</label>
-                  <input type="text" id="editModel" name="model" required placeholder="e.g., XS205" />
+                  <input
+                    type="text"
+                    id="editModel"
+                    name="model"
+                    required
+                    placeholder="e.g., XS205"
+                  />
                 </div>
                 <div class="form-group">
                   <label for="editSerialNumber">Serial Number *</label>
@@ -1608,7 +1691,12 @@
                 </div>
                 <div class="form-group">
                   <label for="editDatePlacedInService">Date Placed in Service *</label>
-                  <input type="date" id="editDatePlacedInService" name="datePlacedInService" required />
+                  <input
+                    type="date"
+                    id="editDatePlacedInService"
+                    name="datePlacedInService"
+                    required
+                  />
                 </div>
               </div>
 
@@ -1645,7 +1733,12 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="editNextCalibrationDue">Next Calibration Due *</label>
-                  <input type="date" id="editNextCalibrationDue" name="nextCalibrationDue" required />
+                  <input
+                    type="date"
+                    id="editNextCalibrationDue"
+                    name="nextCalibrationDue"
+                    required
+                  />
                 </div>
                 <div class="form-group">
                   <label for="editCalibrationInterval">Calibration Interval *</label>
@@ -1659,7 +1752,11 @@
                       max="365"
                       value="12"
                     />
-                    <select id="editCalibrationIntervalType" name="calibrationIntervalType" required>
+                    <select
+                      id="editCalibrationIntervalType"
+                      name="calibrationIntervalType"
+                      required
+                    >
                       <option value="days">Days</option>
                       <option value="weeks">Weeks</option>
                       <option value="months" selected>Months</option>
@@ -1669,7 +1766,9 @@
               </div>
 
               <div class="form-group">
-                <label for="editCalibrationMethod" id="editCalibrationMethodLabel">Calibration Method *</label>
+                <label for="editCalibrationMethod" id="editCalibrationMethodLabel"
+                  >Calibration Method *</label
+                >
                 <input
                   type="text"
                   id="editCalibrationMethod"
@@ -1823,7 +1922,13 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="dupModel">Model *</label>
-                  <input type="text" id="dupModel" name="model" required placeholder="e.g., XS205" />
+                  <input
+                    type="text"
+                    id="dupModel"
+                    name="model"
+                    required
+                    placeholder="e.g., XS205"
+                  />
                 </div>
                 <div class="form-group">
                   <label for="dupSerialNumber">Serial Number *</label>
@@ -1863,7 +1968,12 @@
                 </div>
                 <div class="form-group">
                   <label for="dupDatePlacedInService">Date Placed in Service *</label>
-                  <input type="date" id="dupDatePlacedInService" name="datePlacedInService" required />
+                  <input
+                    type="date"
+                    id="dupDatePlacedInService"
+                    name="datePlacedInService"
+                    required
+                  />
                 </div>
               </div>
 
@@ -1900,7 +2010,12 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="dupNextCalibrationDue">Next Calibration Due *</label>
-                  <input type="date" id="dupNextCalibrationDue" name="nextCalibrationDue" required />
+                  <input
+                    type="date"
+                    id="dupNextCalibrationDue"
+                    name="nextCalibrationDue"
+                    required
+                  />
                 </div>
                 <div class="form-group">
                   <label for="dupCalibrationInterval">Calibration Interval *</label>
@@ -2197,12 +2312,20 @@
         <h3>Mark Out of Service</h3>
         <form id="form-oos">
           <input type="hidden" id="oos-item-id" />
-          <label class="block text-sm mt-2">Date Out of Service <span class="text-red-400">*</span></label>
+          <label class="block text-sm mt-2"
+            >Date Out of Service <span class="text-red-400">*</span></label
+          >
           <input type="date" id="oos-date" class="input" required />
           <label class="block text-sm mt-3">Reason <span class="text-red-400">*</span></label>
           <input id="oos-reason" class="input" required maxlength="200" />
           <label class="block text-sm mt-3">Reported By <span class="text-red-400">*</span></label>
-          <input id="oos-reported-by" class="input" required maxlength="100" placeholder="Your name" />
+          <input
+            id="oos-reported-by"
+            class="input"
+            required
+            maxlength="100"
+            placeholder="Your name"
+          />
           <label class="block text-sm mt-3">Notes (optional)</label>
           <textarea id="oos-notes" class="textarea" maxlength="500"></textarea>
           <div class="flex justify-end gap-2 mt-4">
@@ -2219,11 +2342,21 @@
         <h3>Return to Service</h3>
         <form id="form-rts">
           <input type="hidden" id="rts-item-id" />
-          <label class="block text-sm mt-2">Date Returned to Service <span class="text-red-400">*</span></label>
+          <label class="block text-sm mt-2"
+            >Date Returned to Service <span class="text-red-400">*</span></label
+          >
           <input type="date" id="rts-date" class="input" required />
-                  <label class="block text-sm mt-3">Issue Resolved By <span class="text-red-400">*</span></label>
-        <input id="rts-resolved-by" class="input" required maxlength="200" placeholder="e.g., Repaired, Replaced part, Cleaned, etc." />
-        <label class="block text-sm mt-3">Notes (optional)</label>
+          <label class="block text-sm mt-3"
+            >Issue Resolved By <span class="text-red-400">*</span></label
+          >
+          <input
+            id="rts-resolved-by"
+            class="input"
+            required
+            maxlength="200"
+            placeholder="e.g., Repaired, Replaced part, Cleaned, etc."
+          />
+          <label class="block text-sm mt-3">Notes (optional)</label>
           <textarea id="rts-notes" class="textarea" maxlength="500"></textarea>
           <div class="flex justify-end gap-2 mt-4">
             <button type="button" class="btn btn-ghost" data-close="modal-rts">Cancel</button>
@@ -2237,7 +2370,9 @@
     <div id="modal-post-return" class="modal hidden">
       <div class="modal-card">
         <h3>Add Records After Return to Service</h3>
-        <p class="text-sm opacity-70 mb-4">Would you like to add calibration or maintenance records for this item?</p>
+        <p class="text-sm opacity-70 mb-4">
+          Would you like to add calibration or maintenance records for this item?
+        </p>
         <div class="flex flex-col gap-3">
           <button type="button" class="btn btn-primary" id="btn-add-calibration">
             <i class="fas fa-certificate"></i> Add Calibration Record
@@ -2245,9 +2380,7 @@
           <button type="button" class="btn btn-secondary" id="btn-add-both-records">
             <i class="fas fa-tools"></i> Add Calibration & Maintenance Records
           </button>
-          <button type="button" class="btn btn-ghost" id="btn-not-now">
-            Not At This Moment
-          </button>
+          <button type="button" class="btn btn-ghost" id="btn-not-now">Not At This Moment</button>
         </div>
       </div>
     </div>

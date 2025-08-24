@@ -1,6 +1,5 @@
 // src/services/email.ts
 import nodemailer from 'nodemailer';
-import { config } from '../config';
 
 interface EmailConfig {
   host?: string;
@@ -32,7 +31,7 @@ class EmailService {
     try {
       // Check for email configuration in environment
       const emailConfig = this.getEmailConfig();
-      
+
       if (!emailConfig) {
         console.log('📧 Email service: No configuration found, emails will be logged to console');
         return;
@@ -41,7 +40,7 @@ class EmailService {
       this.transporter = nodemailer.createTransport(emailConfig);
       this.isConfigured = true;
       console.log('📧 Email service: Configured successfully');
-      
+
       // Verify connection
       if (this.transporter) {
         this.transporter.verify((error) => {
@@ -129,7 +128,7 @@ class EmailService {
     const { to, firstName, lastName, companyName, inviteCode, inviteLink, inviterName } = options;
 
     const subject = `Invitation to join ${companyName} - Inventory Manager`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>

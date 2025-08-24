@@ -5,6 +5,7 @@ The inventory management system can send invitation emails to new users. Here's 
 ## 🚀 Quick Setup Options
 
 ### Option 1: Gmail (Easiest)
+
 1. **Enable 2-Factor Authentication** on your Gmail account
 2. **Generate an App Password**:
    - Go to Google Account Settings → Security → 2-Step Verification → App passwords
@@ -18,6 +19,7 @@ The inventory management system can send invitation emails to new users. Here's 
    ```
 
 ### Option 2: Outlook/Hotmail
+
 1. **Add to your `.env` file**:
    ```env
    EMAIL_SERVICE=hotmail
@@ -27,6 +29,7 @@ The inventory management system can send invitation emails to new users. Here's 
    ```
 
 ### Option 3: Company SMTP Server
+
 1. **Get SMTP details** from your IT department
 2. **Add to your `.env` file**:
    ```env
@@ -41,7 +44,9 @@ The inventory management system can send invitation emails to new users. Here's 
 ## 🏢 Render Deployment
 
 ### Environment Variables
+
 In your Render dashboard, add these environment variables:
+
 - `EMAIL_SERVICE` = `gmail` (or your service)
 - `EMAIL_USER` = `your-email@gmail.com`
 - `EMAIL_PASS` = `your-app-password`
@@ -49,9 +54,10 @@ In your Render dashboard, add these environment variables:
 
 ## 🧪 Development Mode
 
-**No configuration needed!** 
+**No configuration needed!**
 
 If no email settings are provided, the system will:
+
 - ✅ Still create invite codes
 - ✅ Log email content to console
 - ✅ Return invite codes in API response
@@ -84,16 +90,19 @@ If no email settings are provided, the system will:
 ## ❓ Troubleshooting
 
 ### "Authentication failed"
+
 - Check your email/password
 - For Gmail: Use App Password, not regular password
 - Ensure 2FA is enabled for Gmail
 
 ### "Connection refused"
+
 - Check SMTP host and port
 - Verify firewall settings
 - Try different ports (587, 465, 25)
 
 ### "No configuration found"
+
 - Check your `.env` file exists
 - Verify environment variable names
 - Restart your server after changes

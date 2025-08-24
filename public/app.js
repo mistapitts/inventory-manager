@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     handleInviteLink(inviteCode);
     return; // Don't proceed with normal auth check
   }
-  
+
   checkAuthStatus();
   setupEventListeners();
   // Handle deep links like /item/:id
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function setupEventListeners() {
   // Login form submission
   loginForm.addEventListener('submit', handleLogin);
-  
+
   // Setup auto-calculation for date fields
   setupDateAutoCalculation();
 
@@ -117,7 +117,7 @@ function setupEventListeners() {
   }
 
   // Modal close buttons for OOS
-  document.querySelectorAll('[data-close]').forEach(btn => {
+  document.querySelectorAll('[data-close]').forEach((btn) => {
     btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
   });
 
@@ -565,6 +565,88 @@ async function apiCall(endpoint, options = {}) {
   return response.json();
 }
 
+// Scrollbar Synchronization
+function setupScrollbarSynchronization() {
+  const topScrollbar = document.getElementById('tableScrollbarTop');
+  const tableScrollWrapper = document.getElementById('inventoryTableScrollWrapper');
+  const table = document.getElementById('inventoryTable');
+  const scrollbarContent = topScrollbar?.querySelector('.scrollbar-content');
+
+  if (!topScrollbar || !tableScrollWrapper || !table || !scrollbarContent) {
+    console.warn('[SCROLLBAR] Elements not found for scrollbar sync setup');
+    return;
+  }
+
+  // Set the scrollbar content width to match the table width
+  function updateScrollbarWidth() {
+    const tableWidth = table.scrollWidth;
+    const containerWidth = tableScrollWrapper.clientWidth;
+
+    // Only show scrollbar if table is wider than container
+    if (tableWidth > containerWidth) {
+      scrollbarContent.style.width = `${tableWidth}px`;
+      topScrollbar.style.display = 'block';
+    } else {
+      topScrollbar.style.display = 'none';
+    }
+  }
+
+  // Update width initially and on window resize
+  updateScrollbarWidth();
+  window.addEventListener('resize', updateScrollbarWidth);
+
+  // Remove any existing event listeners to prevent duplicates
+  const clonedTopScrollbar = topScrollbar.cloneNode(true);
+  const clonedTableWrapper = tableScrollWrapper.cloneNode(true);
+  topScrollbar.parentNode.replaceChild(clonedTopScrollbar, topScrollbar);
+  tableScrollWrapper.parentNode.replaceChild(clonedTableWrapper, tableScrollWrapper);
+
+  // Get fresh references to the cloned elements
+  const freshTopScrollbar = document.getElementById('tableScrollbarTop');
+  const freshTableWrapper = document.getElementById('inventoryTableScrollWrapper');
+
+  if (!freshTopScrollbar || !freshTableWrapper) return;
+
+  // Synchronize scroll positions
+  let isTopScrolling = false;
+  let isTableScrolling = false;
+
+  // Top scrollbar scrolls table
+  freshTopScrollbar.addEventListener('scroll', function () {
+    if (isTableScrolling) return;
+    isTopScrolling = true;
+    freshTableWrapper.scrollLeft = freshTopScrollbar.scrollLeft;
+    requestAnimationFrame(() => {
+      isTopScrolling = false;
+    });
+  });
+
+  // Table scrolls top scrollbar
+  freshTableWrapper.addEventListener('scroll', function () {
+    if (isTopScrolling) return;
+    isTableScrolling = true;
+    freshTopScrollbar.scrollLeft = freshTableWrapper.scrollLeft;
+    requestAnimationFrame(() => {
+      isTableScrolling = false;
+    });
+  });
+
+  // Handle wheel events on top scrollbar to enable horizontal scrolling
+  freshTopScrollbar.addEventListener('wheel', function (e) {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      // Horizontal scroll
+      e.preventDefault();
+      freshTopScrollbar.scrollLeft += e.deltaX;
+    } else if (e.deltaY !== 0) {
+      // Vertical scroll - let it pass through to the page
+      e.preventDefault();
+      freshTableWrapper.scrollLeft += e.deltaY;
+    }
+  });
+
+  console.log('[SCROLLBAR] Synchronization setup complete');
+}
+
 // Navigation handling
 document.addEventListener('click', function (e) {
   const link = e.target.closest('.nav-link');
@@ -795,26 +877,26 @@ async function loadInventoryItems() {
 
   // If cache is empty, fetch fresh data
   if (_itemsCache.length === 0) {
-  try {
-    console.log('Loading inventory items...');
-    const response = await fetch(`/api/inventory`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+    try {
+      console.log('Loading inventory items...');
+      const response = await fetch(`/api/inventory`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Inventory response:', data);
-      const allItems = Array.isArray(data.items) ? data.items : [];
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Inventory response:', data);
+        const allItems = Array.isArray(data.items) ? data.items : [];
         _itemsCache = allItems;
         logStep('loadInventoryItems:fetched', { count: allItems.length });
-    } else {
-      console.error('Failed to load inventory:', response.status, response.statusText);
+      } else {
+        console.error('Failed to load inventory:', response.status, response.statusText);
         _itemsCache = [];
-    }
-  } catch (error) {
-    console.error('Error loading inventory items:', error);
+      }
+    } catch (error) {
+      console.error('Error loading inventory items:', error);
       _itemsCache = [];
     }
   }
@@ -824,18 +906,18 @@ async function loadInventoryItems() {
   let visibleItems = _itemsCache.filter(
     (item) => !item.listId || !hiddenLists.includes(item.listId),
   );
-  
+
   // Apply OOS filtering
   if (!showOOS) {
-    visibleItems = visibleItems.filter(item => !item.isOutOfService);
+    visibleItems = visibleItems.filter((item) => !item.isOutOfService);
   }
-  
+
   logStep('loadInventoryItems:afterFilter', { rows: visibleItems.length });
 
   try {
     displayInventoryItems(visibleItems);
     logStep('loadInventoryItems:rendered');
-    
+
     // Re-apply search if active
     if (searchState.isActive && searchState.query.length >= 2) {
       setTimeout(() => performSearch(searchState.query), 100);
@@ -850,7 +932,10 @@ function displayInventoryItems(items) {
   const inventorySection = document.getElementById('inventorySection');
   const tableBody = document.getElementById('inventoryTableBody');
 
-  logStep('displayInventoryItems:start', { itemCount: Array.isArray(items) ? items.length : 'not-array', hasTableBody: !!tableBody });
+  logStep('displayInventoryItems:start', {
+    itemCount: Array.isArray(items) ? items.length : 'not-array',
+    hasTableBody: !!tableBody,
+  });
 
   // Keep a global copy so actions like Edit can find items quickly
   window.inventoryItems = Array.isArray(items) ? items : [];
@@ -872,7 +957,7 @@ function displayInventoryItems(items) {
     const fragment = document.createDocumentFragment();
     items.forEach((item, index) => {
       try {
-      const row = createInventoryRow(item);
+        const row = createInventoryRow(item);
         fragment.appendChild(row);
       } catch (e) {
         console.warn(`[INV] row render error for item ${index}:`, item?.id, e);
@@ -880,11 +965,14 @@ function displayInventoryItems(items) {
     });
     tableBody.appendChild(fragment);
     logStep('displayInventoryItems:rowsAdded', { count: items.length });
+
+    // Setup horizontal scrollbar synchronization after table is rendered
+    setupScrollbarSynchronization();
   } else {
     // Show empty state in table
     if (inventorySection) inventorySection.style.display = 'block';
     if (welcomeMessage) welcomeMessage.style.display = 'none';
-    
+
     tableBody.innerHTML = `
       <tr class="empty-row">
         <td colspan="17" style="padding: 2rem; text-align: center; opacity: 0.7; color: #b8b8d1;">
@@ -893,6 +981,12 @@ function displayInventoryItems(items) {
       </tr>
     `;
     logStep('displayInventoryItems:emptyState');
+
+    // Hide top scrollbar when there are no items
+    const topScrollbar = document.getElementById('tableScrollbarTop');
+    if (topScrollbar) {
+      topScrollbar.style.display = 'none';
+    }
   }
 }
 
@@ -1101,7 +1195,7 @@ async function deleteRecord(recordId, type, itemId) {
     if (resp.ok) {
       showToast('Record removed', 'success');
       await loadItemDetails(itemId);
-      
+
       // Clear cache to force fresh data fetch with updated dates
       _itemsCache = [];
       await loadInventoryItems();
@@ -1129,7 +1223,7 @@ async function deleteItem(itemId) {
     });
     if (resp.ok) {
       showToast('Item deleted', 'success');
-      
+
       // Clear cache to force fresh data fetch
       _itemsCache = [];
       await loadInventoryItems();
@@ -1258,7 +1352,7 @@ function showAddItemModal() {
 
   // Clean up any existing handlers and ensure add handler is attached
   form.onsubmit = null; // Clear any custom edit submit handler
-  
+
   // Remove any existing edit handler
   if (form._editSubmitHandler) {
     try {
@@ -1266,7 +1360,7 @@ function showAddItemModal() {
     } catch {}
     delete form._editSubmitHandler;
   }
-  
+
   // Ensure add handler is attached
   try {
     form.removeEventListener('submit', handleAddItem);
@@ -1295,7 +1389,7 @@ function showAddItemModal() {
   const nextMaintenance = new Date();
   nextMaintenance.setMonth(nextMaintenance.getMonth() + 6);
   document.getElementById('maintenanceDue').value = nextMaintenance.toISOString().split('T')[0];
-  
+
   // Setup auto-calculation for the form
   setupDateAutoCalculation();
 }
@@ -1330,36 +1424,36 @@ function resetFileUploadAreas() {
 function hideAddItemModal() {
   const modal = document.getElementById('addItemModal');
   const form = document.getElementById('addItemForm');
-  
+
   modal.classList.remove('show');
   form.reset();
-  
+
   // Clean up edit mode if it was active
   if (form.dataset.editing) {
     // Restore form to add mode
     form.onsubmit = null;
     delete form.dataset.editing;
     delete form.dataset.itemId;
-    
+
     // Restore original title and button text
     const titleEl = document.querySelector('#addItemModal .modal-header h2');
     if (titleEl) titleEl.textContent = 'Add New Inventory Item';
-    
+
     const submitBtn = form.querySelector('.btn-primary .btn-text');
     if (submitBtn) submitBtn.textContent = 'Add Item';
-    
+
     // Remove edit submit handler if it exists
     if (form._editSubmitHandler) {
       form.removeEventListener('submit', form._editSubmitHandler);
       delete form._editSubmitHandler;
     }
-    
+
     // Restore original submit handler
     try {
       form.addEventListener('submit', handleAddItem);
     } catch {}
   }
-  
+
   // Reset maintenance fields visibility
   const maintenanceCheckbox = document.getElementById('useMaintenance');
   const maintenanceFields = document.getElementById('maintenanceFields');
@@ -2008,17 +2102,18 @@ async function loadItemDetails(itemId) {
 // Create Service Log section for item details
 function createServiceLogSection(item) {
   const serviceEvents = [];
-  
+
   // Get service events from changelog
   if (item.changelog && Array.isArray(item.changelog)) {
-    item.changelog.forEach(entry => {
+    item.changelog.forEach((entry) => {
       if (entry.action === 'service_out' || entry.action === 'service_return') {
         try {
           const serviceData = JSON.parse(entry.newValue || '{}');
-          const userName = entry.first_name && entry.last_name 
-            ? `${entry.first_name} ${entry.last_name}` 
-            : 'Unknown User';
-          
+          const userName =
+            entry.first_name && entry.last_name
+              ? `${entry.first_name} ${entry.last_name}`
+              : 'Unknown User';
+
           serviceEvents.push({
             type: entry.action === 'service_out' ? 'out_of_service' : 'return_to_service',
             date: serviceData.date,
@@ -2027,7 +2122,7 @@ function createServiceLogSection(item) {
             resolvedBy: serviceData.resolvedBy,
             verifiedBy: serviceData.verifiedBy || userName, // Use verifiedBy from service data or fallback to user name
             notes: serviceData.notes,
-            timestamp: entry.timestamp || serviceData.date
+            timestamp: entry.timestamp || serviceData.date,
           });
         } catch (e) {
           console.warn('Failed to parse service data:', entry);
@@ -2035,15 +2130,16 @@ function createServiceLogSection(item) {
       }
     });
   }
-  
+
   // Sort events chronologically (newest first)
   serviceEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  
+
   const formatServiceEvent = (event) => {
     const date = new Date(event.date).toLocaleDateString();
     const eventIcon = event.type === 'out_of_service' ? '⛔' : '✅';
-    const eventTitle = event.type === 'out_of_service' ? 'Marked Out of Service' : 'Returned to Service';
-    
+    const eventTitle =
+      event.type === 'out_of_service' ? 'Marked Out of Service' : 'Returned to Service';
+
     // Build right-side fields
     let rightFields = [];
     if (event.type === 'out_of_service') {
@@ -2053,12 +2149,13 @@ function createServiceLogSection(item) {
       rightFields.push(`Resolved by: ${event.resolvedBy}`);
       rightFields.push(`Verified by: ${event.verifiedBy}`);
     }
-    
+
     // Notes section (if present)
-    const notesSection = (event.notes && event.notes.trim()) 
-      ? `<div class="service-log-notes">Notes: ${event.notes}</div>` 
-      : '';
-    
+    const notesSection =
+      event.notes && event.notes.trim()
+        ? `<div class="service-log-notes">Notes: ${event.notes}</div>`
+        : '';
+
     return `
       <div class="service-log-card">
         <div class="service-log-header">
@@ -2075,13 +2172,14 @@ function createServiceLogSection(item) {
       </div>
     `;
   };
-  
+
   return `
     <div class="item-detail-section" style="margin-top:24px;">
       <h3>Service Log (${serviceEvents.length})</h3>
-      ${serviceEvents.length > 0 
-        ? serviceEvents.map(formatServiceEvent).join('')
-        : '<p style="color: var(--text-secondary);">No service events recorded yet</p>'
+      ${
+        serviceEvents.length > 0
+          ? serviceEvents.map(formatServiceEvent).join('')
+          : '<p style="color: var(--text-secondary);">No service events recorded yet</p>'
       }
     </div>
   `;
@@ -2720,7 +2818,7 @@ async function handleRecordUpload(event, type, itemId) {
 
       // Refresh item details and inventory list
       await loadItemDetails(itemId);
-      
+
       // Clear cache to force fresh data fetch with updated calibration dates
       _itemsCache = [];
       await loadInventoryItems();
@@ -3806,14 +3904,16 @@ async function apiMarkOutOfService(id, { reason, notes, at }) {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      Authorization: `Bearer ${getAuthToken()}`,
     },
-    body: JSON.stringify({ reason: reason.trim(), notes, at })
+    body: JSON.stringify({ reason: reason.trim(), notes, at }),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP ${response.status}: Failed to mark item out of service`);
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: Failed to mark item out of service`,
+    );
   }
 
   return await response.json();
@@ -3834,9 +3934,9 @@ async function apiReturnToService(id, { verified, verifiedBy, notes, at }) {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      Authorization: `Bearer ${getAuthToken()}`,
     },
-    body: JSON.stringify({ verified, verifiedBy, notes, at })
+    body: JSON.stringify({ verified, verifiedBy, notes, at }),
   });
 
   if (!response.ok) {
@@ -3856,21 +3956,21 @@ async function apiReturnToService(id, { verified, verifiedBy, notes, at }) {
  */
 async function apiFetchItems({ includeOOS, listId } = {}) {
   const params = new URLSearchParams();
-  
+
   if (includeOOS !== undefined) {
     params.append('includeOOS', includeOOS.toString());
   }
-  
+
   if (listId && listId !== 'all') {
     params.append('listId', listId);
   }
 
   const url = `/api/inventory${params.toString() ? '?' + params.toString() : ''}`;
-  
+
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${getAuthToken()}`
-    }
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
   });
 
   if (!response.ok) {
@@ -3888,8 +3988,8 @@ async function apiFetchItems({ includeOOS, listId } = {}) {
 async function apiFetchSummary() {
   const response = await fetch('/api/inventory/stats/overview', {
     headers: {
-      'Authorization': `Bearer ${getAuthToken()}`
-    }
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
   });
 
   if (!response.ok) {
@@ -3917,20 +4017,20 @@ function setShowOOS(val) {
 }
 
 // --- Small helpers for modals
-function openModal(id) { 
-  document.getElementById(id)?.classList.remove('hidden'); 
+function openModal(id) {
+  document.getElementById(id)?.classList.remove('hidden');
 }
-function closeModal(id) { 
-  document.getElementById(id)?.classList.add('hidden'); 
+function closeModal(id) {
+  document.getElementById(id)?.classList.add('hidden');
 }
 
 // --- Updated API wrappers to match our backend endpoints
 async function apiMarkOutOfServiceFixed(id, payload) {
   const res = await fetch(`/api/inventory/${id}/out-of-service`, {
     method: 'PATCH',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      Authorization: `Bearer ${getAuthToken()}`,
     },
     body: JSON.stringify(payload),
   });
@@ -3944,9 +4044,9 @@ async function apiMarkOutOfServiceFixed(id, payload) {
 async function apiReturnToServiceFixed(id, payload) {
   const res = await fetch(`/api/inventory/${id}/return-to-service`, {
     method: 'PATCH',
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      Authorization: `Bearer ${getAuthToken()}`,
     },
     body: JSON.stringify(payload),
   });
@@ -3959,21 +4059,21 @@ async function apiReturnToServiceFixed(id, payload) {
 
 async function apiFetchItemsFixed(options = {}) {
   const params = new URLSearchParams();
-  
+
   if (options.includeOOS !== undefined) {
     params.append('includeOOS', options.includeOOS.toString());
   }
-  
+
   if (options.listId && options.listId !== 'all') {
     params.append('listId', options.listId);
   }
 
   const url = `/api/inventory${params.toString() ? '?' + params.toString() : ''}`;
-  
+
   const res = await fetch(url, {
-    headers: { 
-      'Authorization': `Bearer ${getAuthToken()}`
-    }
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -3984,9 +4084,9 @@ async function apiFetchItemsFixed(options = {}) {
 
 async function apiFetchSummaryFixed() {
   const res = await fetch('/api/inventory/stats/overview', {
-    headers: { 
-      'Authorization': `Bearer ${getAuthToken()}`
-    }
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -4006,39 +4106,50 @@ function getAuthToken() {
 // --- Utility function to truncate file names
 function truncateFileName(fileName, maxLength = 50) {
   if (!fileName || fileName.length <= maxLength) return fileName;
-  
+
   const extension = fileName.split('.').pop();
   const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
   const maxNameLength = maxLength - extension.length - 4; // Account for "..." and "."
-  
+
   if (nameWithoutExt.length <= maxNameLength) return fileName;
-  
+
   return nameWithoutExt.substring(0, maxNameLength) + '...' + '.' + extension;
 }
 
 // --- Render nickname cell with OOS chip
 function renderStatusCell(item) {
   const chips = [];
-  
+
   // Add OOS chip if out of service
   if (item?.isOutOfService) {
     chips.push('<span class="chip chip-oos">OOS</span>');
   }
-  
+
   // Add Outsourced chip if outsourced
   if (item?.isOutsourced === 1 || item?.isOutsourced === true) {
     chips.push('<span class="chip chip-outsourced">OSC</span>');
   }
-  
+
   return `<div class="status-chips">${chips.join('')}</div>`;
 }
 
 function renderNicknameCell(item) {
   const name = (item?.nickname ?? item?.name ?? '').trim() || '—';
-  const safeName = typeof escapeHtml === 'function' ? escapeHtml(name) : name.replace(/[<>&"']/g, (m) => ({
-    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
-  }[m]));
-  
+  const safeName =
+    typeof escapeHtml === 'function'
+      ? escapeHtml(name)
+      : name.replace(
+          /[<>&"']/g,
+          (m) =>
+            ({
+              '<': '&lt;',
+              '>': '&gt;',
+              '&': '&amp;',
+              '"': '&quot;',
+              "'": '&#39;',
+            })[m],
+        );
+
   return `<span>${safeName}</span>`;
 }
 
@@ -4046,9 +4157,9 @@ function renderNicknameCell(item) {
 function buildActionsMenuHTML(item) {
   const edit = `<button class="menu-item" data-action="edit" data-id="${item.id}">✏️ Edit</button>`;
   const duplicate = `<button class="menu-item" data-action="duplicate" data-id="${item.id}">📋 Duplicate</button>`;
-  const oos  = `<button class="menu-item" data-action="oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
-  const rts  = `<button class="menu-item" data-action="rts" data-id="${item.id}">↩️ Return to Service</button>`;
-  const del  = `<button class="menu-item" data-action="delete" data-id="${item.id}" style="color:#ff6b6b">🗑️ Delete</button>`;
+  const oos = `<button class="menu-item" data-action="oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
+  const rts = `<button class="menu-item" data-action="rts" data-id="${item.id}">↩️ Return to Service</button>`;
+  const del = `<button class="menu-item" data-action="delete" data-id="${item.id}" style="color:#ff6b6b">🗑️ Delete</button>`;
 
   return `
     <div class="action-menu" data-id="${item.id}">
@@ -4104,11 +4215,11 @@ function setupOOSFormHandlers() {
       const reason = document.getElementById('oos-reason').value.trim();
       const reportedBy = document.getElementById('oos-reported-by').value.trim();
       const notes = document.getElementById('oos-notes').value.trim() || undefined;
-      
+
       if (!date) return alert('Date is required');
       if (!reason) return alert('Reason is required');
       if (!reportedBy) return alert('Reported By is required');
-      
+
       try {
         await apiMarkOutOfServiceFixed(id, { date, reason, reportedBy, notes });
         closeModal('modal-oos');
@@ -4130,16 +4241,16 @@ function setupOOSFormHandlers() {
       const date = document.getElementById('rts-date').value;
       const resolvedBy = document.getElementById('rts-resolved-by').value.trim();
       const notes = document.getElementById('rts-notes').value.trim() || undefined;
-      
+
       if (!date) return alert('Date is required');
       if (!resolvedBy) return alert('Issue Resolved By is required');
-      
+
       try {
         await apiReturnToServiceFixed(id, { date, resolvedBy, notes });
         closeModal('modal-rts');
         await refreshData();
         showToast('Item returned to service', 'success');
-        
+
         // Show post-return options modal
         showPostReturnModal(id);
       } catch (err) {
@@ -4154,36 +4265,36 @@ function setupOOSFormHandlers() {
 function showPostReturnModal(itemId) {
   const modal = document.getElementById('modal-post-return');
   if (!modal) return;
-  
+
   modal.classList.remove('hidden');
-  
+
   // Set up event listeners for the buttons
   const btnCalibration = document.getElementById('btn-add-calibration');
   const btnBoth = document.getElementById('btn-add-both-records');
   const btnNotNow = document.getElementById('btn-not-now');
-  
+
   // Remove any existing listeners
   btnCalibration.replaceWith(btnCalibration.cloneNode(true));
   btnBoth.replaceWith(btnBoth.cloneNode(true));
   btnNotNow.replaceWith(btnNotNow.cloneNode(true));
-  
+
   // Get fresh references
   const newBtnCalibration = document.getElementById('btn-add-calibration');
   const newBtnBoth = document.getElementById('btn-add-both-records');
   const newBtnNotNow = document.getElementById('btn-not-now');
-  
+
   newBtnCalibration.addEventListener('click', () => {
     closeModal('modal-post-return');
     showUploadModal('calibration', itemId);
   });
-  
+
   newBtnBoth.addEventListener('click', async () => {
     closeModal('modal-post-return');
     // First show calibration modal, then maintenance after it's saved
     showUploadModal('calibration', itemId);
     // TODO: Add logic to automatically show maintenance modal after calibration is saved
   });
-  
+
   newBtnNotNow.addEventListener('click', () => {
     closeModal('modal-post-return');
   });
@@ -4193,12 +4304,12 @@ function showPostReturnModal(itemId) {
 function openModal(modalId, itemId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
-  
+
   modal.classList.remove('hidden');
-  
+
   // Set default dates to today
   const today = new Date().toISOString().split('T')[0];
-  
+
   if (modalId === 'modal-oos') {
     document.getElementById('oos-item-id').value = itemId;
     document.getElementById('oos-date').value = today;
@@ -4217,8 +4328,9 @@ function openModal(modalId, itemId) {
 
 // ChatGPT's robust action delegation system with dynamic positioning
 function toggleActionMenuForCell(cellEl) {
-  document.querySelectorAll('.actions-cell .action-menu.open')
-    .forEach(m => { if (!cellEl.contains(m)) m.classList.remove('open'); });
+  document.querySelectorAll('.actions-cell .action-menu.open').forEach((m) => {
+    if (!cellEl.contains(m)) m.classList.remove('open');
+  });
 
   const menu = cellEl.querySelector('.action-menu');
   if (menu) {
@@ -4228,11 +4340,11 @@ function toggleActionMenuForCell(cellEl) {
       // Calculate position relative to the button
       const button = cellEl.querySelector('[data-action="more"]');
       const rect = button.getBoundingClientRect();
-      
+
       // Position menu below and to the right of the button
-      menu.style.top = (rect.bottom + 5) + 'px';
-      menu.style.right = (window.innerWidth - rect.right) + 'px';
-      
+      menu.style.top = rect.bottom + 5 + 'px';
+      menu.style.right = window.innerWidth - rect.right + 'px';
+
       menu.classList.add('open');
     }
   }
@@ -4282,8 +4394,9 @@ document.addEventListener('click', (e) => {
 
   // Click-away: close menus when clicking outside any actions cell
   if (!e.target.closest('.actions-cell')) {
-    document.querySelectorAll('.actions-cell .action-menu.open')
-      .forEach(m => m.classList.remove('open'));
+    document
+      .querySelectorAll('.actions-cell .action-menu.open')
+      .forEach((m) => m.classList.remove('open'));
   }
 });
 
@@ -4297,15 +4410,21 @@ async function refreshData() {
   logStep('refreshData:start');
   let items, summary;
   try {
-    const [itemsRes, summaryRes] = await Promise.all([apiFetchItemsFixed(), apiFetchSummaryFixed()]);
+    const [itemsRes, summaryRes] = await Promise.all([
+      apiFetchItemsFixed(),
+      apiFetchSummaryFixed(),
+    ]);
     items = itemsRes?.items || itemsRes; // Handle both {items: []} and [] formats
     summary = summaryRes;
   } catch (e) {
     console.error('[INV] fetch failed', e);
-    items = []; 
+    items = [];
     summary = null;
   }
-  logStep('refreshData:fetched', { count: Array.isArray(items) ? items.length : 'n/a', sample: items?.[0] });
+  logStep('refreshData:fetched', {
+    count: Array.isArray(items) ? items.length : 'n/a',
+    sample: items?.[0],
+  });
 
   _itemsCache = Array.isArray(items) ? items : [];
   try {
@@ -4325,21 +4444,26 @@ async function loadSettingsPage() {
   try {
     // Get current user info
     const response = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${authToken}` }
+      headers: { Authorization: `Bearer ${authToken}` },
     });
-    
+
     if (response.ok) {
       const user = await response.json();
       populateUserSettings(user);
       setupSettingsEventListeners();
-      
+
       // Show/hide cards based on user role
       const isAdminOrOwner = user.role === 'admin' || user.role === 'company_owner';
-      
-      document.getElementById('profileSettingsCard').style.display = isAdminOrOwner ? 'block' : 'none';
-      document.getElementById('passwordSettingsCard').style.display = isAdminOrOwner ? 'block' : 'none';
-      document.getElementById('companySettingsCard').style.display = user.role === 'company_owner' ? 'block' : 'none';
-      
+
+      document.getElementById('profileSettingsCard').style.display = isAdminOrOwner
+        ? 'block'
+        : 'none';
+      document.getElementById('passwordSettingsCard').style.display = isAdminOrOwner
+        ? 'block'
+        : 'none';
+      document.getElementById('companySettingsCard').style.display =
+        user.role === 'company_owner' ? 'block' : 'none';
+
       if (!isAdminOrOwner) {
         document.querySelector('.settings-grid').innerHTML = `
           <div class="settings-card">
@@ -4365,7 +4489,7 @@ function populateUserSettings(user) {
   document.getElementById('profileLastName').value = user.lastName || '';
   document.getElementById('profileEmail').value = user.email || '';
   document.getElementById('profileRole').value = user.role || '';
-  
+
   // Populate hidden username field for password managers
   const hiddenUsername = document.getElementById('hiddenUsername');
   if (hiddenUsername) {
@@ -4380,22 +4504,22 @@ function setupSettingsEventListeners() {
     saveProfileBtn.addEventListener('click', async () => {
       const firstName = document.getElementById('profileFirstName').value.trim();
       const lastName = document.getElementById('profileLastName').value.trim();
-      
+
       if (!firstName || !lastName) {
         showToast('First name and last name are required', 'error');
         return;
       }
-      
+
       try {
         const response = await fetch('/api/auth/update-profile', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`
+            Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify({ firstName, lastName })
+          body: JSON.stringify({ firstName, lastName }),
         });
-        
+
         if (response.ok) {
           showToast('Profile updated successfully', 'success');
         } else {
@@ -4408,7 +4532,7 @@ function setupSettingsEventListeners() {
       }
     });
   }
-  
+
   // Password change
   const changePasswordBtn = document.getElementById('changePasswordBtn');
   if (changePasswordBtn) {
@@ -4416,32 +4540,32 @@ function setupSettingsEventListeners() {
       const currentPassword = document.getElementById('currentPassword').value;
       const newPassword = document.getElementById('newPassword').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      
+
       if (!currentPassword || !newPassword || !confirmPassword) {
         showToast('All password fields are required', 'error');
         return;
       }
-      
+
       if (newPassword !== confirmPassword) {
         showToast('New passwords do not match', 'error');
         return;
       }
-      
+
       if (newPassword.length < 6) {
         showToast('New password must be at least 6 characters', 'error');
         return;
       }
-      
+
       try {
         const response = await fetch('/api/auth/change-password', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`
+            Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify({ currentPassword, newPassword })
+          body: JSON.stringify({ currentPassword, newPassword }),
         });
-        
+
         if (response.ok) {
           showToast('Password changed successfully', 'success');
           // Clear password fields
@@ -4465,9 +4589,9 @@ async function loadCompanyPage() {
   try {
     // Get current user and company info
     const response = await fetch('/api/company/info', {
-      headers: { Authorization: `Bearer ${authToken}` }
+      headers: { Authorization: `Bearer ${authToken}` },
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       populateCompanyInfo(data.company);
@@ -4485,7 +4609,7 @@ async function loadCompanyPage() {
 function populateCompanyInfo(company) {
   const content = document.getElementById('companyInfoContent');
   if (!content) return;
-  
+
   if (!company) {
     content.innerHTML = `
       <div class="company-info-empty">
@@ -4494,7 +4618,7 @@ function populateCompanyInfo(company) {
     `;
     return;
   }
-  
+
   content.innerHTML = `
     <div class="company-info-display">
       <div class="company-info-row">
@@ -4544,20 +4668,24 @@ function populateCompanyInfo(company) {
         <div class="company-info-value">${company.country || 'United States'}</div>
       </div>
       
-      ${company.description ? `
+      ${
+        company.description
+          ? `
         <div class="company-info-field">
           <div class="company-info-label">Description</div>
           <div class="company-info-value">${company.description}</div>
         </div>
-      ` : ''}
+      `
+          : ''
+      }
     </div>
   `;
-  
+
   // Update logo display
   const logoImg = document.getElementById('companyLogoImg');
   const noLogoPlaceholder = document.getElementById('noLogoPlaceholder');
   const removeLogoBtn = document.getElementById('removeLogoBtn');
-  
+
   if (company.logo) {
     logoImg.src = company.logo;
     logoImg.style.display = 'block';
@@ -4573,13 +4701,15 @@ function populateCompanyInfo(company) {
 function populateCompanyUsers(users) {
   const usersList = document.getElementById('companyUsersList');
   if (!usersList) return;
-  
+
   if (!users || users.length === 0) {
     usersList.innerHTML = '<p class="company-info-empty">No users found.</p>';
     return;
   }
-  
-  usersList.innerHTML = users.map(user => `
+
+  usersList.innerHTML = users
+    .map(
+      (user) => `
     <div class="user-item">
       <div class="user-info">
         <div class="user-name">${user.firstName} ${user.lastName}</div>
@@ -4587,14 +4717,20 @@ function populateCompanyUsers(users) {
       </div>
       <div class="user-actions">
         <span class="user-role">${user.role.replace('_', ' ')}</span>
-        ${user.role !== 'company_owner' ? `
+        ${
+          user.role !== 'company_owner'
+            ? `
           <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')">
             <i class="fas fa-edit"></i>
           </button>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     </div>
-  `).join('');
+  `,
+    )
+    .join('');
 }
 
 function setupCompanyEventListeners() {
@@ -4603,7 +4739,7 @@ function setupCompanyEventListeners() {
   if (editCompanyBtn) {
     editCompanyBtn.addEventListener('click', showEditCompanyModal);
   }
-  
+
   // Logo upload button
   const uploadLogoBtn = document.getElementById('uploadLogoBtn');
   const logoFileInput = document.getElementById('logoFileInput');
@@ -4611,25 +4747,25 @@ function setupCompanyEventListeners() {
     uploadLogoBtn.addEventListener('click', () => logoFileInput.click());
     logoFileInput.addEventListener('change', handleLogoUpload);
   }
-  
+
   // Remove logo button
   const removeLogoBtn = document.getElementById('removeLogoBtn');
   if (removeLogoBtn) {
     removeLogoBtn.addEventListener('click', handleLogoRemove);
   }
-  
+
   // Invite user button
   const inviteUserBtn = document.getElementById('inviteUserBtn');
   if (inviteUserBtn) {
     inviteUserBtn.addEventListener('click', showInviteUserModal);
   }
-  
+
   // Edit company form
   const editCompanyForm = document.getElementById('form-edit-company');
   if (editCompanyForm) {
     editCompanyForm.addEventListener('submit', handleEditCompanySubmit);
   }
-  
+
   // Invite user form
   const inviteUserForm = document.getElementById('form-invite-user');
   if (inviteUserForm) {
@@ -4641,13 +4777,13 @@ async function showEditCompanyModal() {
   try {
     // Get current company data
     const response = await fetch('/api/company/info', {
-      headers: { Authorization: `Bearer ${authToken}` }
+      headers: { Authorization: `Bearer ${authToken}` },
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       const company = data.company;
-      
+
       // Populate form fields
       document.getElementById('edit-company-name').value = company.name || '';
       document.getElementById('edit-company-phone').value = company.phone || '';
@@ -4659,7 +4795,7 @@ async function showEditCompanyModal() {
       document.getElementById('edit-company-zip').value = company.zipCode || '';
       document.getElementById('edit-company-country').value = company.country || 'United States';
       document.getElementById('edit-company-description').value = company.description || '';
-      
+
       // Show modal
       document.getElementById('modal-edit-company').classList.remove('hidden');
     }
@@ -4678,7 +4814,7 @@ function showInviteUserModal() {
 
 async function handleEditCompanySubmit(e) {
   e.preventDefault();
-  
+
   const formData = {
     name: document.getElementById('edit-company-name').value.trim(),
     phone: document.getElementById('edit-company-phone').value.trim(),
@@ -4691,22 +4827,22 @@ async function handleEditCompanySubmit(e) {
     country: document.getElementById('edit-company-country').value.trim(),
     description: document.getElementById('edit-company-description').value.trim(),
   };
-  
+
   if (!formData.name) {
     showToast('Company name is required', 'error');
     return;
   }
-  
+
   try {
     const response = await fetch('/api/company/update', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`
+        Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(formData),
     });
-    
+
     if (response.ok) {
       showToast('Company information updated successfully', 'success');
       closeModal('modal-edit-company');
@@ -4723,29 +4859,29 @@ async function handleEditCompanySubmit(e) {
 
 async function handleInviteUserSubmit(e) {
   e.preventDefault();
-  
+
   const formData = {
     email: document.getElementById('invite-user-email').value.trim(),
     firstName: document.getElementById('invite-user-first-name').value.trim(),
     lastName: document.getElementById('invite-user-last-name').value.trim(),
     role: document.getElementById('invite-user-role').value,
   };
-  
+
   if (!formData.email || !formData.firstName || !formData.lastName || !formData.role) {
     showToast('All fields are required', 'error');
     return;
   }
-  
+
   try {
     const response = await fetch('/api/company/invite-user', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`
+        Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(formData),
     });
-    
+
     if (response.ok) {
       const result = await response.json();
       showToast(`Invitation sent to ${formData.email}`, 'success');
@@ -4764,31 +4900,31 @@ async function handleInviteUserSubmit(e) {
 async function handleLogoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  
+
   // Validate file type
   if (!file.type.startsWith('image/')) {
     showToast('Please select an image file', 'error');
     return;
   }
-  
+
   // Validate file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     showToast('Image must be smaller than 5MB', 'error');
     return;
   }
-  
+
   const formData = new FormData();
   formData.append('logo', file);
-  
+
   try {
     const response = await fetch('/api/company/upload-logo', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${authToken}`
+        Authorization: `Bearer ${authToken}`,
       },
-      body: formData
+      body: formData,
     });
-    
+
     if (response.ok) {
       showToast('Logo uploaded successfully', 'success');
       loadCompanyPage(); // Refresh to show new logo
@@ -4806,15 +4942,15 @@ async function handleLogoRemove() {
   if (!confirm('Are you sure you want to remove the company logo?')) {
     return;
   }
-  
+
   try {
     const response = await fetch('/api/company/remove-logo', {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${authToken}`
-      }
+        Authorization: `Bearer ${authToken}`,
+      },
     });
-    
+
     if (response.ok) {
       showToast('Logo removed successfully', 'success');
       loadCompanyPage(); // Refresh to hide logo
@@ -4834,7 +4970,7 @@ async function handleInviteLink(inviteCode) {
     // Validate invite code and get details
     const response = await fetch(`/api/auth/validate-invite/${inviteCode}`);
     const data = await response.json();
-    
+
     if (response.ok) {
       // Show invite confirmation page with pre-filled data
       showInviteConfirmation(data.invite, inviteCode);
@@ -4855,31 +4991,33 @@ function showInviteConfirmation(inviteData, inviteCode) {
   document.getElementById('loginContainer').style.display = 'none';
   document.getElementById('registerContainer').style.display = 'none';
   document.getElementById('dashboard').style.display = 'none';
-  
+
   // Show invite confirmation
   const container = document.getElementById('inviteConfirmContainer');
   container.style.display = 'flex';
-  
+
   // Populate invite details
-  document.getElementById('companyWelcomeText').textContent = `Join ${inviteData.companyName} on Inventory Manager`;
-  document.getElementById('inviteFullName').textContent = `${inviteData.firstName} ${inviteData.lastName}`;
+  document.getElementById('companyWelcomeText').textContent =
+    `Join ${inviteData.companyName} on Inventory Manager`;
+  document.getElementById('inviteFullName').textContent =
+    `${inviteData.firstName} ${inviteData.lastName}`;
   document.getElementById('inviteEmail').textContent = inviteData.email;
   document.getElementById('inviteRole').textContent = formatRole(inviteData.role);
   document.getElementById('inviteCompany').textContent = inviteData.companyName;
   document.getElementById('confirmInviteCode').value = inviteCode;
-  
+
   // Setup form handlers
   setupInviteConfirmationHandlers();
 }
 
 function formatRole(role) {
   const roleMap = {
-    'company_owner': 'Company Owner',
-    'company_manager': 'Company Manager', 
-    'region_manager': 'Region Manager',
-    'lab_manager': 'Lab Manager',
-    'user': 'User',
-    'viewer': 'Viewer'
+    company_owner: 'Company Owner',
+    company_manager: 'Company Manager',
+    region_manager: 'Region Manager',
+    lab_manager: 'Lab Manager',
+    user: 'User',
+    viewer: 'Viewer',
   };
   return roleMap[role] || role;
 }
@@ -4888,28 +5026,28 @@ function setupInviteConfirmationHandlers() {
   // Password toggle
   const toggleBtn = document.getElementById('toggleConfirmPassword');
   const passwordInput = document.getElementById('confirmPassword');
-  
+
   if (toggleBtn && passwordInput) {
-    toggleBtn.addEventListener('click', function() {
+    toggleBtn.addEventListener('click', function () {
       const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
       passwordInput.setAttribute('type', type);
-      
+
       const icon = this.querySelector('i');
       icon.classList.toggle('fa-eye');
       icon.classList.toggle('fa-eye-slash');
     });
   }
-  
+
   // Form submission
   const form = document.getElementById('inviteConfirmForm');
   if (form) {
     form.addEventListener('submit', handleInviteConfirmation);
   }
-  
+
   // Cancel button
   const cancelBtn = document.getElementById('cancelInviteBtn');
   if (cancelBtn) {
-    cancelBtn.addEventListener('click', function() {
+    cancelBtn.addEventListener('click', function () {
       if (confirm('Are you sure you want to cancel this invitation?')) {
         // Clear URL and go to login
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -4921,21 +5059,21 @@ function setupInviteConfirmationHandlers() {
 
 async function handleInviteConfirmation(event) {
   event.preventDefault();
-  
+
   const form = event.target;
   const submitBtn = form.querySelector('button[type="submit"]');
   const btnText = submitBtn.querySelector('.btn-text');
   const btnLoader = submitBtn.querySelector('.btn-loader');
-  
+
   // Show loading state
   btnText.style.display = 'none';
   btnLoader.style.display = 'block';
   submitBtn.disabled = true;
-  
+
   try {
     const inviteCode = document.getElementById('confirmInviteCode').value;
     const password = document.getElementById('confirmPassword').value;
-    
+
     const response = await fetch('/api/auth/accept-invite', {
       method: 'POST',
       headers: {
@@ -4943,24 +5081,24 @@ async function handleInviteConfirmation(event) {
       },
       body: JSON.stringify({
         inviteCode,
-        password
+        password,
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok) {
       // Account created successfully
       authToken = data.token;
       currentUser = data.user;
-      
+
       // Store auth data
       localStorage.setItem('authToken', authToken);
       localStorage.setItem('user', JSON.stringify(currentUser));
-      
+
       // Clear URL
       window.history.replaceState({}, document.title, window.location.pathname);
-      
+
       showToast('Account created successfully! Welcome to the team!', 'success');
       showDashboard();
     } else {
@@ -4981,13 +5119,13 @@ async function handleInviteConfirmation(event) {
 function showExportModal() {
   const modal = document.getElementById('modal-export-inventory');
   if (!modal) return;
-  
+
   // Update item counts
   updateExportItemCounts();
-  
+
   // Show modal
   modal.classList.remove('hidden');
-  
+
   // Setup event listeners if not already done
   setupExportModalHandlers();
 }
@@ -4995,12 +5133,12 @@ function showExportModal() {
 function updateExportItemCounts() {
   const allItemsCount = document.getElementById('allItemsCount');
   const visibleItemsCount = document.getElementById('visibleItemsCount');
-  
+
   if (allItemsCount) {
     const totalItems = window.inventoryItems ? window.inventoryItems.length : 0;
     allItemsCount.textContent = `${totalItems} items`;
   }
-  
+
   if (visibleItemsCount) {
     const visibleRows = document.querySelectorAll('#inventoryTableBody tr:not(.empty-row)').length;
     visibleItemsCount.textContent = `${visibleRows} items`;
@@ -5010,12 +5148,12 @@ function updateExportItemCounts() {
 function setupExportModalHandlers() {
   const confirmBtn = document.getElementById('confirmExportBtn');
   const exportBtn = document.getElementById('exportInventoryBtn');
-  
+
   if (exportBtn && !exportBtn.hasAttribute('data-export-setup')) {
     exportBtn.addEventListener('click', showExportModal);
     exportBtn.setAttribute('data-export-setup', 'true');
   }
-  
+
   if (confirmBtn && !confirmBtn.hasAttribute('data-export-setup')) {
     confirmBtn.addEventListener('click', handleExportConfirm);
     confirmBtn.setAttribute('data-export-setup', 'true');
@@ -5025,15 +5163,15 @@ function setupExportModalHandlers() {
 async function handleExportConfirm() {
   const exportType = document.querySelector('input[name="exportType"]:checked')?.value;
   if (!exportType) return;
-  
+
   const confirmBtn = document.getElementById('confirmExportBtn');
   const originalText = confirmBtn.innerHTML;
-  
+
   try {
     // Show loading state
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
     confirmBtn.disabled = true;
-    
+
     // Get data to export
     let dataToExport;
     if (exportType === 'all') {
@@ -5041,14 +5179,13 @@ async function handleExportConfirm() {
     } else {
       dataToExport = getVisibleItems();
     }
-    
+
     // Export to Excel
     await exportToExcel(dataToExport, exportType);
-    
+
     // Close modal
     closeModal('modal-export-inventory');
     showToast('Inventory exported successfully!', 'success');
-    
   } catch (error) {
     console.error('Export error:', error);
     showToast('Failed to export inventory', 'error');
@@ -5062,73 +5199,83 @@ async function handleExportConfirm() {
 function getVisibleItems() {
   const visibleItems = [];
   const tableRows = document.querySelectorAll('#inventoryTableBody tr:not(.empty-row)');
-  
-  tableRows.forEach(row => {
+
+  tableRows.forEach((row) => {
     // Get item ID from the row's action buttons
     const viewBtn = row.querySelector('[data-action="view"]');
     if (viewBtn) {
       const itemId = viewBtn.getAttribute('data-id');
-      const item = window.inventoryItems?.find(item => item.id === itemId);
+      const item = window.inventoryItems?.find((item) => item.id === itemId);
       if (item) {
         visibleItems.push(item);
       }
     }
   });
-  
+
   return visibleItems;
 }
 
 async function exportToExcel(items, exportType) {
   // Import XLSX library dynamically
   const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
-  
+
   // Prepare data for export
-  const exportData = items.map(item => ({
+  const exportData = items.map((item) => ({
     'Item Type': item.itemType || '',
-    'Nickname': item.nickname || '',
+    Nickname: item.nickname || '',
     'Lab ID': item.labId || '',
-    'Make': item.make || '',
-    'Model': item.model || '',
+    Make: item.make || '',
+    Model: item.model || '',
     'Serial Number': item.serialNumber || '',
-    'Condition': item.condition || '',
+    Condition: item.condition || '',
     'Date Received': item.dateReceived ? new Date(item.dateReceived).toLocaleDateString() : '',
-    'Location': item.location || '',
-    'Last Calibration': item.calibrationDate ? new Date(item.calibrationDate).toLocaleDateString() : '',
-    'Next Calibration Due': item.nextCalibrationDue ? new Date(item.nextCalibrationDue).toLocaleDateString() : '',
-    'Calibration Interval': item.calibrationInterval && item.calibrationIntervalType ? 
-      `${item.calibrationInterval} ${item.calibrationIntervalType}` : '',
+    Location: item.location || '',
+    'Last Calibration': item.calibrationDate
+      ? new Date(item.calibrationDate).toLocaleDateString()
+      : '',
+    'Next Calibration Due': item.nextCalibrationDue
+      ? new Date(item.nextCalibrationDue).toLocaleDateString()
+      : '',
+    'Calibration Interval':
+      item.calibrationInterval && item.calibrationIntervalType
+        ? `${item.calibrationInterval} ${item.calibrationIntervalType}`
+        : '',
     'Calibration Method': item.calibrationMethod || '',
-    'Last Maintenance': item.maintenanceDate ? new Date(item.maintenanceDate).toLocaleDateString() : '',
-    'Maintenance Due': item.maintenanceDue ? new Date(item.maintenanceDue).toLocaleDateString() : '',
-    'Notes': item.notes || '',
-    'Status': getItemStatus(item),
-    'Outsourced': item.isOutsourced ? 'Yes' : 'No'
+    'Last Maintenance': item.maintenanceDate
+      ? new Date(item.maintenanceDate).toLocaleDateString()
+      : '',
+    'Maintenance Due': item.maintenanceDue
+      ? new Date(item.maintenanceDue).toLocaleDateString()
+      : '',
+    Notes: item.notes || '',
+    Status: getItemStatus(item),
+    Outsourced: item.isOutsourced ? 'Yes' : 'No',
   }));
-  
+
   // Create workbook and worksheet
   const workbook = XLSX.utils.book_new();
   const worksheet = XLSX.utils.json_to_sheet(exportData);
-  
+
   // Auto-size columns
   const colWidths = [];
   const headers = Object.keys(exportData[0] || {});
   headers.forEach((header, index) => {
     const maxLength = Math.max(
       header.length,
-      ...exportData.map(row => String(row[header] || '').length)
+      ...exportData.map((row) => String(row[header] || '').length),
     );
     colWidths[index] = { width: Math.min(Math.max(maxLength + 2, 10), 50) };
   });
   worksheet['!cols'] = colWidths;
-  
+
   // Add worksheet to workbook
   const sheetName = exportType === 'all' ? 'All Inventory' : 'Filtered Inventory';
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  
+
   // Generate filename with timestamp
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   const filename = `Inventory_Export_${exportType}_${timestamp}.xlsx`;
-  
+
   // Download file
   XLSX.writeFile(workbook, filename);
 }
@@ -5145,28 +5292,28 @@ let searchState = {
   query: '',
   matches: [],
   currentMatchIndex: -1,
-  isActive: false
+  isActive: false,
 };
 
 function initializeSearch() {
   const searchInput = document.getElementById('searchInventory');
   const searchPrevBtn = document.getElementById('searchPrevBtn');
   const searchNextBtn = document.getElementById('searchNextBtn');
-  
+
   if (!searchInput) return;
-  
+
   // Search as you type
   searchInput.addEventListener('input', handleSearchInput);
-  
+
   // Navigation buttons
   if (searchPrevBtn) {
     searchPrevBtn.addEventListener('click', () => navigateToMatch(-1));
   }
-  
+
   if (searchNextBtn) {
     searchNextBtn.addEventListener('click', () => navigateToMatch(1));
   }
-  
+
   // Keyboard shortcuts
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -5174,7 +5321,7 @@ function initializeSearch() {
       if (e.shiftKey) {
         navigateToMatch(-1); // Shift+Enter = Previous
       } else {
-        navigateToMatch(1);  // Enter = Next
+        navigateToMatch(1); // Enter = Next
       }
     } else if (e.key === 'Escape') {
       clearSearch();
@@ -5186,69 +5333,69 @@ function initializeSearch() {
 function handleSearchInput(e) {
   const query = e.target.value.trim();
   searchState.query = query;
-  
+
   if (query.length === 0) {
     clearSearch();
     return;
   }
-  
+
   if (query.length < 2) {
     // Don't search for single characters
     hideSearchPopup();
     return;
   }
-  
+
   performSearch(query);
 }
 
 function performSearch(query) {
   // Clear previous highlights
   clearHighlights();
-  
+
   const tableBody = document.getElementById('inventoryTableBody');
   if (!tableBody) return;
-  
+
   const rows = Array.from(tableBody.querySelectorAll('tr:not(.empty-row)'));
   const matches = [];
-  
+
   // Search through all visible rows
   rows.forEach((row, rowIndex) => {
     const cells = row.querySelectorAll('td');
     let rowHasMatch = false;
-    
+
     cells.forEach((cell, cellIndex) => {
       // Skip action column and status column
       if (cellIndex === 0 || cell.classList.contains('actions')) return;
-      
+
       const cellText = cell.textContent || '';
       const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-      
+
       if (regex.test(cellText)) {
         rowHasMatch = true;
-        
+
         // Highlight matches in this cell
         const highlightedHTML = cellText.replace(regex, '<span class="search-highlight">$1</span>');
-        
+
         // Store original content if not already stored
         if (!cell.hasAttribute('data-original-content')) {
           cell.setAttribute('data-original-content', cell.innerHTML);
         }
-        
+
         cell.innerHTML = highlightedHTML;
-        
+
         // Add to matches array
         const highlightSpans = cell.querySelectorAll('.search-highlight');
-        highlightSpans.forEach(span => {
+        highlightSpans.forEach((span) => {
           matches.push({
             element: span,
             row: row,
             rowIndex: rowIndex,
-            cellIndex: cellIndex
+            cellIndex: cellIndex,
           });
         });
       }
     });
-    
+
     // Show/hide row based on match
     if (rowHasMatch) {
       row.style.display = '';
@@ -5256,15 +5403,15 @@ function performSearch(query) {
       row.style.display = 'none';
     }
   });
-  
+
   // Update search state
   searchState.matches = matches;
   searchState.currentMatchIndex = matches.length > 0 ? 0 : -1;
   searchState.isActive = true;
-  
+
   // Update UI
   updateSearchUI();
-  
+
   // Highlight current match and scroll to it
   if (matches.length > 0) {
     highlightCurrentMatch();
@@ -5277,7 +5424,7 @@ function clearSearch() {
   searchState.matches = [];
   searchState.currentMatchIndex = -1;
   searchState.isActive = false;
-  
+
   clearHighlights();
   showAllRows();
   hideSearchPopup();
@@ -5286,7 +5433,7 @@ function clearSearch() {
 function clearHighlights() {
   // Restore original content for all cells with highlights
   const highlightedCells = document.querySelectorAll('td[data-original-content]');
-  highlightedCells.forEach(cell => {
+  highlightedCells.forEach((cell) => {
     cell.innerHTML = cell.getAttribute('data-original-content');
     cell.removeAttribute('data-original-content');
   });
@@ -5295,26 +5442,26 @@ function clearHighlights() {
 function showAllRows() {
   const tableBody = document.getElementById('inventoryTableBody');
   if (!tableBody) return;
-  
+
   const rows = tableBody.querySelectorAll('tr:not(.empty-row)');
-  rows.forEach(row => {
+  rows.forEach((row) => {
     row.style.display = '';
   });
 }
 
 function navigateToMatch(direction) {
   if (searchState.matches.length === 0) return;
-  
+
   // Update current match index
   searchState.currentMatchIndex += direction;
-  
+
   // Wrap around
   if (searchState.currentMatchIndex >= searchState.matches.length) {
     searchState.currentMatchIndex = 0;
   } else if (searchState.currentMatchIndex < 0) {
     searchState.currentMatchIndex = searchState.matches.length - 1;
   }
-  
+
   highlightCurrentMatch();
   scrollToCurrentMatch();
   updateSearchUI();
@@ -5323,10 +5470,10 @@ function navigateToMatch(direction) {
 function highlightCurrentMatch() {
   // Remove current-match class from all highlights
   const allHighlights = document.querySelectorAll('.search-highlight');
-  allHighlights.forEach(highlight => {
+  allHighlights.forEach((highlight) => {
     highlight.classList.remove('current-match');
   });
-  
+
   // Add current-match class to current highlight
   if (searchState.currentMatchIndex >= 0 && searchState.matches[searchState.currentMatchIndex]) {
     const currentMatch = searchState.matches[searchState.currentMatchIndex];
@@ -5338,12 +5485,12 @@ function scrollToCurrentMatch() {
   if (searchState.currentMatchIndex >= 0 && searchState.matches[searchState.currentMatchIndex]) {
     const currentMatch = searchState.matches[searchState.currentMatchIndex];
     const row = currentMatch.row;
-    
+
     // Scroll the row into view
     row.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
-      inline: 'nearest'
+      inline: 'nearest',
     });
   }
 }
@@ -5353,30 +5500,30 @@ function updateSearchUI() {
   const searchPopup = document.getElementById('searchResultsPopup');
   const searchPrevBtn = document.getElementById('searchPrevBtn');
   const searchNextBtn = document.getElementById('searchNextBtn');
-  
+
   if (!searchCount || !searchPopup) return;
-  
+
   const matchCount = searchState.matches.length;
   const currentIndex = searchState.currentMatchIndex + 1;
-  
+
   if (matchCount === 0) {
     searchCount.textContent = 'No matches';
   } else {
     searchCount.textContent = `${currentIndex} of ${matchCount} matches`;
   }
-  
+
   // Show/hide popup
   if (searchState.isActive && searchState.query.length >= 2) {
     searchPopup.style.display = 'flex';
   } else {
     searchPopup.style.display = 'none';
   }
-  
+
   // Enable/disable navigation buttons
   if (searchPrevBtn) {
     searchPrevBtn.disabled = matchCount === 0;
   }
-  
+
   if (searchNextBtn) {
     searchNextBtn.disabled = matchCount === 0;
   }
@@ -5397,15 +5544,15 @@ function escapeRegExp(string) {
 let duplicateItemData = null; // Store original item data for duplication
 
 function duplicateItem(itemId) {
-  const item = window.inventoryItems?.find(item => item.id === itemId);
+  const item = window.inventoryItems?.find((item) => item.id === itemId);
   if (!item) {
     showToast('Item not found', 'error');
     return;
   }
-  
+
   // Store original item data
   duplicateItemData = { ...item };
-  
+
   // Show duplicate modal and populate with item data
   showDuplicateModal(item);
 }
@@ -5413,13 +5560,13 @@ function duplicateItem(itemId) {
 function showDuplicateModal(item) {
   const modal = document.getElementById('duplicateItemModal');
   if (!modal) return;
-  
+
   // Populate form with item data (excluding ID and dates that should be fresh)
   populateDuplicateForm(item);
-  
+
   // Show modal
   modal.style.display = 'flex';
-  
+
   // Setup form handlers if not already done
   setupDuplicateFormHandlers();
 }
@@ -5433,91 +5580,104 @@ function populateDuplicateForm(item) {
   document.getElementById('dupModel').value = item.model || '';
   document.getElementById('dupSerialNumber').value = ''; // Clear serial number for new item
   document.getElementById('dupCondition').value = item.condition || '';
-  
+
   // Set today's date for received and in-service dates
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('dupDateReceived').value = today;
   document.getElementById('dupDatePlacedInService').value = today;
-  
+
   // Location
   document.getElementById('dupLocation').value = item.location || '';
-  
+
   // Calibration Information
   const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
   document.getElementById('dupCalibrationType').value = calibrationType;
   document.getElementById('dupCalibrationDate').value = today; // Set to today for new calibration
-  
+
   // Calculate next calibration due based on interval
   if (item.calibrationInterval && item.calibrationIntervalType) {
-    const nextDue = calculateNextDate(today, item.calibrationInterval, item.calibrationIntervalType);
+    const nextDue = calculateNextDate(
+      today,
+      item.calibrationInterval,
+      item.calibrationIntervalType,
+    );
     document.getElementById('dupNextCalibrationDue').value = nextDue;
   }
-  
+
   document.getElementById('dupCalibrationInterval').value = item.calibrationInterval || 12;
-  document.getElementById('dupCalibrationIntervalType').value = item.calibrationIntervalType || 'months';
+  document.getElementById('dupCalibrationIntervalType').value =
+    item.calibrationIntervalType || 'months';
   document.getElementById('dupCalibrationMethod').value = item.calibrationMethod || '';
-  
+
   // Maintenance Information
   const useMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
   document.getElementById('dupUseMaintenance').checked = !!useMaintenance;
-  
+
   if (useMaintenance) {
     document.getElementById('dupMaintenanceFields').style.display = 'block';
     document.getElementById('dupMaintenanceDate').value = today; // Set to today for new maintenance
-    
+
     if (item.maintenanceInterval && item.maintenanceIntervalType) {
-      const nextMaintenanceDue = calculateNextDate(today, item.maintenanceInterval, item.maintenanceIntervalType);
+      const nextMaintenanceDue = calculateNextDate(
+        today,
+        item.maintenanceInterval,
+        item.maintenanceIntervalType,
+      );
       document.getElementById('dupMaintenanceDue').value = nextMaintenanceDue;
     }
-    
+
     document.getElementById('dupMaintenanceInterval').value = item.maintenanceInterval || 6;
-    document.getElementById('dupMaintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
+    document.getElementById('dupMaintenanceIntervalType').value =
+      item.maintenanceIntervalType || 'months';
   }
-  
+
   // Notes
   document.getElementById('dupNotes').value = item.notes || '';
-  
+
   // List selection
   populateListDropdownForDuplicate('dupListId', item.listId);
-  
+
   // Clear the duplicate checkbox
   document.getElementById('duplicateAfterDuplicate').checked = false;
-  
+
   // Re-setup auto-calculation for the duplicate form
   setupDateAutoCalculation();
 }
 
 function calculateNextDate(startDate, interval, intervalType) {
   const date = new Date(startDate);
-  
+
   switch (intervalType) {
     case 'days':
       date.setDate(date.getDate() + parseInt(interval));
       break;
     case 'weeks':
-      date.setDate(date.getDate() + (parseInt(interval) * 7));
+      date.setDate(date.getDate() + parseInt(interval) * 7);
       break;
     case 'months':
       date.setMonth(date.getMonth() + parseInt(interval));
       break;
   }
-  
+
   return date.toISOString().split('T')[0];
 }
 
 function populateListDropdownForDuplicate(selectId, selectedListId) {
   const listSelect = document.getElementById(selectId);
   if (!listSelect) return;
-  
+
   // Use the globally stored lists from loadListsIntoSelectors
   const lists = window.loadedLists || [];
-  
+
   if (lists.length === 0) {
     listSelect.innerHTML = '<option value="">No lists available</option>';
   } else {
-    listSelect.innerHTML = lists.map(l => 
-      `<option value="${l.id}" ${l.id === selectedListId ? 'selected' : ''}>${l.name}</option>`
-    ).join('');
+    listSelect.innerHTML = lists
+      .map(
+        (l) =>
+          `<option value="${l.id}" ${l.id === selectedListId ? 'selected' : ''}>${l.name}</option>`,
+      )
+      .join('');
   }
 }
 
@@ -5526,27 +5686,27 @@ function setupDuplicateFormHandlers() {
   const cancelBtn = document.getElementById('cancelDuplicateItem');
   const closeBtn = document.getElementById('closeDuplicateItemModal');
   const maintenanceCheckbox = document.getElementById('dupUseMaintenance');
-  
+
   // Form submission
   if (form && !form.hasAttribute('data-duplicate-setup')) {
     form.addEventListener('submit', handleDuplicateSubmit);
     form.setAttribute('data-duplicate-setup', 'true');
   }
-  
+
   // Cancel and close buttons
   if (cancelBtn && !cancelBtn.hasAttribute('data-duplicate-setup')) {
     cancelBtn.addEventListener('click', closeDuplicateModal);
     cancelBtn.setAttribute('data-duplicate-setup', 'true');
   }
-  
+
   if (closeBtn && !closeBtn.hasAttribute('data-duplicate-setup')) {
     closeBtn.addEventListener('click', closeDuplicateModal);
     closeBtn.setAttribute('data-duplicate-setup', 'true');
   }
-  
+
   // Maintenance checkbox toggle
   if (maintenanceCheckbox && !maintenanceCheckbox.hasAttribute('data-duplicate-setup')) {
-    maintenanceCheckbox.addEventListener('change', function() {
+    maintenanceCheckbox.addEventListener('change', function () {
       const fields = document.getElementById('dupMaintenanceFields');
       if (fields) {
         fields.style.display = this.checked ? 'block' : 'none';
@@ -5561,70 +5721,68 @@ function closeDuplicateModal() {
   if (modal) {
     modal.style.display = 'none';
   }
-  
+
   // Clear form
   const form = document.getElementById('duplicateItemForm');
   if (form) {
     form.reset();
   }
-  
+
   // Clear stored data
   duplicateItemData = null;
 }
 
 async function handleDuplicateSubmit(e) {
   e.preventDefault();
-  
+
   const form = e.target;
   const formData = new FormData(form);
   const submitBtn = form.querySelector('button[type="submit"]');
   const btnText = submitBtn.querySelector('.btn-text');
   const btnLoader = submitBtn.querySelector('.btn-loader');
   const duplicateAfter = document.getElementById('duplicateAfterDuplicate').checked;
-  
+
   // Show loading state
   btnText.style.display = 'none';
   btnLoader.style.display = 'block';
   submitBtn.disabled = true;
-  
+
   try {
     // Create the duplicate item
     const response = await fetch('/api/inventory', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
       },
-      body: formData
+      body: formData,
     });
-    
+
     if (response.ok) {
       const newItem = await response.json();
-      
+
       // Store original data before closing modal (in case we need to chain)
       const originalItemData = duplicateItemData;
-      
+
       // Close modal
       closeDuplicateModal();
-      
+
       // Refresh inventory
       _itemsCache = []; // Clear cache
       await loadInventoryItems();
       await loadInventoryStats();
-      
+
       showToast('Item duplicated successfully!', 'success');
-      
+
       // If duplicate checkbox was checked, open another duplicate form
       if (duplicateAfter && originalItemData) {
         setTimeout(() => {
           showDuplicateModal(originalItemData);
         }, 500);
       }
-      
     } else {
       const errorData = await response.json();
       showToast(errorData.error || 'Failed to duplicate item', 'error');
     }
-    
   } catch (error) {
     console.error('Error duplicating item:', error);
     showToast('Network error. Please try again.', 'error');
@@ -5640,64 +5798,62 @@ async function handleDuplicateSubmit(e) {
 function updateAddItemFormHandler() {
   const form = document.getElementById('addItemForm');
   if (!form) return;
-  
+
   // Remove existing listener
   const newForm = form.cloneNode(true);
   form.parentNode.replaceChild(newForm, form);
-  
+
   // Add new listener with duplicate support
-  newForm.addEventListener('submit', async function(e) {
+  newForm.addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const btnText = submitBtn.querySelector('.btn-text');
     const btnLoader = submitBtn.querySelector('.btn-loader');
     const duplicateAfter = document.getElementById('duplicateAfterAdd').checked;
-    
+
     // Show loading state
     btnText.style.display = 'none';
     btnLoader.style.display = 'block';
     submitBtn.disabled = true;
-    
+
     try {
       const response = await fetch('/api/inventory', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken}`,
         },
-        body: formData
+        body: formData,
       });
-      
+
       if (response.ok) {
         const newItem = await response.json();
-        
+
         // Close modal
         const modal = document.getElementById('addItemModal');
         if (modal) modal.style.display = 'none';
-        
+
         // Clear form
         e.target.reset();
-        
+
         // Refresh inventory
         _itemsCache = []; // Clear cache
         await loadInventoryItems();
         await loadInventoryStats();
-        
+
         showToast('Item added successfully!', 'success');
-        
+
         // If duplicate checkbox was checked, open duplicate form with new item data
         if (duplicateAfter) {
           setTimeout(() => {
             showDuplicateModal(newItem);
           }, 500);
         }
-        
       } else {
         const errorData = await response.json();
         showToast(errorData.error || 'Failed to add item', 'error');
       }
-      
     } catch (error) {
       console.error('Error adding item:', error);
       showToast('Network error. Please try again.', 'error');
@@ -5713,16 +5869,36 @@ function updateAddItemFormHandler() {
 // Setup auto-calculation for calibration and maintenance dates
 function setupDateAutoCalculation() {
   // Add Item Form - Calibration
-  setupDateCalculationForFields('calibrationDate', 'nextCalibrationDue', 'calibrationInterval', 'calibrationIntervalType');
-  
-  // Add Item Form - Maintenance  
-  setupDateCalculationForFields('maintenanceDate', 'maintenanceDue', 'maintenanceInterval', 'maintenanceIntervalType');
-  
+  setupDateCalculationForFields(
+    'calibrationDate',
+    'nextCalibrationDue',
+    'calibrationInterval',
+    'calibrationIntervalType',
+  );
+
+  // Add Item Form - Maintenance
+  setupDateCalculationForFields(
+    'maintenanceDate',
+    'maintenanceDue',
+    'maintenanceInterval',
+    'maintenanceIntervalType',
+  );
+
   // Duplicate Item Form - Calibration
-  setupDateCalculationForFields('dupCalibrationDate', 'dupNextCalibrationDue', 'dupCalibrationInterval', 'dupCalibrationIntervalType');
-  
+  setupDateCalculationForFields(
+    'dupCalibrationDate',
+    'dupNextCalibrationDue',
+    'dupCalibrationInterval',
+    'dupCalibrationIntervalType',
+  );
+
   // Duplicate Item Form - Maintenance
-  setupDateCalculationForFields('dupMaintenanceDate', 'dupMaintenanceDue', 'dupMaintenanceInterval', 'dupMaintenanceIntervalType');
+  setupDateCalculationForFields(
+    'dupMaintenanceDate',
+    'dupMaintenanceDue',
+    'dupMaintenanceInterval',
+    'dupMaintenanceIntervalType',
+  );
 }
 
 // Setup auto-calculation for a specific set of date fields
@@ -5731,30 +5907,30 @@ function setupDateCalculationForFields(lastDateId, nextDateId, intervalId, inter
   const nextDateInput = document.getElementById(nextDateId);
   const intervalInput = document.getElementById(intervalId);
   const intervalTypeInput = document.getElementById(intervalTypeId);
-  
+
   if (!lastDateInput || !nextDateInput || !intervalInput || !intervalTypeInput) {
     return; // Fields don't exist, skip
   }
-  
+
   // Function to calculate and update the next date
   const calculateNextDate = () => {
     const lastDate = lastDateInput.value;
     const interval = parseInt(intervalInput.value);
     const intervalType = intervalTypeInput.value;
-    
+
     if (!lastDate || !interval || interval <= 0) {
       return; // Can't calculate without valid inputs
     }
-    
+
     const date = new Date(lastDate);
-    
+
     // Add the interval based on type
     switch (intervalType) {
       case 'days':
         date.setDate(date.getDate() + interval);
         break;
       case 'weeks':
-        date.setDate(date.getDate() + (interval * 7));
+        date.setDate(date.getDate() + interval * 7);
         break;
       case 'months':
         date.setMonth(date.getMonth() + interval);
@@ -5763,12 +5939,12 @@ function setupDateCalculationForFields(lastDateId, nextDateId, intervalId, inter
         date.setFullYear(date.getFullYear() + interval);
         break;
     }
-    
+
     // Format as YYYY-MM-DD for date input
     const nextDateValue = date.toISOString().split('T')[0];
     nextDateInput.value = nextDateValue;
   };
-  
+
   // Add event listeners to trigger calculation
   lastDateInput.addEventListener('change', calculateNextDate);
   intervalInput.addEventListener('input', calculateNextDate);
@@ -5781,29 +5957,29 @@ function setupDateCalculationForFields(lastDateId, nextDateId, intervalId, inter
 function showNewAddItemModal() {
   const modal = document.getElementById('newAddItemModal');
   const form = document.getElementById('newAddItemForm');
-  
+
   // Reset form
   form.reset();
-  
+
   // Set default dates
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('newDateReceived').value = today;
   document.getElementById('newDatePlacedInService').value = today;
   document.getElementById('newCalibrationDate').value = today;
-  
+
   // Set default calibration due date (1 year from today)
   const nextYear = new Date();
   nextYear.setFullYear(nextYear.getFullYear() + 1);
   document.getElementById('newNextCalibrationDue').value = nextYear.toISOString().split('T')[0];
-  
+
   // Set default maintenance due date (6 months from today)
   const nextMaintenance = new Date();
   nextMaintenance.setMonth(nextMaintenance.getMonth() + 6);
   document.getElementById('newMaintenanceDue').value = nextMaintenance.toISOString().split('T')[0];
-  
+
   // Setup auto-calculation
   setupNewAddFormAutoCalculation();
-  
+
   // Show modal
   modal.classList.add('show');
 }
@@ -5811,10 +5987,10 @@ function showNewAddItemModal() {
 function hideNewAddItemModal() {
   const modal = document.getElementById('newAddItemModal');
   const form = document.getElementById('newAddItemForm');
-  
+
   modal.classList.remove('show');
   form.reset();
-  
+
   // Reset maintenance fields visibility
   const maintenanceCheckbox = document.getElementById('newUseMaintenance');
   const maintenanceFields = document.getElementById('newMaintenanceFields');
@@ -5826,37 +6002,37 @@ function hideNewAddItemModal() {
 
 async function handleNewAddItemSubmit(e) {
   e.preventDefault();
-  
+
   const form = e.target;
   const formData = new FormData(form);
   const submitBtn = form.querySelector('button[type="submit"]');
   const btnText = submitBtn.querySelector('.btn-text');
   const btnLoader = submitBtn.querySelector('.btn-loader');
   const duplicateAfter = document.getElementById('newDuplicateAfterAdd').checked;
-  
+
   // Show loading state
   btnText.style.display = 'none';
   btnLoader.style.display = 'block';
   submitBtn.disabled = true;
-  
+
   try {
     const response = await fetch('/api/inventory', {
       method: 'POST',
       headers: { Authorization: `Bearer ${authToken}` },
       body: formData,
     });
-    
+
     if (response.ok) {
       const newItem = await response.json();
       hideNewAddItemModal();
-      
+
       // Clear cache and refresh inventory
       _itemsCache = [];
       await loadInventoryItems();
       await loadInventoryStats();
-      
+
       showToast('Item added successfully!', 'success');
-      
+
       // Handle duplication if requested
       if (duplicateAfter && newItem) {
         setTimeout(() => {
@@ -5885,13 +6061,13 @@ function showEditItemModal(itemId) {
     showToast('Item not found in list. Try refreshing.', 'error');
     return;
   }
-  
+
   const modal = document.getElementById('editItemModal');
   const form = document.getElementById('editItemForm');
-  
+
   // Store item ID for submission
   form.dataset.itemId = itemId;
-  
+
   // Populate form fields
   document.getElementById('editItemType').value = item.itemType || '';
   document.getElementById('editNickname').value = item.nickname || '';
@@ -5900,44 +6076,58 @@ function showEditItemModal(itemId) {
   document.getElementById('editModel').value = item.model || '';
   document.getElementById('editSerialNumber').value = item.serialNumber || '';
   document.getElementById('editCondition').value = item.condition || 'new';
-  document.getElementById('editDateReceived').value = item.dateReceived ? item.dateReceived.split('T')[0] : '';
-  document.getElementById('editDatePlacedInService').value = item.datePlacedInService ? item.datePlacedInService.split('T')[0] : '';
+  document.getElementById('editDateReceived').value = item.dateReceived
+    ? item.dateReceived.split('T')[0]
+    : '';
+  document.getElementById('editDatePlacedInService').value = item.datePlacedInService
+    ? item.datePlacedInService.split('T')[0]
+    : '';
   document.getElementById('editLocation').value = item.location || '';
-  document.getElementById('editCalibrationDate').value = item.calibrationDate ? item.calibrationDate.split('T')[0] : '';
-  document.getElementById('editNextCalibrationDue').value = item.nextCalibrationDue ? item.nextCalibrationDue.split('T')[0] : '';
+  document.getElementById('editCalibrationDate').value = item.calibrationDate
+    ? item.calibrationDate.split('T')[0]
+    : '';
+  document.getElementById('editNextCalibrationDue').value = item.nextCalibrationDue
+    ? item.nextCalibrationDue.split('T')[0]
+    : '';
   document.getElementById('editCalibrationInterval').value = item.calibrationInterval || 12;
-  document.getElementById('editCalibrationIntervalType').value = item.calibrationIntervalType || 'months';
+  document.getElementById('editCalibrationIntervalType').value =
+    item.calibrationIntervalType || 'months';
   document.getElementById('editCalibrationMethod').value = item.calibrationMethod || '';
-  
+
   // Set calibration type
   const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
   document.getElementById('editCalibrationType').value = calibrationType;
   handleEditCalibrationTypeChange();
-  
+
   // Set maintenance fields
-  document.getElementById('editMaintenanceDate').value = item.maintenanceDate ? item.maintenanceDate.split('T')[0] : '';
-  document.getElementById('editMaintenanceDue').value = item.maintenanceDue ? item.maintenanceDue.split('T')[0] : '';
+  document.getElementById('editMaintenanceDate').value = item.maintenanceDate
+    ? item.maintenanceDate.split('T')[0]
+    : '';
+  document.getElementById('editMaintenanceDue').value = item.maintenanceDue
+    ? item.maintenanceDue.split('T')[0]
+    : '';
   document.getElementById('editMaintenanceInterval').value = item.maintenanceInterval || '';
-  document.getElementById('editMaintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
-  
+  document.getElementById('editMaintenanceIntervalType').value =
+    item.maintenanceIntervalType || 'months';
+
   // Set maintenance checkbox and show/hide fields
   const hasMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
   const maintenanceCheckbox = document.getElementById('editUseMaintenance');
   const maintenanceFields = document.getElementById('editMaintenanceFields');
-  
+
   if (maintenanceCheckbox && maintenanceFields) {
     maintenanceCheckbox.checked = !!hasMaintenance;
     maintenanceFields.style.display = hasMaintenance ? 'block' : 'none';
   }
-  
+
   document.getElementById('editNotes').value = item.notes || '';
-  
+
   // Populate list dropdown
   populateEditListDropdown(item.listId);
-  
+
   // Setup auto-calculation
   setupEditFormAutoCalculation();
-  
+
   // Show modal
   modal.classList.add('show');
 }
@@ -5945,11 +6135,11 @@ function showEditItemModal(itemId) {
 function hideEditItemModal() {
   const modal = document.getElementById('editItemModal');
   const form = document.getElementById('editItemForm');
-  
+
   modal.classList.remove('show');
   form.reset();
   delete form.dataset.itemId;
-  
+
   // Reset maintenance fields visibility
   const maintenanceCheckbox = document.getElementById('editUseMaintenance');
   const maintenanceFields = document.getElementById('editMaintenanceFields');
@@ -5961,7 +6151,7 @@ function hideEditItemModal() {
 
 async function handleEditItemSubmit(e) {
   e.preventDefault();
-  
+
   const form = e.target;
   const itemId = form.dataset.itemId;
   const formData = new FormData(form);
@@ -5969,26 +6159,26 @@ async function handleEditItemSubmit(e) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const btnText = submitBtn.querySelector('.btn-text');
   const btnLoader = submitBtn.querySelector('.btn-loader');
-  
+
   // Show loading state
   btnText.style.display = 'none';
   btnLoader.style.display = 'block';
   submitBtn.disabled = true;
-  
+
   try {
     const response = await fetch(`/api/inventory/${itemId}`, {
       method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json', 
-        Authorization: `Bearer ${authToken}` 
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify(data),
     });
-    
+
     if (response.ok) {
       showToast('Item updated successfully!', 'success');
       hideEditItemModal();
-      
+
       // Clear cache and refresh inventory
       _itemsCache = [];
       await loadInventoryItems();
@@ -6040,11 +6230,11 @@ function handleNewCalibrationTypeChange() {
 function populateEditListDropdown(selectedListId) {
   const listSelect = document.getElementById('editListId');
   if (!listSelect) return;
-  
+
   listSelect.innerHTML = '<option value="">Select a list</option>';
-  
+
   if (window.loadedLists && window.loadedLists.length > 0) {
-    window.loadedLists.forEach(list => {
+    window.loadedLists.forEach((list) => {
       const option = document.createElement('option');
       option.value = list.id;
       option.textContent = list.name;
@@ -6059,11 +6249,11 @@ function populateEditListDropdown(selectedListId) {
 function populateNewAddListDropdown() {
   const listSelect = document.getElementById('newListId');
   if (!listSelect) return;
-  
+
   listSelect.innerHTML = '<option value="">Select a list</option>';
-  
+
   if (window.loadedLists && window.loadedLists.length > 0) {
-    window.loadedLists.forEach(list => {
+    window.loadedLists.forEach((list) => {
       const option = document.createElement('option');
       option.value = list.id;
       option.textContent = list.name;
@@ -6074,13 +6264,33 @@ function populateNewAddListDropdown() {
 
 // Auto-calculation setup for new forms
 function setupNewAddFormAutoCalculation() {
-  setupDateCalculationForFields('newCalibrationDate', 'newNextCalibrationDue', 'newCalibrationInterval', 'newCalibrationIntervalType');
-  setupDateCalculationForFields('newMaintenanceDate', 'newMaintenanceDue', 'newMaintenanceInterval', 'newMaintenanceIntervalType');
+  setupDateCalculationForFields(
+    'newCalibrationDate',
+    'newNextCalibrationDue',
+    'newCalibrationInterval',
+    'newCalibrationIntervalType',
+  );
+  setupDateCalculationForFields(
+    'newMaintenanceDate',
+    'newMaintenanceDue',
+    'newMaintenanceInterval',
+    'newMaintenanceIntervalType',
+  );
 }
 
 function setupEditFormAutoCalculation() {
-  setupDateCalculationForFields('editCalibrationDate', 'editNextCalibrationDue', 'editCalibrationInterval', 'editCalibrationIntervalType');
-  setupDateCalculationForFields('editMaintenanceDate', 'editMaintenanceDue', 'editMaintenanceInterval', 'editMaintenanceIntervalType');
+  setupDateCalculationForFields(
+    'editCalibrationDate',
+    'editNextCalibrationDue',
+    'editCalibrationInterval',
+    'editCalibrationIntervalType',
+  );
+  setupDateCalculationForFields(
+    'editMaintenanceDate',
+    'editMaintenanceDue',
+    'editMaintenanceInterval',
+    'editMaintenanceIntervalType',
+  );
 }
 
 // Setup event listeners for new forms
@@ -6184,7 +6394,7 @@ function setupNewFormEventListeners() {
 }
 
 // Initialize search, export, and duplicate functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   setupExportModalHandlers();
   initializeSearch();
   setupDuplicateFormHandlers();

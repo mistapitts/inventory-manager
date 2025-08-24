@@ -23,7 +23,7 @@ router.get('/download', authenticateToken, (req, res) => {
       return res.status(400).json({ error: 'Missing file query parameter' });
     }
 
-        // Normalize and resolve the file path within the uploads directory
+    // Normalize and resolve the file path within the uploads directory
     // Files are stored directly in the uploadDocsDir, so we can resolve directly
     const uploadsRoot = config.paths.uploadDocsDir;
     const normalizedPath = path.normalize(fileQuery);
@@ -51,13 +51,16 @@ router.get('/download', authenticateToken, (req, res) => {
     const downloadFilename = path.basename(absPath);
 
     // Set appropriate headers for file download (UX + security) - RFC 6266 compliant
-    const contentType = mime.getType(absPath) || "application/octet-stream";
-    res.setHeader("Content-Type", contentType);
-    
+    const contentType = mime.getType(absPath) || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+
     // RFC 6266 compliant filename headers with fallback for international characters
     const asciiFilename = downloadFilename.replace(/[^\x00-\x7F]/g, '_'); // ASCII fallback
-    res.setHeader("Content-Disposition", `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
-    res.setHeader("Cache-Control", "no-store");
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`,
+    );
+    res.setHeader('Cache-Control', 'no-store');
 
     // Stream the file for efficient memory usage
     const fileStream = fs.createReadStream(absPath);
@@ -84,7 +87,7 @@ router.get('/download/*', authenticateToken, (req, res) => {
       return res.status(400).json({ error: 'Missing filename' });
     }
 
-        // Reuse the same logic as the query param version
+    // Reuse the same logic as the query param version
     const uploadsRoot = config.paths.uploadDocsDir;
     const normalizedPath = path.normalize(filePath);
     const absPath = path.resolve(uploadsRoot, normalizedPath);
@@ -110,13 +113,16 @@ router.get('/download/*', authenticateToken, (req, res) => {
     }
 
     const downloadFilename = path.basename(absPath);
-    const contentType = mime.getType(absPath) || "application/octet-stream";
-    res.setHeader("Content-Type", contentType);
-    
+    const contentType = mime.getType(absPath) || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+
     // RFC 6266 compliant filename headers with fallback for international characters
     const asciiFilename = downloadFilename.replace(/[^\x00-\x7F]/g, '_'); // ASCII fallback
-    res.setHeader("Content-Disposition", `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`);
-    res.setHeader("Cache-Control", "no-store");
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`,
+    );
+    res.setHeader('Cache-Control', 'no-store');
 
     const fileStream = fs.createReadStream(absPath);
     fileStream.pipe(res);
