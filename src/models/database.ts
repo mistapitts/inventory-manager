@@ -203,6 +203,9 @@ export class Database {
         companyId TEXT NOT NULL,
         code TEXT NOT NULL,
         role TEXT NOT NULL,
+        email TEXT,
+        firstName TEXT,
+        lastName TEXT,
         locationId TEXT,
         regionId TEXT,
         expiresAt DATETIME NOT NULL,
@@ -344,6 +347,32 @@ export class Database {
             console.log(`✅ Added column ${column.name} to companies table`);
           } catch (error: any) {
             console.error(`❌ Error adding column ${column.name} to companies:`, error);
+          }
+        }
+      }
+
+      // Add missing columns to invite_codes table
+      const inviteTableExists = await this.get(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='invite_codes'",
+      );
+      if (inviteTableExists) {
+        const inviteColumns = await this.all('PRAGMA table_info(invite_codes)');
+        const inviteColumnNames = inviteColumns.map((col: any) => col.name);
+
+        const inviteCodeColumns = [
+          { name: 'email', type: 'TEXT' },
+          { name: 'firstName', type: 'TEXT' },
+          { name: 'lastName', type: 'TEXT' },
+        ];
+
+        for (const column of inviteCodeColumns) {
+          if (!inviteColumnNames.includes(column.name)) {
+            try {
+              await this.run(`ALTER TABLE invite_codes ADD COLUMN ${column.name} ${column.type}`);
+              console.log(`✅ Added column ${column.name} to invite_codes table`);
+            } catch (error: any) {
+              console.error(`❌ Error adding column ${column.name} to invite_codes:`, error);
+            }
           }
         }
       }
