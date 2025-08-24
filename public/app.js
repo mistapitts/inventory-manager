@@ -565,86 +565,77 @@ async function apiCall(endpoint, options = {}) {
   return response.json();
 }
 
-// Scrollbar Synchronization
+// ChatGPT's improved scrollbar synchronization with precise width matching
 function setupScrollbarSynchronization() {
-  const topScrollbar = document.getElementById('tableScrollbarTop');
-  const tableScrollWrapper = document.getElementById('inventoryTableScrollWrapper');
-  const table = document.getElementById('inventoryTable');
-  const scrollbarContent = topScrollbar?.querySelector('.scrollbar-content');
+  const wrapper = document.getElementById('inventoryTableScrollWrapper'); // real scroller
+  const table = document.getElementById('inventoryTable');                 // the table
+  const proxy = document.getElementById('tableScrollbarTop');              // top scroller
+  const proxyFill = proxy?.querySelector('.scrollbar-content');
 
-  if (!topScrollbar || !tableScrollWrapper || !table || !scrollbarContent) {
+  if (!wrapper || !table || !proxy || !proxyFill) {
     console.warn('[SCROLLBAR] Elements not found for scrollbar sync setup');
     return;
   }
 
-  // Set the scrollbar content width to match the table width
-  function updateScrollbarWidth() {
-    const tableWidth = table.scrollWidth;
-    const containerWidth = tableScrollWrapper.clientWidth;
+  const syncFromWrapper = () => {
+    if (proxy.scrollLeft !== wrapper.scrollLeft) {
+      proxy.scrollLeft = wrapper.scrollLeft;
+    }
+  };
+  
+  const syncFromProxy = () => {
+    if (wrapper.scrollLeft !== proxy.scrollLeft) {
+      wrapper.scrollLeft = proxy.scrollLeft;
+    }
+  };
 
-    // Only show scrollbar if table is wider than container
-    if (tableWidth > containerWidth) {
-      scrollbarContent.style.width = `${tableWidth}px`;
-      topScrollbar.style.display = 'block';
+  // Keep the proxy content width EXACTLY equal to the table scrollWidth
+  const updateProxyWidth = () => {
+    // Use integer values to avoid fractional drift at zoom
+    const exact = Math.ceil(table.scrollWidth);
+    if (proxyFill.style.width !== `${exact}px`) {
+      proxyFill.style.width = `${exact}px`;
+    }
+
+    // Also ensure the proxy track is the same visible width as the wrapper
+    // so the ratio matches at all zoom levels.
+    const visible = Math.ceil(wrapper.clientWidth);
+    proxy.style.width = `${visible}px`;
+
+    // Show/hide scrollbar based on whether scrolling is needed
+    if (exact > visible) {
+      proxy.style.display = 'block';
     } else {
-      topScrollbar.style.display = 'none';
+      proxy.style.display = 'none';
     }
-  }
+  };
 
-  // Update width initially and on window resize
-  updateScrollbarWidth();
-  window.addEventListener('resize', updateScrollbarWidth);
+  // Initial setup
+  updateProxyWidth();
+  proxy.addEventListener('scroll', syncFromProxy, { passive: true });
+  wrapper.addEventListener('scroll', syncFromWrapper, { passive: true });
 
-  // Remove any existing event listeners to prevent duplicates
-  const clonedTopScrollbar = topScrollbar.cloneNode(true);
-  const clonedTableWrapper = tableScrollWrapper.cloneNode(true);
-  topScrollbar.parentNode.replaceChild(clonedTopScrollbar, topScrollbar);
-  tableScrollWrapper.parentNode.replaceChild(clonedTableWrapper, tableScrollWrapper);
+  // Resize when table/layout changes
+  const ro = new ResizeObserver(updateProxyWidth);
+  ro.observe(table);
+  ro.observe(wrapper);
 
-  // Get fresh references to the cloned elements
-  const freshTopScrollbar = document.getElementById('tableScrollbarTop');
-  const freshTableWrapper = document.getElementById('inventoryTableScrollWrapper');
-
-  if (!freshTopScrollbar || !freshTableWrapper) return;
-
-  // Synchronize scroll positions
-  let isTopScrolling = false;
-  let isTableScrolling = false;
-
-  // Top scrollbar scrolls table
-  freshTopScrollbar.addEventListener('scroll', function () {
-    if (isTableScrolling) return;
-    isTopScrolling = true;
-    freshTableWrapper.scrollLeft = freshTopScrollbar.scrollLeft;
-    requestAnimationFrame(() => {
-      isTopScrolling = false;
-    });
-  });
-
-  // Table scrolls top scrollbar
-  freshTableWrapper.addEventListener('scroll', function () {
-    if (isTopScrolling) return;
-    isTableScrolling = true;
-    freshTopScrollbar.scrollLeft = freshTableWrapper.scrollLeft;
-    requestAnimationFrame(() => {
-      isTableScrolling = false;
-    });
-  });
-
-  // Handle wheel events on top scrollbar to enable horizontal scrolling
-  freshTopScrollbar.addEventListener('wheel', function (e) {
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      // Horizontal scroll
-      e.preventDefault();
-      freshTopScrollbar.scrollLeft += e.deltaX;
-    } else if (e.deltaY !== 0) {
-      // Vertical scroll - let it pass through to the page
-      e.preventDefault();
-      freshTableWrapper.scrollLeft += e.deltaY;
+  // Handle zoom: listen for DPR changes (Chrome fires a resize, but this is safer)
+  let lastDpr = window.devicePixelRatio;
+  const dprCheck = () => {
+    if (window.devicePixelRatio !== lastDpr) {
+      lastDpr = window.devicePixelRatio;
+      updateProxyWidth();
     }
-  });
+    // poll infrequently; cheap and robust across browsers
+    requestAnimationFrame(dprCheck);
+  };
+  dprCheck();
 
-  console.log('[SCROLLBAR] Synchronization setup complete');
+  // Also update on window resize
+  window.addEventListener('resize', updateProxyWidth);
+
+  console.log('[SCROLLBAR] ChatGPT synchronization setup complete');
 }
 
 // Navigation handling

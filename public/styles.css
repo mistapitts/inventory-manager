@@ -1014,28 +1014,47 @@ body {
   min-width: 100%;
 }
 
-/* Custom scrollbar styling for top scrollbar - zoom responsive */
-.table-scrollbar-top::-webkit-scrollbar {
-  height: 0.75rem; /* Scales with zoom level */
+/* ChatGPT's recommended approach: stable geometry for both scrollers */
+.table-scrollbar-top,
+.inventory-table-scroll-wrapper {
+  scrollbar-gutter: stable both-edges;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
 }
 
-.table-scrollbar-top::-webkit-scrollbar-track {
+.table-scrollbar-top .scrollbar-content {
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+}
+
+/* Scrollbar styling - controls thickness/colors only, not thumb length */
+.table-scrollbar-top::-webkit-scrollbar,
+.inventory-table-scroll-wrapper::-webkit-scrollbar {
+  height: 0.75rem;
+}
+
+.table-scrollbar-top::-webkit-scrollbar-track,
+.inventory-table-scroll-wrapper::-webkit-scrollbar-track {
   background: var(--bg-secondary);
   border-radius: 0;
 }
 
-.table-scrollbar-top::-webkit-scrollbar-thumb {
+.table-scrollbar-top::-webkit-scrollbar-thumb,
+.inventory-table-scroll-wrapper::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 0.375rem; /* Proportional to scrollbar height */
-  border: 0.125rem solid var(--bg-secondary); /* Proportional border */
-  min-width: 2rem; /* Minimum thumb size for better visibility */
+  border-radius: 0.375rem;
+  border: 0.125rem solid var(--bg-secondary);
 }
 
-.table-scrollbar-top::-webkit-scrollbar-thumb:hover {
+.table-scrollbar-top::-webkit-scrollbar-thumb:hover,
+.inventory-table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
 }
 
-.table-scrollbar-top::-webkit-scrollbar-corner {
+.table-scrollbar-top::-webkit-scrollbar-corner,
+.inventory-table-scroll-wrapper::-webkit-scrollbar-corner {
   background: var(--bg-secondary);
 }
 
@@ -2655,18 +2674,19 @@ body {
 
 /* Table-specific scrollbar */
 .inventory-table-container::-webkit-scrollbar {
-  height: 12px;
+  height: 0.75rem; /* Use rem for zoom responsiveness */
 }
 
 .inventory-table-container::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .inventory-table-container::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 6px;
-  border: 2px solid var(--bg-secondary);
+  border-radius: 0.375rem;
+  border: 0.125rem solid var(--bg-secondary);
+  min-width: 2rem; /* Minimum thumb size */
 }
 
 .inventory-table-container::-webkit-scrollbar-thumb:hover {
@@ -2675,18 +2695,19 @@ body {
 
 /* Column customizer scrollbar */
 .column-options::-webkit-scrollbar {
-  width: 8px;
+  width: 0.5rem; /* Use rem for zoom responsiveness */
 }
 
 .column-options::-webkit-scrollbar-track {
   background: var(--bg-input);
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .column-options::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 4px;
-  border: 1px solid var(--bg-input);
+  border-radius: 0.25rem;
+  border: 0.0625rem solid var(--bg-input);
+  min-width: 1.5rem; /* Minimum thumb size */
 }
 
 .column-options::-webkit-scrollbar-thumb:hover {
@@ -2695,18 +2716,19 @@ body {
 
 /* Modal content scrollbar */
 .modal-content::-webkit-scrollbar {
-  width: 8px;
+  width: 0.5rem; /* Use rem for zoom responsiveness */
 }
 
 .modal-content::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .modal-content::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 4px;
-  border: 1px solid var(--bg-secondary);
+  border-radius: 0.25rem;
+  border: 0.0625rem solid var(--bg-secondary);
+  min-width: 1.5rem; /* Minimum thumb size */
 }
 
 .modal-content::-webkit-scrollbar-thumb:hover {
