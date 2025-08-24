@@ -537,15 +537,11 @@ body {
   border-color: var(--accent-danger);
 }
 
-/* Main Content - support hybrid scrolling */
+/* Main Content - restore page scrolling */
 .main-content {
   flex: 1;
   background: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  /* Allow page scroll until table area, then container scroll */
-  overflow-y: visible;
-  min-height: 0; /* Important for flexbox */
+  overflow-y: auto; /* Restore page scrolling */
 }
 
 .top-bar {
@@ -614,14 +610,9 @@ body {
   border-color: var(--accent-primary);
 }
 
-/* Content Area - support hybrid scrolling */
+/* Content Area */
 .content-area {
   padding: 32px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0; /* Important for flexbox */
-  /* Allow natural page scroll until inventory table fills viewport */
 }
 
 .welcome-message {
@@ -985,7 +976,7 @@ body {
   /* Removed max-height for full page scroll */
 }
 
-/* Fixed table header - truly sticky and unaffected by horizontal scroll */
+/* Fixed table header - stays in place during horizontal scroll */
 .inventory-table-header {
   background: var(--bg-secondary);
   padding: 16px 20px;
@@ -999,21 +990,16 @@ body {
   top: 0;
   z-index: 100;
   flex-shrink: 0;
-  /* Ensure header stays fixed during horizontal scroll */
-  left: 0;
-  right: 0;
 }
 
-/* Hybrid scroll wrapper - vertical page scroll until table fills viewport, then container scroll */
+/* Table scroll wrapper - ensure horizontal scrollbar is accessible */
 .inventory-table-scroll-wrapper {
-  /* Set max height to viewport minus header and other elements */
-  max-height: calc(100vh - 300px); /* Adjust based on header + stats + padding */
-  overflow-x: auto; /* Horizontal scroll within container */
-  overflow-y: auto; /* Vertical scroll within container when needed */
-  overscroll-behavior: auto;
+  overflow-x: auto; /* Horizontal scroll for wide tables */
+  overflow-y: visible; /* Let page handle vertical scroll */
   position: relative;
-  /* Ensure scrollbars are accessible */
-  min-height: 400px; /* Minimum height to ensure scrollbar visibility */
+  /* Ensure there's enough bottom padding so scrollbar isn't cut off */
+  padding-bottom: 20px;
+  margin-bottom: -20px; /* Negative margin to maintain spacing */
 }
 
 
@@ -1129,23 +1115,18 @@ body {
   min-width: 140px; /* Ensure Next Cal Due column has adequate space */
 }
 
-/* Inventory content wrapper - support hybrid scrolling */
+/* Inventory content wrapper - restore normal layout */
 .inventory-content-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  flex: 1; /* Allow to grow and fill available space */
-  min-height: 0; /* Important for flexbox */
+  margin-bottom: 24px; /* Add bottom margin for spacing */
 }
 
 .inventory-main-content {
   position: relative;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* Important for flexbox */
-  /* Remove overflow - let hybrid scrolling handle it */
 }
 
 /* Inventory Legend */
@@ -2488,18 +2469,12 @@ body {
   vertical-align: middle;
 }
 
-/* Table container with hybrid scrolling approach */
+/* Table container - restore normal behavior */
 .inventory-table-container {
   border-radius: 12px;
   border: 2px solid var(--border-color);
   background: var(--bg-secondary);
   position: relative;
-  /* Remove overflow settings - handled by scroll wrapper */
-  display: flex;
-  flex-direction: column;
-  /* Ensure container can grow to fill available space */
-  flex: 1;
-  min-height: 0; /* Allow flexbox shrinking */
 }
 
 /* When fewer columns are visible, increase font size and padding */
