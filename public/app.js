@@ -1121,6 +1121,9 @@ async function deleteItem(itemId) {
     });
     if (resp.ok) {
       showToast('Item deleted', 'success');
+      
+      // Clear cache to force fresh data fetch
+      _itemsCache = [];
       await loadInventoryItems();
       await loadInventoryStats();
     } else {
@@ -1217,6 +1220,9 @@ function editItem(itemId) {
       if (resp.ok) {
         showToast('Item updated', 'success');
         hideAddItemModal();
+        
+        // Clear cache to force fresh data fetch with updated item data
+        _itemsCache = [];
         await loadInventoryItems();
       } else {
         const err = await resp.json().catch(() => ({}));
@@ -2761,6 +2767,9 @@ async function handleRecordUpload(event, type, itemId) {
 
       // Refresh item details and inventory list
       await loadItemDetails(itemId);
+      
+      // Clear cache to force fresh data fetch with updated calibration dates
+      _itemsCache = [];
       await loadInventoryItems();
     } else {
       const error = await response.json();
