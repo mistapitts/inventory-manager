@@ -5480,7 +5480,8 @@ function populateDuplicateForm(item) {
   document.getElementById('dupLocation').value = item.location || '';
   
   // Calibration Information
-  document.getElementById('dupCalibrationType').value = item.calibrationType || '';
+  const calibrationType = item.isOutsourced === 1 ? 'outsourced' : 'in_house';
+  document.getElementById('dupCalibrationType').value = calibrationType;
   document.getElementById('dupCalibrationDate').value = today; // Set to today for new calibration
   
   // Calculate next calibration due based on interval
@@ -5633,6 +5634,9 @@ async function handleDuplicateSubmit(e) {
     if (response.ok) {
       const newItem = await response.json();
       
+      // Store original data before closing modal (in case we need to chain)
+      const originalItemData = duplicateItemData;
+      
       // Close modal
       closeDuplicateModal();
       
@@ -5644,9 +5648,9 @@ async function handleDuplicateSubmit(e) {
       showToast('Item duplicated successfully!', 'success');
       
       // If duplicate checkbox was checked, open another duplicate form
-      if (duplicateAfter && duplicateItemData) {
+      if (duplicateAfter && originalItemData) {
         setTimeout(() => {
-          showDuplicateModal(duplicateItemData);
+          showDuplicateModal(originalItemData);
         }, 500);
       }
       
