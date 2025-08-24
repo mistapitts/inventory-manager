@@ -589,19 +589,23 @@ function handleNavigation(route) {
   switch (route) {
     case '#inventory':
       breadcrumb.textContent = 'Inventory';
-      // Show inventory section, hide calendar
+      // Show inventory section, hide others
       const invSec = document.getElementById('inventorySection');
       const calSec = document.getElementById('calendarSection');
+      const settingsSec1 = document.getElementById('settingsSection');
       if (invSec) invSec.style.display = 'block';
       if (calSec) calSec.style.display = 'none';
+      if (settingsSec1) settingsSec1.style.display = 'none';
       loadInventoryItems();
       break;
     case '#calendar':
       breadcrumb.textContent = 'Calendar';
-      // Show calendar section, hide inventory
+      // Show calendar section, hide others
       const calSec2 = document.getElementById('calendarSection');
       const invSec2 = document.getElementById('inventorySection');
+      const settingsSec2 = document.getElementById('settingsSection');
       if (invSec2) invSec2.style.display = 'none';
+      if (settingsSec2) settingsSec2.style.display = 'none';
       if (calSec2) {
         calSec2.style.display = 'block';
         loadCalendarView();
