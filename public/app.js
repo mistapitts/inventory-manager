@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
 function setupEventListeners() {
   // Login form submission
   loginForm.addEventListener('submit', handleLogin);
+  
+  // Setup auto-calculation for date fields
+  setupDateAutoCalculation();
 
   // Registration form submission
   registerForm.addEventListener('submit', handleRegistration);
@@ -1097,6 +1100,10 @@ async function deleteRecord(recordId, type, itemId) {
     if (resp.ok) {
       showToast('Record removed', 'success');
       await loadItemDetails(itemId);
+      
+      // Clear cache to force fresh data fetch with updated dates
+      _itemsCache = [];
+      await loadInventoryItems();
     } else {
       const err = await resp.json().catch(() => ({}));
       showToast(err.error || 'Failed to remove record', 'error');
@@ -1197,6 +1204,9 @@ function editItem(itemId) {
 
   // Enhanced file upload areas for edit mode
   enhanceFileUploadsForEdit(item);
+  
+  // Re-setup auto-calculation for the edit form (since event listeners may need refreshing)
+  setupDateAutoCalculation();
 
   // Ensure the create-item handler does not run in edit mode
   try {
@@ -1381,6 +1391,9 @@ function showAddItemModal() {
   const nextMaintenance = new Date();
   nextMaintenance.setMonth(nextMaintenance.getMonth() + 6);
   document.getElementById('maintenanceDue').value = nextMaintenance.toISOString().split('T')[0];
+  
+  // Setup auto-calculation for the form
+  setupDateAutoCalculation();
 }
 
 // Reset file upload areas to default state
@@ -2941,7 +2954,7 @@ function updateInventoryLegend() {
     legendItem.innerHTML = `
       <div class="legend-color" style="background-color: ${list.color}"></div>
       <span class="legend-name">${list.name}</span>
-    `;
+        `;
     tableHeaderLegendLists.appendChild(legendItem);
   });
 }
@@ -5529,6 +5542,9 @@ function populateDuplicateForm(item) {
   
   // Clear the duplicate checkbox
   document.getElementById('duplicateAfterDuplicate').checked = false;
+  
+  // Re-setup auto-calculation for the duplicate form
+  setupDateAutoCalculation();
 }
 
 function calculateNextDate(startDate, interval, intervalType) {
@@ -5754,10 +5770,76 @@ function updateAddItemFormHandler() {
   });
 }
 
+// Setup auto-calculation for calibration and maintenance dates
+function setupDateAutoCalculation() {
+  // Add Item Form - Calibration
+  setupDateCalculationForFields('calibrationDate', 'nextCalibrationDue', 'calibrationInterval', 'calibrationIntervalType');
+  
+  // Add Item Form - Maintenance  
+  setupDateCalculationForFields('maintenanceDate', 'maintenanceDue', 'maintenanceInterval', 'maintenanceIntervalType');
+  
+  // Duplicate Item Form - Calibration
+  setupDateCalculationForFields('dupCalibrationDate', 'dupNextCalibrationDue', 'dupCalibrationInterval', 'dupCalibrationIntervalType');
+  
+  // Duplicate Item Form - Maintenance
+  setupDateCalculationForFields('dupMaintenanceDate', 'dupMaintenanceDue', 'dupMaintenanceInterval', 'dupMaintenanceIntervalType');
+}
+
+// Setup auto-calculation for a specific set of date fields
+function setupDateCalculationForFields(lastDateId, nextDateId, intervalId, intervalTypeId) {
+  const lastDateInput = document.getElementById(lastDateId);
+  const nextDateInput = document.getElementById(nextDateId);
+  const intervalInput = document.getElementById(intervalId);
+  const intervalTypeInput = document.getElementById(intervalTypeId);
+  
+  if (!lastDateInput || !nextDateInput || !intervalInput || !intervalTypeInput) {
+    return; // Fields don't exist, skip
+  }
+  
+  // Function to calculate and update the next date
+  const calculateNextDate = () => {
+    const lastDate = lastDateInput.value;
+    const interval = parseInt(intervalInput.value);
+    const intervalType = intervalTypeInput.value;
+    
+    if (!lastDate || !interval || interval <= 0) {
+      return; // Can't calculate without valid inputs
+    }
+    
+    const date = new Date(lastDate);
+    
+    // Add the interval based on type
+    switch (intervalType) {
+      case 'days':
+        date.setDate(date.getDate() + interval);
+        break;
+      case 'weeks':
+        date.setDate(date.getDate() + (interval * 7));
+        break;
+      case 'months':
+        date.setMonth(date.getMonth() + interval);
+        break;
+      case 'years':
+        date.setFullYear(date.getFullYear() + interval);
+        break;
+    }
+    
+    // Format as YYYY-MM-DD for date input
+    const nextDateValue = date.toISOString().split('T')[0];
+    nextDateInput.value = nextDateValue;
+  };
+  
+  // Add event listeners to trigger calculation
+  lastDateInput.addEventListener('change', calculateNextDate);
+  intervalInput.addEventListener('input', calculateNextDate);
+  intervalTypeInput.addEventListener('change', calculateNextDate);
+}
+
 // Initialize search, export, and duplicate functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   setupExportModalHandlers();
   initializeSearch();
   setupDuplicateFormHandlers();
   updateAddItemFormHandler();
+  setupDateAutoCalculation();
 });
