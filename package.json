@@ -52,7 +52,8 @@
     "qrcode": "^1.5.3",
     "sharp": "^0.32.6",
     "sqlite3": "^5.1.6",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.40.0",

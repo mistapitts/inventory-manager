@@ -255,6 +255,53 @@
         </div>
       </div>
 
+      <!-- Export Inventory Modal -->
+      <div id="modal-export-inventory" class="modal hidden">
+        <div class="modal-card">
+          <h3><i class="fas fa-download"></i> Export Inventory</h3>
+          <p class="modal-description">Choose which items to include in your Excel export:</p>
+          
+          <div class="export-options">
+            <div class="export-option">
+              <input type="radio" id="exportAll" name="exportType" value="all" checked>
+              <label for="exportAll">
+                <div class="option-content">
+                  <div class="option-header">
+                    <i class="fas fa-list"></i>
+                    <strong>Export All Items</strong>
+                  </div>
+                  <p class="option-description">Export all inventory items regardless of current filters or search</p>
+                  <span class="item-count" id="allItemsCount">0 items</span>
+                </div>
+              </label>
+            </div>
+            
+            <div class="export-option">
+              <input type="radio" id="exportVisible" name="exportType" value="visible">
+              <label for="exportVisible">
+                <div class="option-content">
+                  <div class="option-header">
+                    <i class="fas fa-filter"></i>
+                    <strong>Export Visible Items Only</strong>
+                  </div>
+                  <p class="option-description">Export only the items currently shown in the table (filtered results)</p>
+                  <span class="item-count" id="visibleItemsCount">0 items</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-close="modal-export-inventory">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="confirmExportBtn">
+              <i class="fas fa-file-excel"></i> Export to Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Dashboard (hidden until login) -->
       <div class="dashboard" id="dashboard" style="display: none">
         <nav class="sidebar">
@@ -325,16 +372,20 @@
             <div class="breadcrumb">
               <span>Inventory</span>
             </div>
-            <div class="top-actions">
-              <button class="add-item-btn" id="addItemBtn">
-                <i class="fas fa-plus"></i>
-                Add Item
-              </button>
-              <button class="btn btn-primary" id="createListBtn">
-                <i class="fas fa-list"></i>
-                Create List
-              </button>
-              <div class="search-box">
+                            <div class="top-actions">
+                  <button class="add-item-btn" id="addItemBtn">
+                    <i class="fas fa-plus"></i>
+                    Add Item
+                  </button>
+                  <button class="btn btn-primary" id="createListBtn">
+                    <i class="fas fa-list"></i>
+                    Create List
+                  </button>
+                  <button class="btn btn-secondary" id="exportInventoryBtn">
+                    <i class="fas fa-download"></i>
+                    Export Inventory
+                  </button>
+                  <div class="search-box">
                 <i class="fas fa-search"></i>
                 <label for="searchInventory" class="visually-hidden">Search inventory</label>
                 <input

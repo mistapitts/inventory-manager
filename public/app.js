@@ -5004,3 +5004,171 @@ async function handleInviteConfirmation(event) {
     submitBtn.disabled = false;
   }
 }
+
+// Export Inventory Functionality
+function showExportModal() {
+  const modal = document.getElementById('modal-export-inventory');
+  if (!modal) return;
+  
+  // Update item counts
+  updateExportItemCounts();
+  
+  // Show modal
+  modal.classList.remove('hidden');
+  
+  // Setup event listeners if not already done
+  setupExportModalHandlers();
+}
+
+function updateExportItemCounts() {
+  const allItemsCount = document.getElementById('allItemsCount');
+  const visibleItemsCount = document.getElementById('visibleItemsCount');
+  
+  if (allItemsCount) {
+    const totalItems = window.inventoryItems ? window.inventoryItems.length : 0;
+    allItemsCount.textContent = `${totalItems} items`;
+  }
+  
+  if (visibleItemsCount) {
+    const visibleRows = document.querySelectorAll('#inventoryTableBody tr:not(.empty-row)').length;
+    visibleItemsCount.textContent = `${visibleRows} items`;
+  }
+}
+
+function setupExportModalHandlers() {
+  const confirmBtn = document.getElementById('confirmExportBtn');
+  const exportBtn = document.getElementById('exportInventoryBtn');
+  
+  if (exportBtn && !exportBtn.hasAttribute('data-export-setup')) {
+    exportBtn.addEventListener('click', showExportModal);
+    exportBtn.setAttribute('data-export-setup', 'true');
+  }
+  
+  if (confirmBtn && !confirmBtn.hasAttribute('data-export-setup')) {
+    confirmBtn.addEventListener('click', handleExportConfirm);
+    confirmBtn.setAttribute('data-export-setup', 'true');
+  }
+}
+
+async function handleExportConfirm() {
+  const exportType = document.querySelector('input[name="exportType"]:checked')?.value;
+  if (!exportType) return;
+  
+  const confirmBtn = document.getElementById('confirmExportBtn');
+  const originalText = confirmBtn.innerHTML;
+  
+  try {
+    // Show loading state
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+    confirmBtn.disabled = true;
+    
+    // Get data to export
+    let dataToExport;
+    if (exportType === 'all') {
+      dataToExport = window.inventoryItems || [];
+    } else {
+      dataToExport = getVisibleItems();
+    }
+    
+    // Export to Excel
+    await exportToExcel(dataToExport, exportType);
+    
+    // Close modal
+    closeModal('modal-export-inventory');
+    showToast('Inventory exported successfully!', 'success');
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    showToast('Failed to export inventory', 'error');
+  } finally {
+    // Reset button
+    confirmBtn.innerHTML = originalText;
+    confirmBtn.disabled = false;
+  }
+}
+
+function getVisibleItems() {
+  const visibleItems = [];
+  const tableRows = document.querySelectorAll('#inventoryTableBody tr:not(.empty-row)');
+  
+  tableRows.forEach(row => {
+    // Get item ID from the row's action buttons
+    const viewBtn = row.querySelector('[data-action="view"]');
+    if (viewBtn) {
+      const itemId = viewBtn.getAttribute('data-id');
+      const item = window.inventoryItems?.find(item => item.id === itemId);
+      if (item) {
+        visibleItems.push(item);
+      }
+    }
+  });
+  
+  return visibleItems;
+}
+
+async function exportToExcel(items, exportType) {
+  // Import XLSX library dynamically
+  const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
+  
+  // Prepare data for export
+  const exportData = items.map(item => ({
+    'Item Type': item.itemType || '',
+    'Nickname': item.nickname || '',
+    'Lab ID': item.labId || '',
+    'Make': item.make || '',
+    'Model': item.model || '',
+    'Serial Number': item.serialNumber || '',
+    'Condition': item.condition || '',
+    'Date Received': item.dateReceived ? new Date(item.dateReceived).toLocaleDateString() : '',
+    'Location': item.location || '',
+    'Last Calibration': item.calibrationDate ? new Date(item.calibrationDate).toLocaleDateString() : '',
+    'Next Calibration Due': item.nextCalibrationDue ? new Date(item.nextCalibrationDue).toLocaleDateString() : '',
+    'Calibration Interval': item.calibrationInterval && item.calibrationIntervalType ? 
+      `${item.calibrationInterval} ${item.calibrationIntervalType}` : '',
+    'Calibration Method': item.calibrationMethod || '',
+    'Last Maintenance': item.maintenanceDate ? new Date(item.maintenanceDate).toLocaleDateString() : '',
+    'Maintenance Due': item.maintenanceDue ? new Date(item.maintenanceDue).toLocaleDateString() : '',
+    'Notes': item.notes || '',
+    'Status': getItemStatus(item),
+    'Outsourced': item.isOutsourced ? 'Yes' : 'No'
+  }));
+  
+  // Create workbook and worksheet
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  
+  // Auto-size columns
+  const colWidths = [];
+  const headers = Object.keys(exportData[0] || {});
+  headers.forEach((header, index) => {
+    const maxLength = Math.max(
+      header.length,
+      ...exportData.map(row => String(row[header] || '').length)
+    );
+    colWidths[index] = { width: Math.min(Math.max(maxLength + 2, 10), 50) };
+  });
+  worksheet['!cols'] = colWidths;
+  
+  // Add worksheet to workbook
+  const sheetName = exportType === 'all' ? 'All Inventory' : 'Filtered Inventory';
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const filename = `Inventory_Export_${exportType}_${timestamp}.xlsx`;
+  
+  // Download file
+  XLSX.writeFile(workbook, filename);
+}
+
+function getItemStatus(item) {
+  const statuses = [];
+  if (item.isOutOfService) statuses.push('Out of Service');
+  if (item.isOutsourced) statuses.push('Outsourced');
+  return statuses.length > 0 ? statuses.join(', ') : 'In Service';
+}
+
+// Initialize export functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  setupExportModalHandlers();
+});
