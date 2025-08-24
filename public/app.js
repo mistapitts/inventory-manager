@@ -4082,6 +4082,7 @@ function renderNicknameCell(item) {
 // --- Build actions menu HTML with OOS options (ChatGPT's approach)
 function buildActionsMenuHTML(item) {
   const edit = `<button class="menu-item" data-action="edit" data-id="${item.id}">✏️ Edit</button>`;
+  const duplicate = `<button class="menu-item" data-action="duplicate" data-id="${item.id}">📋 Duplicate</button>`;
   const oos  = `<button class="menu-item" data-action="oos" data-id="${item.id}">⛔ Mark Out of Service</button>`;
   const rts  = `<button class="menu-item" data-action="rts" data-id="${item.id}">↩️ Return to Service</button>`;
   const del  = `<button class="menu-item" data-action="delete" data-id="${item.id}" style="color:#ff6b6b">🗑️ Delete</button>`;
@@ -4089,6 +4090,7 @@ function buildActionsMenuHTML(item) {
   return `
     <div class="action-menu" data-id="${item.id}">
       ${edit}
+      ${duplicate}
       ${item.isOutOfService ? rts : oos}
       ${del}
     </div>
@@ -4299,6 +4301,8 @@ document.addEventListener('click', (e) => {
     const { action, id } = menuItem.dataset;
     if (action === 'edit') {
       editItem(id);
+    } else if (action === 'duplicate') {
+      duplicateItem(id);
     } else if (action === 'oos') {
       openModal('modal-oos', id);
     } else if (action === 'rts') {
@@ -5426,8 +5430,304 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Initialize search and export functionality when DOM is loaded
+// Duplicate Item Functionality
+let duplicateItemData = null; // Store original item data for duplication
+
+function duplicateItem(itemId) {
+  const item = window.inventoryItems?.find(item => item.id === itemId);
+  if (!item) {
+    showToast('Item not found', 'error');
+    return;
+  }
+  
+  // Store original item data
+  duplicateItemData = { ...item };
+  
+  // Show duplicate modal and populate with item data
+  showDuplicateModal(item);
+}
+
+function showDuplicateModal(item) {
+  const modal = document.getElementById('duplicateItemModal');
+  if (!modal) return;
+  
+  // Populate form with item data (excluding ID and dates that should be fresh)
+  populateDuplicateForm(item);
+  
+  // Show modal
+  modal.style.display = 'flex';
+  
+  // Setup form handlers if not already done
+  setupDuplicateFormHandlers();
+}
+
+function populateDuplicateForm(item) {
+  // Basic Information
+  document.getElementById('dupItemType').value = item.itemType || '';
+  document.getElementById('dupNickname').value = item.nickname || '';
+  document.getElementById('dupLabId').value = ''; // Clear lab ID for new item
+  document.getElementById('dupMake').value = item.make || '';
+  document.getElementById('dupModel').value = item.model || '';
+  document.getElementById('dupSerialNumber').value = ''; // Clear serial number for new item
+  document.getElementById('dupCondition').value = item.condition || '';
+  
+  // Set today's date for received and in-service dates
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('dupDateReceived').value = today;
+  document.getElementById('dupDatePlacedInService').value = today;
+  
+  // Location
+  document.getElementById('dupLocation').value = item.location || '';
+  
+  // Calibration Information
+  document.getElementById('dupCalibrationType').value = item.calibrationType || '';
+  document.getElementById('dupCalibrationDate').value = today; // Set to today for new calibration
+  
+  // Calculate next calibration due based on interval
+  if (item.calibrationInterval && item.calibrationIntervalType) {
+    const nextDue = calculateNextDate(today, item.calibrationInterval, item.calibrationIntervalType);
+    document.getElementById('dupNextCalibrationDue').value = nextDue;
+  }
+  
+  document.getElementById('dupCalibrationInterval').value = item.calibrationInterval || 12;
+  document.getElementById('dupCalibrationIntervalType').value = item.calibrationIntervalType || 'months';
+  document.getElementById('dupCalibrationMethod').value = item.calibrationMethod || '';
+  
+  // Maintenance Information
+  const useMaintenance = item.maintenanceDate || item.maintenanceDue || item.maintenanceInterval;
+  document.getElementById('dupUseMaintenance').checked = !!useMaintenance;
+  
+  if (useMaintenance) {
+    document.getElementById('dupMaintenanceFields').style.display = 'block';
+    document.getElementById('dupMaintenanceDate').value = today; // Set to today for new maintenance
+    
+    if (item.maintenanceInterval && item.maintenanceIntervalType) {
+      const nextMaintenanceDue = calculateNextDate(today, item.maintenanceInterval, item.maintenanceIntervalType);
+      document.getElementById('dupMaintenanceDue').value = nextMaintenanceDue;
+    }
+    
+    document.getElementById('dupMaintenanceInterval').value = item.maintenanceInterval || 6;
+    document.getElementById('dupMaintenanceIntervalType').value = item.maintenanceIntervalType || 'months';
+  }
+  
+  // Notes
+  document.getElementById('dupNotes').value = item.notes || '';
+  
+  // List selection
+  populateListDropdown('dupListId', item.listId);
+  
+  // Clear the duplicate checkbox
+  document.getElementById('duplicateAfterDuplicate').checked = false;
+}
+
+function calculateNextDate(startDate, interval, intervalType) {
+  const date = new Date(startDate);
+  
+  switch (intervalType) {
+    case 'days':
+      date.setDate(date.getDate() + parseInt(interval));
+      break;
+    case 'weeks':
+      date.setDate(date.getDate() + (parseInt(interval) * 7));
+      break;
+    case 'months':
+      date.setMonth(date.getMonth() + parseInt(interval));
+      break;
+  }
+  
+  return date.toISOString().split('T')[0];
+}
+
+function setupDuplicateFormHandlers() {
+  const form = document.getElementById('duplicateItemForm');
+  const cancelBtn = document.getElementById('cancelDuplicateItem');
+  const closeBtn = document.getElementById('closeDuplicateItemModal');
+  const maintenanceCheckbox = document.getElementById('dupUseMaintenance');
+  
+  // Form submission
+  if (form && !form.hasAttribute('data-duplicate-setup')) {
+    form.addEventListener('submit', handleDuplicateSubmit);
+    form.setAttribute('data-duplicate-setup', 'true');
+  }
+  
+  // Cancel and close buttons
+  if (cancelBtn && !cancelBtn.hasAttribute('data-duplicate-setup')) {
+    cancelBtn.addEventListener('click', closeDuplicateModal);
+    cancelBtn.setAttribute('data-duplicate-setup', 'true');
+  }
+  
+  if (closeBtn && !closeBtn.hasAttribute('data-duplicate-setup')) {
+    closeBtn.addEventListener('click', closeDuplicateModal);
+    closeBtn.setAttribute('data-duplicate-setup', 'true');
+  }
+  
+  // Maintenance checkbox toggle
+  if (maintenanceCheckbox && !maintenanceCheckbox.hasAttribute('data-duplicate-setup')) {
+    maintenanceCheckbox.addEventListener('change', function() {
+      const fields = document.getElementById('dupMaintenanceFields');
+      if (fields) {
+        fields.style.display = this.checked ? 'block' : 'none';
+      }
+    });
+    maintenanceCheckbox.setAttribute('data-duplicate-setup', 'true');
+  }
+}
+
+function closeDuplicateModal() {
+  const modal = document.getElementById('duplicateItemModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  
+  // Clear form
+  const form = document.getElementById('duplicateItemForm');
+  if (form) {
+    form.reset();
+  }
+  
+  // Clear stored data
+  duplicateItemData = null;
+}
+
+async function handleDuplicateSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const formData = new FormData(form);
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoader = submitBtn.querySelector('.btn-loader');
+  const duplicateAfter = document.getElementById('duplicateAfterDuplicate').checked;
+  
+  // Show loading state
+  btnText.style.display = 'none';
+  btnLoader.style.display = 'block';
+  submitBtn.disabled = true;
+  
+  try {
+    // Create the duplicate item
+    const response = await fetch('/api/inventory', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: formData
+    });
+    
+    if (response.ok) {
+      const newItem = await response.json();
+      
+      // Close modal
+      closeDuplicateModal();
+      
+      // Refresh inventory
+      _itemsCache = []; // Clear cache
+      await loadInventoryItems();
+      await loadInventoryStats();
+      
+      showToast('Item duplicated successfully!', 'success');
+      
+      // If duplicate checkbox was checked, open another duplicate form
+      if (duplicateAfter && duplicateItemData) {
+        setTimeout(() => {
+          showDuplicateModal(duplicateItemData);
+        }, 500);
+      }
+      
+    } else {
+      const errorData = await response.json();
+      showToast(errorData.error || 'Failed to duplicate item', 'error');
+    }
+    
+  } catch (error) {
+    console.error('Error duplicating item:', error);
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    btnText.style.display = 'block';
+    btnLoader.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+// Update Add Item form handler to support duplicate checkbox
+function updateAddItemFormHandler() {
+  const form = document.getElementById('addItemForm');
+  if (!form) return;
+  
+  // Remove existing listener
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+  
+  // Add new listener with duplicate support
+  newForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+    const duplicateAfter = document.getElementById('duplicateAfterAdd').checked;
+    
+    // Show loading state
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'block';
+    submitBtn.disabled = true;
+    
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData
+      });
+      
+      if (response.ok) {
+        const newItem = await response.json();
+        
+        // Close modal
+        const modal = document.getElementById('addItemModal');
+        if (modal) modal.style.display = 'none';
+        
+        // Clear form
+        e.target.reset();
+        
+        // Refresh inventory
+        _itemsCache = []; // Clear cache
+        await loadInventoryItems();
+        await loadInventoryStats();
+        
+        showToast('Item added successfully!', 'success');
+        
+        // If duplicate checkbox was checked, open duplicate form with new item data
+        if (duplicateAfter) {
+          setTimeout(() => {
+            showDuplicateModal(newItem);
+          }, 500);
+        }
+        
+      } else {
+        const errorData = await response.json();
+        showToast(errorData.error || 'Failed to add item', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Error adding item:', error);
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      // Reset button state
+      btnText.style.display = 'block';
+      btnLoader.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+// Initialize search, export, and duplicate functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   setupExportModalHandlers();
   initializeSearch();
+  setupDuplicateFormHandlers();
+  updateAddItemFormHandler();
 });

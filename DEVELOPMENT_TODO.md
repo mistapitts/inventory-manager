@@ -172,13 +172,6 @@
   - ✅ Form now stays in edit mode after errors
   - ✅ No more duplicate item creation issues
 
-### 14. 🟠 Orange Outsourced Tab Positioning (ABORTED)
-
-- **Issue**: Orange tab on outsourced items should be fixed during scroll
-- **Status**: ❌ ABORTED
-- **Reason**: Unnecessary complexity - current border-left styling is sufficient
-- **Notes**: User decided to keep simple border-left approach instead of complex positioning
-
 ---
 
 _Last Updated: 2025-01-27_

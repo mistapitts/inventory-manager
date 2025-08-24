@@ -1279,13 +1279,280 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" id="cancelAddItem">Cancel</button>
-            <button type="submit" class="btn-primary">
-              <span class="btn-text">Add Item</span>
-              <div class="btn-loader" style="display: none">
-                <div class="spinner"></div>
+            <label class="checkbox-label duplicate-checkbox">
+              <input type="checkbox" id="duplicateAfterAdd" name="duplicateAfterAdd" />
+              <span class="checkmark"></span>
+              Duplicate this item after creating
+            </label>
+            <div class="action-buttons">
+              <button type="button" class="btn-secondary" id="cancelAddItem">Cancel</button>
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">Add Item</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Duplicate Item Modal -->
+    <div class="modal-overlay" id="duplicateItemModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Duplicate Item</h2>
+          <button class="modal-close" id="closeDuplicateItemModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form class="add-item-form" id="duplicateItemForm">
+          <div class="form-sections">
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h3>Basic Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupItemType">Item Type *</label>
+                  <input
+                    type="text"
+                    id="dupItemType"
+                    name="itemType"
+                    required
+                    placeholder="e.g., Scale, Caliper, Vibration Analyzer"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="dupNickname">Nickname</label>
+                  <input
+                    type="text"
+                    id="dupNickname"
+                    name="nickname"
+                    placeholder="e.g., Main Lab Scale"
+                  />
+                </div>
               </div>
-            </button>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupListId">List</label>
+                  <select id="dupListId" name="listId">
+                    <option value="">No lists available</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <!-- spacer -->
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupLabId">Lab ID/Number</label>
+                  <input type="text" id="dupLabId" name="labId" placeholder="e.g., LAB-001" />
+                </div>
+                <div class="form-group">
+                  <label for="dupMake">Make *</label>
+                  <input
+                    type="text"
+                    id="dupMake"
+                    name="make"
+                    required
+                    placeholder="e.g., Mettler Toledo"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupModel">Model *</label>
+                  <input type="text" id="dupModel" name="model" required placeholder="e.g., XS205" />
+                </div>
+                <div class="form-group">
+                  <label for="dupSerialNumber">Serial Number *</label>
+                  <input
+                    type="text"
+                    id="dupSerialNumber"
+                    name="serialNumber"
+                    required
+                    placeholder="e.g., SN123456"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupCondition">Condition When Received *</label>
+                  <select id="dupCondition" name="condition" required>
+                    <option value="">Select Condition</option>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <!-- Empty div for spacing -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Dates and Location -->
+            <div class="form-section">
+              <h3>Dates and Location</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupDateReceived">Date Received *</label>
+                  <input type="date" id="dupDateReceived" name="dateReceived" required />
+                </div>
+                <div class="form-group">
+                  <label for="dupDatePlacedInService">Date Placed in Service *</label>
+                  <input type="date" id="dupDatePlacedInService" name="datePlacedInService" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="dupLocation">Location *</label>
+                <input
+                  type="text"
+                  id="dupLocation"
+                  name="location"
+                  required
+                  placeholder="e.g., Main Lab, Field Truck #1, Lab 3 - Bench 2"
+                />
+              </div>
+            </div>
+
+            <!-- Calibration Information -->
+            <div class="form-section">
+              <h3>Calibration Information</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupCalibrationType">Calibration Type *</label>
+                  <select id="dupCalibrationType" name="calibrationType" required>
+                    <option value="">Select Type</option>
+                    <option value="in_house">In-House</option>
+                    <option value="outsourced">Outsourced</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="dupCalibrationDate">Last Calibration Date *</label>
+                  <input type="date" id="dupCalibrationDate" name="calibrationDate" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dupNextCalibrationDue">Next Calibration Due *</label>
+                  <input type="date" id="dupNextCalibrationDue" name="nextCalibrationDue" required />
+                </div>
+                <div class="form-group">
+                  <label for="dupCalibrationInterval">Calibration Interval *</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="dupCalibrationInterval"
+                      name="calibrationInterval"
+                      required
+                      min="1"
+                      max="365"
+                      value="12"
+                    />
+                    <select id="dupCalibrationIntervalType" name="calibrationIntervalType" required>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="dupCalibrationMethod">Calibration Method *</label>
+                <input
+                  type="text"
+                  id="dupCalibrationMethod"
+                  name="calibrationMethod"
+                  required
+                  placeholder="e.g., ASTM D4753"
+                />
+              </div>
+            </div>
+
+            <!-- Maintenance Information -->
+            <div class="form-section">
+              <h3>Maintenance Information</h3>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="dupUseMaintenance" name="useMaintenance" />
+                  <span class="checkmark"></span>
+                  Include maintenance tracking for this item
+                </label>
+              </div>
+
+              <div id="dupMaintenanceFields" style="display: none">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="dupMaintenanceDate">Last Maintenance Date</label>
+                    <input type="date" id="dupMaintenanceDate" name="maintenanceDate" />
+                  </div>
+                  <div class="form-group">
+                    <label for="dupMaintenanceDue">Next Maintenance Due</label>
+                    <input type="date" id="dupMaintenanceDue" name="maintenanceDue" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="dupMaintenanceInterval">Maintenance Interval</label>
+                  <div class="interval-input">
+                    <input
+                      type="number"
+                      id="dupMaintenanceInterval"
+                      name="maintenanceInterval"
+                      min="1"
+                      max="365"
+                      value="6"
+                    />
+                    <select id="dupMaintenanceIntervalType" name="maintenanceIntervalType">
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months" selected>Months</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="form-section">
+              <h3>Additional Information</h3>
+              <div class="form-group">
+                <label for="dupNotes">Notes</label>
+                <textarea
+                  id="dupNotes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Additional notes about this item..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <label class="checkbox-label duplicate-checkbox">
+              <input type="checkbox" id="duplicateAfterDuplicate" name="duplicateAfterDuplicate" />
+              <span class="checkmark"></span>
+              Duplicate this item after creating
+            </label>
+            <div class="action-buttons">
+              <button type="button" class="btn-secondary" id="cancelDuplicateItem">Cancel</button>
+              <button type="submit" class="btn-primary">
+                <span class="btn-text">Create Item</span>
+                <div class="btn-loader" style="display: none">
+                  <div class="spinner"></div>
+                </div>
+              </button>
+            </div>
           </div>
         </form>
       </div>
