@@ -966,17 +966,17 @@ body {
   overflow: visible; /* Allow sticky positioning to work */
 }
 
-/* Inventory table container with fixed header and scrollable content */
+/* Inventory table container with fixed header and full page scroll */
 .inventory-table-container {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
+  /* Removed max-height for full page scroll */
 }
 
-/* Fixed toolbar (never scrolls) */
+/* Sticky table header for full page scroll */
 .inventory-table-header {
   background: var(--bg-secondary);
   padding: 16px 20px;
@@ -986,15 +986,17 @@ body {
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
 }
 
-/* Only this part scrolls */
+/* Full page scroll - no container scroll */
 .inventory-table-scroll-wrapper {
   min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow-y: visible; /* Allow full page scroll instead of container scroll */
+  overscroll-behavior: auto;
   position: relative;
 }
 
