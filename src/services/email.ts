@@ -38,19 +38,21 @@ class EmailService {
         return;
       }
 
-      this.transporter = nodemailer.createTransporter(emailConfig);
+      this.transporter = nodemailer.createTransport(emailConfig);
       this.isConfigured = true;
       console.log('📧 Email service: Configured successfully');
       
       // Verify connection
-      this.transporter.verify((error) => {
-        if (error) {
-          console.error('📧 Email service: Connection verification failed:', error.message);
-          this.isConfigured = false;
-        } else {
-          console.log('📧 Email service: Ready to send emails');
-        }
-      });
+      if (this.transporter) {
+        this.transporter.verify((error) => {
+          if (error) {
+            console.error('📧 Email service: Connection verification failed:', error.message);
+            this.isConfigured = false;
+          } else {
+            console.log('📧 Email service: Ready to send emails');
+          }
+        });
+      }
     } catch (error) {
       console.error('📧 Email service: Initialization failed:', error);
       this.isConfigured = false;
