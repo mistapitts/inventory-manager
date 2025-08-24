@@ -1218,10 +1218,18 @@ function editItem(itemId) {
   // Re-setup auto-calculation for the edit form (since event listeners may need refreshing)
   setupDateAutoCalculation();
 
-  // Ensure the create-item handler does not run in edit mode
+  // Clean up any existing handlers before setting up edit mode
   try {
     form.removeEventListener('submit', handleAddItem);
   } catch {}
+  
+  // Remove any existing edit handler
+  if (form._editSubmitHandler) {
+    try {
+      form.removeEventListener('submit', form._editSubmitHandler);
+    } catch {}
+    delete form._editSubmitHandler;
+  }
   
   // Remove any existing onsubmit handler
   form.onsubmit = null;
@@ -1243,11 +1251,13 @@ function editItem(itemId) {
       });
       if (resp.ok) {
         showToast('Item updated', 'success');
-        hideAddItemModal();
         
         // Clear cache to force fresh data fetch with updated item data
         _itemsCache = [];
         await loadInventoryItems();
+        
+        // Close modal (this will handle cleanup)
+        hideAddItemModal();
       } else {
         const err = await resp.json().catch(() => ({}));
         showToast(err.error || 'Failed to update item', 'error');
@@ -1261,20 +1271,9 @@ function editItem(itemId) {
       return;
     }
 
-    // Only reset form on successful update
+    // Only reset button state on successful update (modal cleanup handles the rest)
     btnText.style.display = 'block';
     btnLoader.style.display = 'none';
-    // Restore default submit handler for create mode
-    form.onsubmit = null;
-    try {
-      form.addEventListener('submit', handleAddItem);
-    } catch {}
-    delete form.dataset.editing;
-    delete form.dataset.itemId;
-    const titleEl2 = document.querySelector('#addItemModal .modal-header h2');
-    if (titleEl2) titleEl2.textContent = 'Add New Inventory Item';
-    const submitText = form.querySelector('.btn-primary .btn-text');
-    if (submitText) submitText.textContent = 'Add Item';
   };
   
   // Store reference and attach the edit submit handler
@@ -1384,8 +1383,22 @@ function showAddItemModal() {
   delete form.dataset.editing;
   delete form.dataset.itemId;
 
-  // Reset form to original submit handler
+  // Clean up any existing handlers and ensure add handler is attached
   form.onsubmit = null; // Clear any custom edit submit handler
+  
+  // Remove any existing edit handler
+  if (form._editSubmitHandler) {
+    try {
+      form.removeEventListener('submit', form._editSubmitHandler);
+    } catch {}
+    delete form._editSubmitHandler;
+  }
+  
+  // Ensure add handler is attached
+  try {
+    form.removeEventListener('submit', handleAddItem);
+    form.addEventListener('submit', handleAddItem);
+  } catch {}
 
   // Reset all file upload areas to default state
   resetFileUploadAreas();

@@ -976,7 +976,7 @@ body {
   /* Removed max-height for full page scroll */
 }
 
-/* Sticky table header for full page scroll */
+/* Sticky table header for full page scroll with legend support */
 .inventory-table-header {
   background: var(--bg-secondary);
   padding: 16px 20px;
@@ -4160,15 +4160,7 @@ td.actions {
   color: var(--text-secondary);
 }
 
-/* Update inventory table header to accommodate legend */
-.inventory-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-}
+/* Update inventory table header to accommodate legend - merged with sticky positioning */
 
 /* Inventory Sidebar (where old legend was) */
 .inventory-sidebar {
