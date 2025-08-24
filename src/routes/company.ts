@@ -6,6 +6,7 @@ import { authenticateToken } from '../middleware/auth';
 import { database } from '../models/database';
 import { UserRole } from '../types';
 import { config } from '../config';
+import { emailService } from '../services/email';
 
 const router = Router();
 
@@ -168,8 +169,8 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
       return res.status(400).json({ error: 'Invalid role specified' });
     }
 
-    // Get user's company
-    const user = await database.get('SELECT companyId, role FROM users WHERE id = ?', [userId]);
+    // Get user's company and inviter info
+    const user = await database.get('SELECT u.companyId, u.role, u.firstName, u.lastName, c.name as companyName FROM users u LEFT JOIN companies c ON u.companyId = c.id WHERE u.id = ?', [userId]);
     if (!user || !user.companyId) {
       return res.status(400).json({ error: 'User not associated with a company' });
     }
@@ -197,14 +198,26 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
       [generateId(), user.companyId, inviteCode, role, email, firstName, lastName, expiresAt.toISOString()],
     );
 
-    // TODO: Send email with invite code
-    // For now, we'll just return the invite code
-    res.json({ 
-      message: 'Invitation created successfully',
+    // Send invitation email
+    const inviteLink = `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`;
+    const inviterName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
+    
+    const emailSent = await emailService.sendUserInvitation({
+      to: email,
+      firstName,
+      lastName,
+      companyName: user.companyName || 'Your Company',
       inviteCode,
+      inviteLink,
+      inviterName,
+    });
+
+    res.json({ 
+      message: emailSent ? 'Invitation sent successfully' : 'Invitation created (email not configured)',
+      inviteCode: emailSent ? undefined : inviteCode, // Only return code if email failed
       expiresAt: expiresAt.toISOString(),
-      // In production, you would send this via email instead of returning it
-      inviteLink: `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`
+      emailSent,
+      inviteLink: emailSent ? undefined : inviteLink // Only return link if email failed
     });
   } catch (error) {
     console.error('Error creating user invitation:', error);
