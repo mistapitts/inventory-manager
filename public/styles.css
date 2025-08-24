@@ -999,10 +999,12 @@ body {
 .table-scrollbar-top {
   overflow-x: auto;
   overflow-y: hidden;
-  height: 16px;
+  height: 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  margin: 0;
+  padding: 0;
   /* Hide the scrollbar track but keep functionality */
 }
 
@@ -1014,7 +1016,7 @@ body {
 
 /* Custom scrollbar styling for top scrollbar */
 .table-scrollbar-top::-webkit-scrollbar {
-  height: 12px;
+  height: 10px;
 }
 
 .table-scrollbar-top::-webkit-scrollbar-track {
@@ -1050,21 +1052,21 @@ body {
 /* Responsive adjustments for scrollbar */
 @media (max-width: 768px) {
   .table-scrollbar-top {
-    height: 14px; /* Slightly larger on mobile for easier touch interaction */
+    height: 12px; /* Compact but still touchable on mobile */
   }
 
   .table-scrollbar-top::-webkit-scrollbar {
-    height: 14px;
+    height: 12px;
   }
 }
 
 @media (max-width: 480px) {
   .table-scrollbar-top {
-    height: 16px; /* Even larger on small mobile devices */
+    height: 14px; /* Slightly larger on small mobile devices */
   }
 
   .table-scrollbar-top::-webkit-scrollbar {
-    height: 16px;
+    height: 14px;
   }
 }
 
