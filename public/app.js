@@ -4340,10 +4340,38 @@ function toggleActionMenuForCell(cellEl) {
       // Calculate position relative to the button
       const button = cellEl.querySelector('[data-action="more"]');
       const rect = button.getBoundingClientRect();
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      
+      // Estimate menu dimensions (can be adjusted based on actual menu)
+      const menuHeight = 150; // Approximate menu height
+      const menuWidth = 220; // From CSS min-width
+      
+      // Calculate optimal position
+      let top = rect.bottom + 5;
+      let left = rect.right - menuWidth; // Align to right edge of button
+      
+      // Check if menu would extend below viewport
+      if (top + menuHeight > viewport.height) {
+        // Position above the button instead
+        top = rect.top - menuHeight - 5;
+      }
+      
+      // Check if menu would extend beyond left edge
+      if (left < 10) {
+        left = 10; // Keep some margin from edge
+      }
+      
+      // Check if menu would extend beyond right edge
+      if (left + menuWidth > viewport.width - 10) {
+        left = viewport.width - menuWidth - 10;
+      }
 
-      // Position menu below and to the right of the button
-      menu.style.top = rect.bottom + 5 + 'px';
-      menu.style.right = window.innerWidth - rect.right + 'px';
+      // Position menu with calculated coordinates
+      menu.style.top = top + 'px';
+      menu.style.left = left + 'px';
 
       menu.classList.add('open');
     }

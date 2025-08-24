@@ -2623,19 +2623,20 @@ body {
 /* Custom Scrollbar Styling */
 /* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 0.75rem; /* Use rem for zoom responsiveness */
+  height: 0.75rem;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--bg-input);
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 6px;
-  border: 2px solid var(--bg-input);
+  border-radius: 0.375rem;
+  border: 0.125rem solid var(--bg-input);
+  min-width: 2rem; /* Minimum thumb size */
 }
 
 ::-webkit-scrollbar-thumb:hover {
