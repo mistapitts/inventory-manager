@@ -2225,7 +2225,7 @@ function displayItemDetails(data) {
                 <div class="item-detail-row"><span class="item-detail-label">Make/Model:</span><span class="item-detail-value">${item.make || ''} ${item.model || ''}</span></div>
                 <div class="item-detail-row"><span class="item-detail-label">Serial #:</span><span class="item-detail-value">${item.serialNumber || 'N/A'}</span></div>
                 <div class="item-detail-row"><span class="item-detail-label">Received/In Service:</span><span class="item-detail-value">${safeDate(item.dateReceived)} • ${safeDate(item.datePlacedInService)}</span></div>
-                <div class="item-detail-row"><span class="item-detail-label">Location:</span><span class="item-detail-value">${item.location || 'N/A'}</span></div>
+                <div class="item-detail-row"><span class="item-detail-label">Where to Find:</span><span class="item-detail-value">${item.location || 'N/A'}</span></div>
             </div>
             <div class="item-detail-section">
                 <h3>Calibration</h3>
@@ -5489,7 +5489,7 @@ async function exportToExcel(items, exportType) {
     'Serial Number': item.serialNumber || '',
     Condition: item.condition || '',
     'Date Received': item.dateReceived ? new Date(item.dateReceived).toLocaleDateString() : '',
-    Location: item.location || '',
+    'Where to Find': item.location || '',
     'Last Calibration': item.calibrationDate
       ? new Date(item.calibrationDate).toLocaleDateString()
       : '',
