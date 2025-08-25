@@ -241,7 +241,7 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
     );
 
     // Send invitation email
-    const inviteLink = `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`;
+    const inviteLink = `${req.protocol}://${req.get('host')}/signup/${inviteCode}`;
     const inviterName =
       user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
 
@@ -255,10 +255,13 @@ router.post('/invite-user', authenticateToken, async (req: Request, res: Respons
       inviterName,
     });
 
+    // Log invitation details for development
+    console.log(`📧 Invitation created for ${email}: ${inviteLink}`);
+
     res.json({
       message: emailSent
         ? 'Invitation sent successfully'
-        : 'Invitation created (email not configured)',
+        : 'Invitation created successfully (check server logs for email content in development mode)',
       inviteCode: emailSent ? undefined : inviteCode, // Only return code if email failed
       expiresAt: expiresAt.toISOString(),
       emailSent,

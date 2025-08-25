@@ -4510,7 +4510,6 @@ function populateUserSettings(user) {
   document.getElementById('profileFirstName').value = user.firstName || '';
   document.getElementById('profileLastName').value = user.lastName || '';
   document.getElementById('profileEmail').value = user.email || '';
-  document.getElementById('profileRole').value = user.role || '';
 
   // Populate hidden username field for password managers
   const hiddenUsername = document.getElementById('hiddenUsername');

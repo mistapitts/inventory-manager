@@ -19,6 +19,9 @@ class Database {
         await this.createTables();
         await this.addMissingColumns();
         await this.addMissingCompanyColumns();
+        await this.addMissingListColumns();
+        await this.addMissingUserColumns();
+        await this.migrateExistingDataToLocations();
         await this.createAdminUser();
     }
     async createTables() {
@@ -583,6 +586,87 @@ class Database {
                     resolve(rows || []);
             });
         });
+    }
+    // Migration for existing data to location-based system
+    async migrateExistingDataToLocations() {
+        try {
+            console.log('🔄 Checking for location migration...');
+            // Get companies that don't have locations yet
+            const companiesWithoutLocations = await this.all(`
+        SELECT c.id, c.name 
+        FROM companies c 
+        LEFT JOIN locations l ON c.id = l.companyId 
+        WHERE l.id IS NULL
+      `);
+            for (const company of companiesWithoutLocations) {
+                console.log(`📍 Creating default location for company: ${company.name}`);
+                // Create default location for this company
+                const locationId = this.generateId();
+                await this.run(`
+          INSERT INTO locations (id, companyId, name, address, isActive, createdAt, updatedAt)
+          VALUES (?, ?, 'Main Office', 'Default Location', 1, datetime('now'), datetime('now'))
+        `, [locationId, company.id]);
+                // Create default "General" list for this location
+                const listId = this.generateId();
+                await this.run(`
+          INSERT INTO lists (id, companyId, locationId, name, color, textColor, createdAt, updatedAt)
+          VALUES (?, ?, ?, 'General', '#6b7280', '#ffffff', datetime('now'), datetime('now'))
+        `, [listId, company.id, locationId]);
+                // Move all inventory items without locationId to this location
+                const itemsToMigrate = await this.all(`
+          SELECT id FROM inventory_items 
+          WHERE companyId = ? AND (locationId IS NULL OR locationId = '')
+        `, [company.id]);
+                if (itemsToMigrate.length > 0) {
+                    console.log(`📦 Migrating ${itemsToMigrate.length} items for ${company.name}`);
+                    await this.run(`
+            UPDATE inventory_items 
+            SET locationId = ?, listId = ?, updatedAt = datetime('now')
+            WHERE companyId = ? AND (locationId IS NULL OR locationId = '')
+          `, [locationId, listId, company.id]);
+                }
+                // Assign all company users to this default location
+                const companyUsers = await this.all(`
+          SELECT id FROM users WHERE companyId = ?
+        `, [company.id]);
+                for (const user of companyUsers) {
+                    const userLocationId = this.generateId();
+                    await this.run(`
+            INSERT OR IGNORE INTO user_locations (id, userId, locationId, listPermissions, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+          `, [userLocationId, user.id, locationId, JSON.stringify([listId])]);
+                }
+                console.log(`✅ Migration complete for ${company.name}: location ${locationId}, list ${listId}`);
+            }
+            // Also check for existing items that somehow have NULL locationId
+            const orphanedItems = await this.all(`
+        SELECT i.id, i.companyId, c.name as companyName
+        FROM inventory_items i
+        JOIN companies c ON i.companyId = c.id
+        WHERE i.locationId IS NULL OR i.locationId = ''
+      `);
+            if (orphanedItems.length > 0) {
+                console.log(`🔧 Found ${orphanedItems.length} orphaned items, assigning to default locations...`);
+                for (const item of orphanedItems) {
+                    // Find the first location for this company
+                    const defaultLocation = await this.get(`
+            SELECT id FROM locations WHERE companyId = ? LIMIT 1
+          `, [item.companyId]);
+                    if (defaultLocation) {
+                        await this.run(`
+              UPDATE inventory_items 
+              SET locationId = ?, updatedAt = datetime('now')
+              WHERE id = ?
+            `, [defaultLocation.id, item.id]);
+                    }
+                }
+                console.log(`✅ Orphaned items migration complete`);
+            }
+            console.log('🎯 Location migration check complete');
+        }
+        catch (error) {
+            console.error('❌ Error in location migration:', error);
+        }
     }
     generateId() {
         return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);

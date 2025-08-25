@@ -188,7 +188,7 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
             expiresAt.toISOString(),
         ]);
         // Send invitation email
-        const inviteLink = `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`;
+        const inviteLink = `${req.protocol}://${req.get('host')}/signup/${inviteCode}`;
         const inviterName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
         const emailSent = await email_1.emailService.sendUserInvitation({
             to: email,
@@ -199,10 +199,12 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
             inviteLink,
             inviterName,
         });
+        // Log invitation details for development
+        console.log(`📧 Invitation created for ${email}: ${inviteLink}`);
         res.json({
             message: emailSent
                 ? 'Invitation sent successfully'
-                : 'Invitation created (email not configured)',
+                : 'Invitation created successfully (check server logs for email content in development mode)',
             inviteCode: emailSent ? undefined : inviteCode, // Only return code if email failed
             expiresAt: expiresAt.toISOString(),
             emailSent,
