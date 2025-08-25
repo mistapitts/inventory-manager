@@ -202,6 +202,8 @@ class SignupManager {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Account created successfully:', result);
         this.showSuccess();
       } else {
         const error = await response.json();
