@@ -99,7 +99,7 @@ class EmailService {
       }
 
       const mailOptions = {
-        from: `"Inventory Manager" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+        from: `"EZ Inventory" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.SMTP_USER}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -108,7 +108,7 @@ class EmailService {
         headers: {
           'X-Priority': '1',
           'X-MSMail-Priority': 'High',
-          'X-Mailer': 'Inventory Manager v1.0',
+          'X-Mailer': 'EZ Inventory v1.0',
           'X-Auto-Response-Suppress': 'OOF, DR, RN, NRN',
         },
       };
@@ -134,7 +134,7 @@ class EmailService {
   }): Promise<boolean> {
     const { to, firstName, lastName, companyName, inviteCode, inviteLink, inviterName } = options;
 
-    const subject = `Invitation to join ${companyName} - Inventory Manager`;
+    const subject = `Invitation to join ${companyName} - EZ Inventory`;
 
     const html = `
       <!DOCTYPE html>
@@ -155,7 +155,7 @@ class EmailService {
         <div class="container">
           <div class="header">
             <h1>🏢 You're Invited!</h1>
-            <p>Join ${companyName} on Inventory Manager</p>
+            <p>Join ${companyName} on EZ Inventory</p>
           </div>
           <div class="content">
             <p>Hi ${firstName} ${lastName},</p>
@@ -180,7 +180,7 @@ class EmailService {
             <p>Welcome to the team!</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from Inventory Manager</p>
+            <p>This is an automated message from EZ Inventory</p>
             <p><small>This invitation was sent by ${inviterName} from ${companyName}. If you believe this was sent in error, please contact your system administrator.</small></p>
           </div>
         </div>
@@ -216,7 +216,7 @@ class EmailService {
   }): Promise<boolean> {
     const { to, firstName, resetLink } = options;
 
-    const subject = `Password Reset - Inventory Manager`;
+    const subject = `Password Reset - EZ Inventory`;
 
     const html = `
       <!DOCTYPE html>
@@ -264,7 +264,7 @@ class EmailService {
             <p>If you have any questions or concerns, please contact your system administrator.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from Inventory Manager</p>
+            <p>This is an automated message from EZ Inventory</p>
           </div>
         </div>
       </body>
@@ -272,7 +272,7 @@ class EmailService {
     `;
 
     const text = `
-      Password Reset - Inventory Manager
+      Password Reset - EZ Inventory
       
       Hi ${firstName},
       
