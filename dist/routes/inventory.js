@@ -19,7 +19,7 @@ const storage = multer_1.default.diskStorage({
         cb(null, config_1.default.paths.uploadDocsDir);
     },
     filename(_req, file, cb) {
-        const safeBase = path_1.default.basename(file.originalname).replace(/[^\w.\-()+ ]/g, "_");
+        const safeBase = path_1.default.basename(file.originalname).replace(/[^\w.\-()+ ]/g, '_');
         const storedName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBase}`;
         cb(null, storedName);
     },
@@ -29,19 +29,19 @@ const upload = (0, multer_1.default)({
     limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
     fileFilter: (_req, file, cb) => {
         const ok = [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "image/png",
-            "image/jpeg"
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'image/png',
+            'image/jpeg',
         ].includes(file.mimetype);
         if (ok) {
             cb(null, true);
         }
         else {
-            cb(new Error("Unsupported file type"));
+            cb(new Error('Unsupported file type'));
         }
-    }
+    },
 });
 // Lists: get all lists for current user's company
 router.get('/lists', auth_1.authenticateToken, async (req, res) => {
@@ -934,7 +934,7 @@ router.patch('/:id/out-of-service', auth_1.authenticateToken, async (req, res) =
             date,
             reason: reason.trim(),
             reportedBy: reportedBy.trim(),
-            notes: notes || null
+            notes: notes || null,
         };
         await database_1.database.run(`
             INSERT INTO changelog (
@@ -983,7 +983,9 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
             return res.status(409).json({ error: 'Item is not out of service' });
         }
         // Get user info for verification
-        const currentUser = await database_1.database.get('SELECT firstName, lastName FROM users WHERE id = ?', [userId]);
+        const currentUser = await database_1.database.get('SELECT firstName, lastName FROM users WHERE id = ?', [
+            userId,
+        ]);
         const verifiedByName = currentUser && currentUser.firstName && currentUser.lastName
             ? `${currentUser.firstName} ${currentUser.lastName}`
             : 'Unknown User';
@@ -1003,7 +1005,7 @@ router.patch('/:id/return-to-service', auth_1.authenticateToken, async (req, res
             date,
             resolvedBy: resolvedBy.trim(),
             verifiedBy: verifiedByName,
-            notes: notes || null
+            notes: notes || null,
         };
         await database_1.database.run(`
             INSERT INTO changelog (

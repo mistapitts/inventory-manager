@@ -425,11 +425,10 @@
             <div class="welcome-message" id="welcomeMessage">
               <h2>Welcome to Randy's Inventory Manager</h2>
               <p>
-                Your inventory dashboard is ready. Start by setting up your company, then add your
-                first item.
+                Your inventory dashboard is ready. Start by setting up your first location to organize your inventory.
               </p>
-              <button id="setupCompanyBtn" class="btn btn-primary">
-                <i class="fas fa-building"></i> Setup Demo Company
+              <button id="setupFirstLocationBtn" class="btn btn-primary">
+                <i class="fas fa-map-marker-alt"></i> Setup First Location
               </button>
               <button
                 id="createFirstListBtn"
@@ -826,16 +825,7 @@
                         />
                         <small class="form-help">Email cannot be changed</small>
                       </div>
-                      <div class="form-group">
-                        <label>Role</label>
-                        <input
-                          type="text"
-                          id="profileRole"
-                          class="input"
-                          readonly
-                          autocomplete="off"
-                        />
-                      </div>
+
                       <button class="btn btn-primary" id="saveProfileBtn">
                         <i class="fas fa-save"></i> Save Changes
                       </button>
@@ -892,22 +882,7 @@
                     </div>
                   </div>
 
-                  <!-- Company Settings (Company Owner only) -->
-                  <div class="settings-card" id="companySettingsCard" style="display: none">
-                    <div class="settings-card-header">
-                      <h3><i class="fas fa-building"></i> Company Settings</h3>
-                      <p>Manage company information</p>
-                    </div>
-                    <div class="settings-card-content">
-                      <div class="form-group">
-                        <label>Company Name</label>
-                        <input type="text" id="companyName" class="input" />
-                      </div>
-                      <button class="btn btn-secondary" disabled>
-                        <i class="fas fa-building"></i> Update Company (Coming Soon)
-                      </button>
-                    </div>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -984,6 +959,62 @@
             </button>
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Setup First Location Modal -->
+    <div id="modal-setup-first-location" class="modal hidden">
+      <div class="modal-card" style="max-width: 600px">
+        <h3><i class="fas fa-map-marker-alt"></i> Setup First Location</h3>
+        <p class="modal-description">Create your first office/branch location to organize your inventory.</p>
+        <form id="form-setup-first-location">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location Name <span class="text-red-400">*</span></label>
+              <input type="text" id="setup-location-name" class="input" required placeholder="e.g., Main Office, Lab A, Branch 1" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Address</label>
+              <input type="text" id="setup-location-address" class="input" placeholder="Street address" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="setup-location-city" class="input" placeholder="City" />
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <input type="text" id="setup-location-state" class="input" placeholder="State" />
+            </div>
+            <div class="form-group">
+              <label>ZIP Code</label>
+              <input type="text" id="setup-location-zip" class="input" placeholder="ZIP" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="setup-location-phone" class="input" placeholder="(555) 123-4567" />
+            </div>
+            <div class="form-group">
+              <label>Branch Manager</label>
+              <input type="text" id="setup-location-manager" class="input" placeholder="Manager name" />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="hideSetupFirstLocationModal()">Cancel</button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-check"></i> Create Location
             </button>
           </div>
         </form>

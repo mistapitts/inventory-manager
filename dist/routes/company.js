@@ -3,14 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const path_1 = __importDefault(require("path"));
 const express_1 = require("express");
 const multer_1 = __importDefault(require("multer"));
-const path_1 = __importDefault(require("path"));
+const config_1 = require("../config");
 const auth_1 = require("../middleware/auth");
 const database_1 = require("../models/database");
-const types_1 = require("../types");
-const config_1 = require("../config");
 const email_1 = require("../services/email");
+const types_1 = require("../types");
 const router = (0, express_1.Router)();
 // Create a simple company for demo purposes
 router.post('/setup-demo', auth_1.authenticateToken, async (req, res) => {
@@ -101,16 +101,28 @@ router.patch('/update', auth_1.authenticateToken, async (req, res) => {
         }
         // Check permissions (only company_owner and admin can update)
         if (user.role !== 'company_owner' && user.role !== 'admin') {
-            return res.status(403).json({ error: 'Insufficient permissions to update company information' });
+            return res
+                .status(403)
+                .json({ error: 'Insufficient permissions to update company information' });
         }
         // Update company
         await database_1.database.run(`UPDATE companies SET 
          name = ?, phone = ?, email = ?, website = ?, address = ?, 
          city = ?, state = ?, zipCode = ?, country = ?, description = ?,
          updatedAt = datetime('now')
-       WHERE id = ?`, [name.trim(), phone || null, email || null, website || null, address || null,
-            city || null, state || null, zipCode || null, country || 'United States',
-            description || null, user.companyId]);
+       WHERE id = ?`, [
+            name.trim(),
+            phone || null,
+            email || null,
+            website || null,
+            address || null,
+            city || null,
+            state || null,
+            zipCode || null,
+            country || 'United States',
+            description || null,
+            user.companyId,
+        ]);
         res.json({ message: 'Company information updated successfully' });
     }
     catch (error) {
@@ -151,7 +163,16 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
         expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
         // Create invite code record
         await database_1.database.run(`INSERT INTO invite_codes (id, companyId, code, role, email, firstName, lastName, expiresAt, isUsed, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`, [generateId(), user.companyId, inviteCode, role, email, firstName, lastName, expiresAt.toISOString()]);
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`, [
+            generateId(),
+            user.companyId,
+            inviteCode,
+            role,
+            email,
+            firstName,
+            lastName,
+            expiresAt.toISOString(),
+        ]);
         // Send invitation email
         const inviteLink = `${req.protocol}://${req.get('host')}/register?invite=${inviteCode}`;
         const inviterName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'Your administrator';
@@ -165,11 +186,13 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
             inviterName,
         });
         res.json({
-            message: emailSent ? 'Invitation sent successfully' : 'Invitation created (email not configured)',
+            message: emailSent
+                ? 'Invitation sent successfully'
+                : 'Invitation created (email not configured)',
             inviteCode: emailSent ? undefined : inviteCode, // Only return code if email failed
             expiresAt: expiresAt.toISOString(),
             emailSent,
-            inviteLink: emailSent ? undefined : inviteLink // Only return link if email failed
+            inviteLink: emailSent ? undefined : inviteLink, // Only return link if email failed
         });
     }
     catch (error) {
@@ -184,9 +207,9 @@ const storage = multer_1.default.diskStorage({
         cb(null, logoDir);
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, 'logo-' + uniqueSuffix + path_1.default.extname(file.originalname));
-    }
+    },
 });
 const upload = (0, multer_1.default)({
     storage: storage,
@@ -201,7 +224,7 @@ const upload = (0, multer_1.default)({
             'image/png',
             'image/gif',
             'image/webp',
-            'image/svg+xml'
+            'image/svg+xml',
         ];
         if (allowedMimes.includes(file.mimetype)) {
             cb(null, true);
@@ -209,7 +232,7 @@ const upload = (0, multer_1.default)({
         else {
             cb(new Error(`Unsupported file type: ${file.mimetype}. Please use JPG, PNG, GIF, WEBP, or SVG.`));
         }
-    }
+    },
 });
 // Upload company logo
 router.post('/upload-logo', auth_1.authenticateToken, upload.single('logo'), async (req, res) => {
@@ -232,7 +255,7 @@ router.post('/upload-logo', auth_1.authenticateToken, upload.single('logo'), asy
         await database_1.database.run(`UPDATE companies SET logo = ?, updatedAt = datetime('now') WHERE id = ?`, [logoPath, user.companyId]);
         res.json({
             message: 'Logo uploaded successfully',
-            logoPath
+            logoPath,
         });
     }
     catch (error) {

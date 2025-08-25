@@ -12,6 +12,7 @@ import { database } from './models/database';
 import authRoutes from './routes/auth';
 import companyRoutes from './routes/company';
 import inventoryRoutes from './routes/inventory';
+import locationsRoutes from './routes/locations';
 import storageRoutes from './routes/storage';
 
 const app = express();
@@ -88,6 +89,7 @@ app.use(express.static(PUBLIC_DIR)); // also serve at root
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/company', companyRoutes);
+app.use('/api/locations', locationsRoutes);
 app.use('/api/storage', storageRoutes);
 
 // Health check endpoint

@@ -56,16 +56,18 @@ class Database {
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
-            // Lists table (per company)
+            // Lists table (per location)
             `CREATE TABLE IF NOT EXISTS lists (
         id TEXT PRIMARY KEY,
         companyId TEXT NOT NULL,
+        locationId TEXT NOT NULL,
         name TEXT NOT NULL,
         color TEXT DEFAULT '#6b7280',
         textColor TEXT DEFAULT '#ffffff',
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (companyId) REFERENCES companies (id)
+        FOREIGN KEY (companyId) REFERENCES companies (id),
+        FOREIGN KEY (locationId) REFERENCES locations (id)
       )`,
             // Subscriptions table
             `CREATE TABLE IF NOT EXISTS subscriptions (
@@ -89,19 +91,20 @@ class Database {
         city TEXT,
         state TEXT,
         zipCode TEXT,
-        country TEXT,
-        parentLocationId TEXT,
-        level TEXT NOT NULL,
+        country TEXT DEFAULT 'United States',
+        phone TEXT,
+        manager TEXT,
         isActive BOOLEAN DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (companyId) REFERENCES companies (id),
-        FOREIGN KEY (parentLocationId) REFERENCES locations (id)
+        FOREIGN KEY (companyId) REFERENCES companies (id)
       )`,
             // Inventory items table
             `CREATE TABLE IF NOT EXISTS inventory_items (
         id TEXT PRIMARY KEY,
         companyId TEXT NOT NULL,
+        locationId TEXT NOT NULL,
+        listId TEXT,
         itemType TEXT NOT NULL,
         nickname TEXT,
         labId TEXT,
@@ -129,7 +132,9 @@ class Database {
         image TEXT,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (companyId) REFERENCES companies (id)
+        FOREIGN KEY (companyId) REFERENCES companies (id),
+        FOREIGN KEY (locationId) REFERENCES locations (id),
+        FOREIGN KEY (listId) REFERENCES lists (id)
       )`,
             // Calibration records table
             `CREATE TABLE IF NOT EXISTS calibration_records (
@@ -192,14 +197,25 @@ class Database {
         email TEXT,
         firstName TEXT,
         lastName TEXT,
+        employeeId TEXT,
         locationId TEXT,
-        regionId TEXT,
         expiresAt DATETIME NOT NULL,
         isUsed BOOLEAN DEFAULT 0,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (companyId) REFERENCES companies (id),
+        FOREIGN KEY (locationId) REFERENCES locations (id)
+      )`,
+            // User-Location assignments with list permissions
+            `CREATE TABLE IF NOT EXISTS user_locations (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        locationId TEXT NOT NULL,
+        listPermissions TEXT, -- JSON array of listIds user can access
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES users (id),
         FOREIGN KEY (locationId) REFERENCES locations (id),
-        FOREIGN KEY (regionId) REFERENCES locations (id)
+        UNIQUE(userId, locationId)
       )`,
         ];
         for (const table of tables) {
@@ -256,6 +272,7 @@ class Database {
                 { name: 'createdAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
                 { name: 'updatedAt', type: 'DATETIME DEFAULT CURRENT_TIMESTAMP' },
                 { name: 'listId', type: 'TEXT' },
+                { name: 'locationId', type: 'TEXT' },
             ];
             // Add missing columns
             for (const column of requiredColumns) {
@@ -280,6 +297,8 @@ class Database {
             await this.migrateRecordTablesIfNeeded();
             // Add missing columns to lists table
             await this.addMissingListColumns();
+            // Add missing columns to users table
+            await this.addMissingUserColumns();
         }
         catch (error) {
             console.error('❌ Error in addMissingColumns:', error);
@@ -363,6 +382,7 @@ class Database {
             const requiredListColumns = [
                 { name: 'color', type: 'TEXT DEFAULT "#6b7280"' },
                 { name: 'textColor', type: 'TEXT DEFAULT "#ffffff"' },
+                { name: 'locationId', type: 'TEXT' },
             ];
             // Add missing columns
             for (const column of requiredListColumns) {
@@ -382,6 +402,42 @@ class Database {
         }
         catch (error) {
             console.error('❌ Error in addMissingListColumns:', error);
+        }
+    }
+    async addMissingUserColumns() {
+        try {
+            // Check if users table exists
+            const tableExists = await this.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
+            if (!tableExists) {
+                console.log('Table users does not exist yet, will be created with full schema');
+                return;
+            }
+            // Get all existing columns
+            const columns = await this.all('PRAGMA table_info(users)');
+            const columnNames = columns.map((col) => col.name);
+            console.log('Existing columns in users:', columnNames);
+            // Define required columns for users
+            const requiredUserColumns = [
+                { name: 'employeeId', type: 'TEXT' },
+            ];
+            // Add missing columns
+            for (const column of requiredUserColumns) {
+                if (!columnNames.includes(column.name)) {
+                    try {
+                        await this.run(`ALTER TABLE users ADD COLUMN ${column.name} ${column.type}`);
+                        console.log(`✅ Added missing column to users: ${column.name}`);
+                    }
+                    catch (error) {
+                        console.log(`❌ Failed to add column ${column.name} to users:`, error);
+                    }
+                }
+                else {
+                    console.log(`✅ Column ${column.name} already exists in users`);
+                }
+            }
+        }
+        catch (error) {
+            console.error('❌ Error in addMissingUserColumns:', error);
         }
     }
     async migrateRecordTablesIfNeeded() {

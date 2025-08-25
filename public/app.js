@@ -82,10 +82,10 @@ function setupEventListeners() {
   // Remember me checkbox
   rememberMeCheckbox.addEventListener('change', handleRememberMe);
 
-  // Company setup button
-  const setupCompanyBtn = document.getElementById('setupCompanyBtn');
-  if (setupCompanyBtn) {
-    setupCompanyBtn.addEventListener('click', setupDemoCompany);
+  // Setup first location button
+  const setupFirstLocationBtn = document.getElementById('setupFirstLocationBtn');
+  if (setupFirstLocationBtn) {
+    setupFirstLocationBtn.addEventListener('click', showSetupFirstLocationModal);
   }
 
   // Create first list button
@@ -4790,6 +4790,12 @@ function setupCompanyEventListeners() {
   if (inviteUserForm) {
     inviteUserForm.addEventListener('submit', handleInviteUserSubmit);
   }
+
+  // Setup first location form
+  const setupFirstLocationForm = document.getElementById('form-setup-first-location');
+  if (setupFirstLocationForm) {
+    setupFirstLocationForm.addEventListener('submit', handleSetupFirstLocation);
+  }
 }
 
 async function showEditCompanyModal() {
@@ -4821,6 +4827,72 @@ async function showEditCompanyModal() {
   } catch (error) {
     console.error('Error loading company data for editing:', error);
     showToast('Failed to load company data', 'error');
+  }
+}
+
+function showSetupFirstLocationModal() {
+  // Clear form
+  document.getElementById('form-setup-first-location').reset();
+  // Show modal
+  openModal('modal-setup-first-location');
+}
+
+function hideSetupFirstLocationModal() {
+  closeModal('modal-setup-first-location');
+}
+
+async function handleSetupFirstLocation(e) {
+  e.preventDefault();
+
+  const formData = {
+    name: document.getElementById('setup-location-name').value,
+    address: document.getElementById('setup-location-address').value,
+    city: document.getElementById('setup-location-city').value,
+    state: document.getElementById('setup-location-state').value,
+    zipCode: document.getElementById('setup-location-zip').value,
+    phone: document.getElementById('setup-location-phone').value,
+    manager: document.getElementById('setup-location-manager').value,
+  };
+
+  try {
+    const response = await fetch('/api/locations/create-first', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      showToast('First location created successfully!', 'success');
+      hideSetupFirstLocationModal();
+      
+      // Hide the setup location button
+      const setupBtn = document.getElementById('setupFirstLocationBtn');
+      if (setupBtn) {
+        setupBtn.style.display = 'none';
+      }
+      
+      // Show the create first list button
+      const createListBtn = document.getElementById('createFirstListBtn');
+      if (createListBtn) {
+        createListBtn.style.display = 'inline-block';
+      }
+      
+      // Update welcome message
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      if (welcomeMessage) {
+        welcomeMessage.querySelector('p').textContent = 'Great! Now create your first list for this location.';
+      }
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to create location', 'error');
+    }
+  } catch (error) {
+    console.error('Error creating first location:', error);
+    showToast('Failed to create location', 'error');
   }
 }
 

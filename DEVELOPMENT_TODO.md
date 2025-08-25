@@ -94,7 +94,7 @@
   - Include "Duplicate?" checkbox on Add Item form
   - Chain duplication capability (duplicate from duplicate form)
 - **Priority**: MEDIUM
-- **Status**: 🔴 PENDING
+- **Status**: ✅ COMPLETED
 
 ## 🔍 **Phase 5: Search & Filtering**
 
@@ -134,15 +134,6 @@
 
 **Phase 1 COMPLETED!** ✅ All UI/UX issues resolved. Moving to **Phase 2** - implementing new features and functionality.
 
-## 📊 **Progress Tracking**
-
-- **Total Tasks**: 14
-- **Completed**: 7
-- **In Progress**: 0
-- **Pending**: 6
-- **Aborted**: 1
-- **Completion**: 50%
-
 ---
 
 ## 🚨 **Phase 7: Critical Issues Discovered During Testing**
@@ -172,7 +163,16 @@
   - ✅ Form now stays in edit mode after errors
   - ✅ No more duplicate item creation issues
 
+### 14. 
+
+- **Issue**: Hybrid Scrolling has stopped working again
+- **Impact**: Convenience while vertical scrolling for the user while maintaining horizontal scrollbar usability
+- **Solution**: To be determined
+- **Priority**: MEDIUM
+- **Status**: 🔴 PENDING
+- **Notes**:
+  - The Inventory List, horizontal scroll, and column headers should lock in place at the top of the page once the page is scrolled down far enough. At that point only the list should continue to scroll.
+ 
+
 ---
 
-_Last Updated: 2025-01-27_
-_Next Review: Phase 2 implementation_
