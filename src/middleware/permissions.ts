@@ -9,6 +9,9 @@ export interface UserPermissions {
   canManageUsers: boolean;
   canManageCompany: boolean;
   canManageLocations: boolean;
+  canManageSettings: boolean;
+  canEditCompanyInfo: boolean;
+  canManageSubscription: boolean;
   accessibleLocationIds: string[];
   accessibleListIds: string[];
   currentLocationId?: string;
@@ -16,7 +19,8 @@ export interface UserPermissions {
 
 // Role hierarchy for permission checks
 const ROLE_HIERARCHY = {
-  'company_owner': 100,
+  'company_account_admin': 100, // Top of company hierarchy
+  'company_owner': 95,
   'company_admin': 90,
   'manager': 70,
   'user': 50,
@@ -25,13 +29,26 @@ const ROLE_HIERARCHY = {
 
 // Permission definitions by role
 const ROLE_PERMISSIONS = {
+  'company_account_admin': {
+    canViewInventory: true,
+    canEditInventory: true,
+    canDeleteInventory: true,
+    canManageUsers: true,
+    canManageLocations: true,
+    canManageSettings: true,
+    canEditCompanyInfo: true,
+    canManageSubscription: true
+  },
   'company_owner': {
     canViewInventory: true,
     canEditInventory: true,
     canDeleteInventory: true,
     canManageUsers: true,
     canManageCompany: true,
-    canManageLocations: true
+    canManageLocations: true,
+    canManageSettings: true,
+    canEditCompanyInfo: true,
+    canManageSubscription: false
   },
   'company_admin': {
     canViewInventory: true,
@@ -39,7 +56,10 @@ const ROLE_PERMISSIONS = {
     canDeleteInventory: true,
     canManageUsers: true,
     canManageCompany: true,
-    canManageLocations: true
+    canManageLocations: true,
+    canManageSettings: false,
+    canEditCompanyInfo: false,
+    canManageSubscription: false
   },
   'manager': {
     canViewInventory: true,
@@ -47,7 +67,10 @@ const ROLE_PERMISSIONS = {
     canDeleteInventory: true,
     canManageUsers: false,
     canManageCompany: false,
-    canManageLocations: false
+    canManageLocations: false,
+    canManageSettings: false,
+    canEditCompanyInfo: false,
+    canManageSubscription: false
   },
   'user': {
     canViewInventory: true,
@@ -55,7 +78,10 @@ const ROLE_PERMISSIONS = {
     canDeleteInventory: false,
     canManageUsers: false,
     canManageCompany: false,
-    canManageLocations: false
+    canManageLocations: false,
+    canManageSettings: false,
+    canEditCompanyInfo: false,
+    canManageSubscription: false
   },
   'viewer': {
     canViewInventory: true,
@@ -63,7 +89,10 @@ const ROLE_PERMISSIONS = {
     canDeleteInventory: false,
     canManageUsers: false,
     canManageCompany: false,
-    canManageLocations: false
+    canManageLocations: false,
+    canManageSettings: false,
+    canEditCompanyInfo: false,
+    canManageSubscription: false
   }
 };
 

@@ -4563,6 +4563,7 @@ td.actions {
   letter-spacing: 0.5px;
 }
 
+.role-account-admin { background: #7c2d12; color: white; }
 .role-owner { background: #dc2626; color: white; }
 .role-admin { background: #ea580c; color: white; }
 .role-manager { background: #0ea5e9; color: white; }

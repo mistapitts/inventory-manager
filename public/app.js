@@ -376,43 +376,7 @@ function handleLogout() {
   }
 }
 
-// Setup demo company
-async function setupDemoCompany() {
-  try {
-    const response = await fetch('/api/company/setup-demo', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
 
-    if (response.ok) {
-      showToast('Demo company created successfully!', 'success');
-      // Hide the setup button
-      const setupCompanyBtn = document.getElementById('setupCompanyBtn');
-      if (setupCompanyBtn) {
-        setupCompanyBtn.style.display = 'none';
-      }
-      // Show the create first list button
-      const createFirstListBtn = document.getElementById('createFirstListBtn');
-      if (createFirstListBtn) {
-        createFirstListBtn.style.display = 'inline-block';
-      }
-      // Update welcome message
-      const welcomeMessage = document.getElementById('welcomeMessage');
-      if (welcomeMessage) {
-        welcomeMessage.querySelector('p').textContent =
-          'Your company is set up! Create your first list, then add items.';
-      }
-    } else {
-      const error = await response.json();
-      showToast(error.error || 'Failed to setup company', 'error');
-    }
-  } catch (error) {
-    console.error('Error setting up company:', error);
-    showToast('Network error. Please try again.', 'error');
-  }
-}
 
 // Clear authentication data
 function clearAuthData() {
@@ -4775,6 +4739,7 @@ function populateCompanyUsers(users) {
 
 function formatUserRole(role) {
   const roleMap = {
+    'company_account_admin': 'Company Account Admin',
     'company_owner': 'Company Owner',
     'company_admin': 'Company Admin', 
     'manager': 'Manager',
@@ -4785,19 +4750,31 @@ function formatUserRole(role) {
 }
 
 function getRoleBadgeClass(role) {
-  const classMap = {
+    const classMap = {
+    'company_account_admin': 'role-account-admin',
     'company_owner': 'role-owner',
     'company_admin': 'role-admin',
-    'manager': 'role-manager', 
+    'manager': 'role-manager',
     'user': 'role-user',
     'viewer': 'role-viewer'
   };
   return classMap[role] || 'role-default';
 }
 
-function canManageUser(userRole) {
-  // Company admins and owners can manage all users except other owners
-  return currentUser && (currentUser.role === 'company_owner' || currentUser.role === 'company_admin');
+function canManageUser(targetUserRole) {
+  if (!currentUser) return false;
+  
+  // Company Account Admin can manage everyone including Company Owners
+  if (currentUser.role === 'company_account_admin') {
+    return true;
+  }
+  
+  // Company Owners and Admins can manage users below them, but not Company Account Admin
+  if (currentUser.role === 'company_owner' || currentUser.role === 'company_admin') {
+    return targetUserRole !== 'company_account_admin';
+  }
+  
+  return false;
 }
 
 // User management functions

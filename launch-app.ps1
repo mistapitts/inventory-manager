@@ -1,7 +1,7 @@
-# Randy's Inventory Manager - Launch Script
+# EZ Inventory - Launch Script
 # This script launches the inventory manager application
 
-Write-Host "🚀 Launching Randy's Inventory Manager..." -ForegroundColor Green
+Write-Host "🚀 Launching EZ Inventory..." -ForegroundColor Green
 Write-Host ""
 
 # Check if Node.js is running
@@ -33,14 +33,14 @@ try {
 }
 
 # Launch the application in the default browser
-Write-Host "🌐 Opening Randy's Inventory Manager in your browser..." -ForegroundColor Green
+Write-Host "🌐 Opening EZ Inventory in your browser..." -ForegroundColor Green
 Start-Process "http://localhost:3000"
 
 Write-Host ""
-Write-Host "🎯 Demo Instructions:" -ForegroundColor Cyan
-Write-Host "1. Login with: mistapitts@gmail.com / Admin123!" -ForegroundColor White
-Write-Host "2. First, setup the demo company by visiting: http://localhost:3000/api/company/setup-demo" -ForegroundColor White
-Write-Host "3. Then return to the main app and start adding inventory items!" -ForegroundColor White
+Write-Host "🎯 Instructions:" -ForegroundColor Cyan
+Write-Host "1. Login with your account credentials" -ForegroundColor White
+Write-Host "2. Set up your company and locations" -ForegroundColor White
+Write-Host "3. Start managing your inventory!" -ForegroundColor White
 Write-Host ""
 Write-Host "💡 Tip: Keep this PowerShell window open to keep the server running" -ForegroundColor Yellow
 Write-Host "Press Ctrl+C to stop the server when you're done" -ForegroundColor Yellow

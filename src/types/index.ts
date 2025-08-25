@@ -15,10 +15,10 @@ export interface User {
 
 export enum UserRole {
   ADMIN = 'admin',
+  COMPANY_ACCOUNT_ADMIN = 'company_account_admin',
   COMPANY_OWNER = 'company_owner',
-  COMPANY_MANAGER = 'company_manager',
-  REGION_MANAGER = 'region_manager',
-  LAB_MANAGER = 'lab_manager',
+  COMPANY_ADMIN = 'company_admin',
+  MANAGER = 'manager',
   USER = 'user',
   VIEWER = 'viewer',
 }

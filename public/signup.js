@@ -76,6 +76,7 @@ class SignupManager {
 
   formatRole(role) {
     const roleMap = {
+      'company_account_admin': 'Company Account Admin',
       'company_owner': 'Company Owner',
       'company_admin': 'Company Admin',
       'manager': 'Manager',
@@ -87,6 +88,7 @@ class SignupManager {
 
   getRoleBadgeClass(role) {
     const classMap = {
+      'company_account_admin': 'role-account-admin',
       'company_owner': 'role-owner',
       'company_admin': 'role-admin',
       'manager': 'role-manager',

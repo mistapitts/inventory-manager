@@ -10,49 +10,7 @@ const config_1 = require("../config");
 const auth_1 = require("../middleware/auth");
 const database_1 = require("../models/database");
 const email_1 = require("../services/email");
-const types_1 = require("../types");
 const router = (0, express_1.Router)();
-// Create a simple company for demo purposes
-router.post('/setup-demo', auth_1.authenticateToken, async (req, res) => {
-    try {
-        // Check if demo company already exists
-        const existingCompany = await database_1.database.get('SELECT id FROM companies WHERE name = ?', [
-            "Randy's Company",
-        ]);
-        if (existingCompany) {
-            return res.status(400).json({ error: 'Demo company already exists' });
-        }
-        // Create demo company
-        const companyId = generateId();
-        await database_1.database.run(`
-            INSERT INTO companies (
-                id, name, isActive, createdAt, updatedAt
-            ) VALUES (?, ?, 1, datetime('now'), datetime('now'))
-        `, [companyId, "Randy's Company"]);
-        // Create demo location
-        const locationId = generateId();
-        await database_1.database.run(`
-            INSERT INTO locations (
-                id, companyId, name, level, isActive, createdAt, updatedAt
-            ) VALUES (?, ?, 'Main Lab', 'lab', 1, datetime('now'), datetime('now'))
-        `, [locationId, companyId]);
-        // Update current user to be associated with this company
-        await database_1.database.run(`
-            UPDATE users 
-            SET companyId = ?, role = ?
-            WHERE id = ?
-        `, [companyId, types_1.UserRole.COMPANY_OWNER, req.user.id]);
-        res.json({
-            message: 'Demo company setup successfully',
-            companyId,
-            locationId,
-        });
-    }
-    catch (error) {
-        console.error('Error setting up demo company:', error);
-        res.status(500).json({ error: 'Failed to setup demo company' });
-    }
-});
 // Get company info for current user
 router.get('/info', auth_1.authenticateToken, async (req, res) => {
     try {
@@ -152,7 +110,7 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'All fields are required' });
         }
         // Validate role
-        const validRoles = ['company_owner', 'company_admin', 'manager', 'user', 'viewer'];
+        const validRoles = ['company_account_admin', 'company_owner', 'company_admin', 'manager', 'user', 'viewer'];
         if (!validRoles.includes(role)) {
             return res.status(400).json({ error: 'Invalid role specified' });
         }
@@ -355,7 +313,7 @@ router.put('/users/:userId', auth_1.authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'First name, last name, and role are required' });
         }
         // Validate role
-        const validRoles = ['company_owner', 'company_admin', 'manager', 'user', 'viewer'];
+        const validRoles = ['company_account_admin', 'company_owner', 'company_admin', 'manager', 'user', 'viewer'];
         if (!validRoles.includes(role)) {
             return res.status(400).json({ error: 'Invalid role' });
         }

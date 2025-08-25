@@ -4,10 +4,10 @@ exports.UserRole = void 0;
 var UserRole;
 (function (UserRole) {
     UserRole["ADMIN"] = "admin";
+    UserRole["COMPANY_ACCOUNT_ADMIN"] = "company_account_admin";
     UserRole["COMPANY_OWNER"] = "company_owner";
-    UserRole["COMPANY_MANAGER"] = "company_manager";
-    UserRole["REGION_MANAGER"] = "region_manager";
-    UserRole["LAB_MANAGER"] = "lab_manager";
+    UserRole["COMPANY_ADMIN"] = "company_admin";
+    UserRole["MANAGER"] = "manager";
     UserRole["USER"] = "user";
     UserRole["VIEWER"] = "viewer";
 })(UserRole || (exports.UserRole = UserRole = {}));
