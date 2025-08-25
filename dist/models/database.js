@@ -21,6 +21,7 @@ class Database {
         await this.addMissingCompanyColumns();
         await this.addMissingListColumns();
         await this.addMissingUserColumns();
+        await this.addMissingInviteCodeColumns();
         await this.migrateExistingDataToLocations();
         await this.createAdminUser();
     }
@@ -586,6 +587,32 @@ class Database {
                     resolve(rows || []);
             });
         });
+    }
+    async addMissingInviteCodeColumns() {
+        try {
+            // Get current columns in invite_codes table
+            const tableInfo = await this.all("PRAGMA table_info('invite_codes')");
+            const existingColumns = tableInfo.map((col) => col.name);
+            console.log('Existing columns in invite_codes:', existingColumns);
+            const requiredColumns = [
+                { name: 'employeeId', type: 'TEXT', nullable: true },
+                { name: 'locationId', type: 'TEXT', nullable: true }
+            ];
+            for (const column of requiredColumns) {
+                if (!existingColumns.includes(column.name)) {
+                    console.log(`➕ Adding column ${column.name} to invite_codes`);
+                    const nullConstraint = column.nullable ? '' : ' NOT NULL';
+                    await this.run(`ALTER TABLE invite_codes ADD COLUMN ${column.name} ${column.type}${nullConstraint}`);
+                    console.log(`✅ Column ${column.name} added to invite_codes`);
+                }
+                else {
+                    console.log(`✅ Column ${column.name} already exists in invite_codes`);
+                }
+            }
+        }
+        catch (error) {
+            console.error('Error adding missing invite_codes columns:', error);
+        }
     }
     // Migration for existing data to location-based system
     async migrateExistingDataToLocations() {
