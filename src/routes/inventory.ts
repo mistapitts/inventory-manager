@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 
 import config from '../config';
 import { authenticateToken } from '../middleware/auth';
+import { enforceLocationAccess, requirePermission, getCurrentLocation } from '../middleware/permissions';
 import { database } from '../models/database';
 
 const router = Router();
@@ -283,46 +284,127 @@ router.post('/lists/migrate-to-field', authenticateToken, async (req: Request, r
   }
 });
 
-// Get all inventory items for the user's company
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+// Get all inventory items for the user's accessible locations
+router.get('/', authenticateToken, enforceLocationAccess(), requirePermission('canViewInventory'), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { listId, includeOOS } = req.query as { listId?: string; includeOOS?: string };
+    const { listId, includeOOS, locationId } = req.query as { 
+      listId?: string; 
+      includeOOS?: string; 
+      locationId?: string;
+    };
 
     // Get user's company info
-    const user = await database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
+    const user = await database.get('SELECT companyId, role FROM users WHERE id = ?', [userId]);
 
     if (!user || !user.companyId) {
       return res.status(400).json({ error: 'User not associated with a company' });
     }
 
-    // Build WHERE clause based on parameters
+    const permissions = req.userPermissions!;
+    const locationFilter = req.locationFilter!;
+
+    // Determine which location to show
+    let targetLocationId = locationId;
+    if (!targetLocationId) {
+      // Default to current location or first accessible location
+      targetLocationId = await getCurrentLocation(userId) || undefined;
+    }
+
+    // Verify user can access the requested location
+    if (targetLocationId && !locationFilter.accessibleLocationIds.includes(targetLocationId)) {
+      return res.status(403).json({ error: 'Access denied to this location' });
+    }
+
+    // Build WHERE clause based on permissions and parameters
     const params: any[] = [user.companyId];
     let where = 'companyId = ?';
+
+    // Location-based filtering (critical for security)
+    if (locationFilter.accessibleLocationIds.length === 0) {
+      // User has no location access - return empty result
+      return res.json({ items: [], location: null, accessibleLocations: [] });
+    }
+
+    if (targetLocationId) {
+      // Filter by specific location
+      where += ' AND locationId = ?';
+      params.push(targetLocationId);
+    } else {
+      // Filter by all accessible locations
+      const locationPlaceholders = locationFilter.accessibleLocationIds.map(() => '?').join(',');
+      where += ` AND locationId IN (${locationPlaceholders})`;
+      params.push(...locationFilter.accessibleLocationIds);
+    }
+
+    // List-based filtering (if user has restricted list access)
+    if (locationFilter.accessibleListIds.length > 0 && !['company_owner', 'company_admin'].includes(user.role)) {
+      const listPlaceholders = locationFilter.accessibleListIds.map(() => '?').join(',');
+      where += ` AND (listId IN (${listPlaceholders}) OR listId IS NULL)`;
+      params.push(...locationFilter.accessibleListIds);
+    }
 
     // Handle includeOOS parameter
     if (includeOOS === 'false') {
       where += ' AND isOutOfService = 0';
     }
-    // If includeOOS is omitted or 'true', return all items (including OOS)
 
-    // Handle listId filter
+    // Handle specific listId filter
     if (listId && listId !== 'all') {
+      // Verify user can access this list
+      if (locationFilter.accessibleListIds.length > 0 && 
+          !locationFilter.accessibleListIds.includes(listId) && 
+          !['company_owner', 'company_admin'].includes(user.role)) {
+        return res.status(403).json({ error: 'Access denied to this list' });
+      }
       where += ' AND listId = ?';
       params.push(listId);
     }
 
+    console.log(`🔍 Inventory query for user ${userId} (${user.role}):`, {
+      targetLocationId,
+      accessibleLocations: locationFilter.accessibleLocationIds.length,
+      accessibleLists: locationFilter.accessibleListIds.length,
+      whereClause: where
+    });
+
     const items = await database.all(
       `
-            SELECT *
-            FROM inventory_items
-            WHERE ${where}
-            ORDER BY itemType, nickname, labId
-        `,
+        SELECT *
+        FROM inventory_items
+        WHERE ${where}
+        ORDER BY itemType, nickname, labId
+      `,
       params,
     );
 
-    res.json({ items });
+    // Get current location info if specified
+    let currentLocation = null;
+    if (targetLocationId) {
+      currentLocation = await database.get(
+        'SELECT id, name, address FROM locations WHERE id = ? AND companyId = ?',
+        [targetLocationId, user.companyId]
+      );
+    }
+
+    // Get accessible locations for frontend
+    const accessibleLocations = await database.all(
+      `SELECT id, name, address FROM locations 
+       WHERE companyId = ? AND id IN (${locationFilter.accessibleLocationIds.map(() => '?').join(',')})
+       ORDER BY name`,
+      [user.companyId, ...locationFilter.accessibleLocationIds]
+    );
+
+    res.json({ 
+      items,
+      currentLocation,
+      accessibleLocations,
+      permissions: {
+        canEdit: permissions.canEditInventory,
+        canDelete: permissions.canDeleteInventory,
+        canManageLocations: permissions.canManageLocations
+      }
+    });
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ error: 'Failed to fetch inventory' });
@@ -449,6 +531,8 @@ router.post(
     { name: 'maintenanceInstructions', maxCount: 1 },
   ]),
   authenticateToken,
+  enforceLocationAccess(),
+  requirePermission('canEditInventory'),
   async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -540,6 +624,31 @@ router.post(
 
       console.log('🏢 User company ID:', user.companyId);
 
+      const permissions = req.userPermissions!;
+      const locationFilter = req.locationFilter!;
+
+      // Validate location access - item must be created in a location user can access
+      let targetLocationId = req.body.locationId || (await getCurrentLocation(userId) || undefined);
+      
+      if (!targetLocationId) {
+        return res.status(400).json({ error: 'No location specified and user has no accessible locations' });
+      }
+
+      if (!locationFilter.accessibleLocationIds.includes(targetLocationId)) {
+        return res.status(403).json({ error: 'Access denied to this location' });
+      }
+
+      // Validate list access if listId is specified
+      if (normalized.listId) {
+        if (locationFilter.accessibleListIds.length > 0 && 
+            !locationFilter.accessibleListIds.includes(normalized.listId) && 
+            !['company_owner', 'company_admin'].includes(user.role)) {
+          return res.status(403).json({ error: 'Access denied to this list' });
+        }
+      }
+
+      console.log(`🔐 Creating item in location ${targetLocationId} for user ${userId} (${user.role})`);
+
       // Generate unique ID
       const itemId = generateId();
       console.log('🆔 Generated item ID:', itemId);
@@ -568,6 +677,7 @@ router.post(
       const columns = [
         'id',
         'companyId',
+        'locationId',
         'itemType',
         'nickname',
         'labId',
@@ -606,6 +716,7 @@ router.post(
       const values = [
         itemId,
         user.companyId,
+        targetLocationId,
         normalized.itemType,
         normalized.nickname,
         normalized.labId,
@@ -1543,7 +1654,7 @@ async function resolveItemIdColumn(tableName: string): Promise<string | null> {
 }
 
 // Delete inventory item (and associated records/files)
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateToken, enforceLocationAccess(), requirePermission('canDeleteInventory'), async (req: Request, res: Response) => {
   try {
     const itemId = req.params.id;
     const userId = req.user!.id;

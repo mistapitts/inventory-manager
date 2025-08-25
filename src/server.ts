@@ -92,6 +92,11 @@ app.use('/api/company', companyRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/storage', storageRoutes);
 
+// Signup page route
+app.get('/signup/:code', (req: Request, res: Response) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'signup.html'));
+});
+
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   // Test database connection

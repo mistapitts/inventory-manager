@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complete Your Invitation - Inventory Manager</title>
+    <link rel="stylesheet" href="/styles.css?v=signup-page-v1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+      /* Signup page specific styles */
+      .signup-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+      }
+
+      .signup-card {
+        background: var(--bg-primary);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 100%;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .signup-header {
+        margin-bottom: 30px;
+      }
+
+      .signup-header h1 {
+        color: var(--text-primary);
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+
+      .signup-header p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+      }
+
+      .company-info {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 4px solid var(--accent-primary);
+      }
+
+      .company-info h3 {
+        color: var(--text-primary);
+        margin: 0 0 8px 0;
+        font-size: 1.25rem;
+      }
+
+      .company-info p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.875rem;
+      }
+
+      .user-info {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: left;
+      }
+
+      .user-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .user-info-row:last-child {
+        border-bottom: none;
+      }
+
+      .user-info-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .user-info-value {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .role-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .password-form {
+        text-align: left;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        color: var(--text-primary);
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-input);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(112, 128, 255, 0.1);
+      }
+
+      .password-requirements {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+        font-size: 0.875rem;
+      }
+
+      .password-requirements h4 {
+        color: var(--text-primary);
+        margin: 0 0 8px 0;
+        font-size: 0.875rem;
+      }
+
+      .password-requirements ul {
+        color: var(--text-secondary);
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .password-requirements li {
+        margin-bottom: 4px;
+      }
+
+      .requirement-check {
+        color: var(--accent-success);
+      }
+
+      .requirement-fail {
+        color: var(--text-secondary);
+      }
+
+      .submit-btn {
+        width: 100%;
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 20px;
+      }
+
+      .submit-btn:hover {
+        background: var(--accent-primary-dark);
+        transform: translateY(-1px);
+      }
+
+      .submit-btn:disabled {
+        background: var(--text-secondary);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .error-message {
+        background: var(--error-bg);
+        color: var(--error-text);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        border-left: 4px solid var(--error-border);
+      }
+
+      .success-message {
+        background: var(--success-bg);
+        color: var(--success-text);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        border-left: 4px solid var(--success-border);
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .footer-link {
+        margin-top: 30px;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+
+      .footer-link a {
+        color: var(--accent-primary);
+        text-decoration: none;
+      }
+
+      .footer-link a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .signup-card {
+          padding: 30px 20px;
+          margin: 10px;
+        }
+
+        .signup-header h1 {
+          font-size: 1.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="signup-container">
+      <div class="signup-card">
+        <!-- Loading State -->
+        <div id="loading-state" class="signup-header">
+          <div class="loading-spinner"></div>
+          <p>Loading your invitation...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden">
+          <div class="error-message">
+            <h3><i class="fas fa-exclamation-triangle"></i> Invalid Invitation</h3>
+            <p id="error-text">This invitation link is invalid or has expired.</p>
+          </div>
+          <div class="footer-link">
+            <a href="/"><i class="fas fa-arrow-left"></i> Return to Login</a>
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-state" class="hidden">
+          <div class="success-message">
+            <h3><i class="fas fa-check-circle"></i> Account Created Successfully!</h3>
+            <p>You can now log in with your new credentials.</p>
+          </div>
+          <div class="footer-link">
+            <a href="/"><i class="fas fa-sign-in-alt"></i> Go to Login</a>
+          </div>
+        </div>
+
+        <!-- Main Signup Form -->
+        <div id="signup-form" class="hidden">
+          <div class="signup-header">
+            <h1><i class="fas fa-user-plus"></i> Welcome!</h1>
+            <p>Complete your account setup</p>
+          </div>
+
+          <div class="company-info">
+            <h3 id="company-name">Loading...</h3>
+            <p>You've been invited to join this company's inventory management system</p>
+          </div>
+
+          <div class="user-info">
+            <div class="user-info-row">
+              <span class="user-info-label">Name:</span>
+              <span class="user-info-value" id="user-full-name">Loading...</span>
+            </div>
+            <div class="user-info-row">
+              <span class="user-info-label">Email:</span>
+              <span class="user-info-value" id="user-email">Loading...</span>
+            </div>
+            <div class="user-info-row" id="employee-id-row" style="display: none;">
+              <span class="user-info-label">Employee ID:</span>
+              <span class="user-info-value" id="user-employee-id"></span>
+            </div>
+            <div class="user-info-row">
+              <span class="user-info-label">Role:</span>
+              <span class="user-info-value">
+                <span class="role-badge" id="user-role-badge">Loading...</span>
+              </span>
+            </div>
+          </div>
+
+          <form id="password-form" class="password-form">
+            <div class="form-group">
+              <label for="password">Choose Your Password <span style="color: #ef4444;">*</span></label>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required 
+                placeholder="Enter a secure password"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password <span style="color: #ef4444;">*</span></label>
+              <input 
+                type="password" 
+                id="confirmPassword" 
+                name="confirmPassword" 
+                required 
+                placeholder="Confirm your password"
+              />
+            </div>
+
+            <div class="password-requirements">
+              <h4>Password Requirements:</h4>
+              <ul>
+                <li id="req-length" class="requirement-fail">At least 8 characters</li>
+                <li id="req-uppercase" class="requirement-fail">One uppercase letter</li>
+                <li id="req-lowercase" class="requirement-fail">One lowercase letter</li>
+                <li id="req-number" class="requirement-fail">One number</li>
+                <li id="req-match" class="requirement-fail">Passwords match</li>
+              </ul>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn" disabled>
+              <span id="submit-text">Create Account</span>
+            </button>
+          </form>
+
+          <div class="footer-link">
+            Already have an account? <a href="/"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/signup.js?v=signup-page-v1"></script>
+  </body>
+</html>

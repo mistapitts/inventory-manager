@@ -453,4 +453,139 @@ router.post('/accept-invite', async (req: Request, res: Response) => {
   }
 });
 
+// Get invite details for signup page (public endpoint)
+router.get('/invite/:code', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+
+    // Get invite details with company info
+    const invite = await database.get(
+      `SELECT ic.*, c.name as companyName 
+       FROM invite_codes ic
+       LEFT JOIN companies c ON ic.companyId = c.id
+       WHERE ic.code = ? AND ic.isUsed = 0 AND ic.expiresAt > datetime('now')`,
+      [code]
+    );
+
+    if (!invite) {
+      return res.status(404).json({ error: 'Invitation not found or expired' });
+    }
+
+    // Check if user already exists with this email
+    const existingUser = await database.get('SELECT id FROM users WHERE email = ?', [invite.email]);
+    
+    if (existingUser) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    // Return invite details (excluding sensitive information)
+    res.json({
+      invite: {
+        firstName: invite.firstName,
+        lastName: invite.lastName,
+        email: invite.email,
+        employeeId: invite.employeeId,
+        role: invite.role,
+        expiresAt: invite.expiresAt
+      },
+      company: {
+        name: invite.companyName
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching invite details:', error);
+    res.status(500).json({ error: 'Failed to fetch invitation details' });
+  }
+});
+
+// Complete signup process with password
+router.post('/complete-signup', async (req: Request, res: Response) => {
+  try {
+    const { inviteCode, password } = req.body;
+
+    if (!inviteCode || !password) {
+      return res.status(400).json({ error: 'Invite code and password are required' });
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return res.status(400).json({ error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' });
+    }
+
+    // Get invite details
+    const invite = await database.get(
+      `SELECT * FROM invite_codes 
+       WHERE code = ? AND isUsed = 0 AND expiresAt > datetime('now')`,
+      [inviteCode]
+    );
+
+    if (!invite) {
+      return res.status(404).json({ error: 'Invalid or expired invitation code' });
+    }
+
+    // Check if user already exists
+    const existingUser = await database.get('SELECT id FROM users WHERE email = ?', [invite.email]);
+    
+    if (existingUser) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user account
+    const userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    await database.run(
+      `INSERT INTO users (
+        id, email, password, firstName, lastName, role, employeeId, companyId, isActive, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      [
+        userId,
+        invite.email,
+        hashedPassword,
+        invite.firstName,
+        invite.lastName,
+        invite.role,
+        invite.employeeId || null,
+        invite.companyId
+      ]
+    );
+
+    // If invite specifies location assignments, create them
+    if (invite.locationId) {
+      const locationAssignmentId = Math.random().toString(36).substring(2, 15);
+      await database.run(
+        `INSERT INTO user_locations (id, userId, locationId, listPermissions, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [locationAssignmentId, userId, invite.locationId, '[]'] // Empty list permissions by default
+      );
+    }
+
+    // Mark invite as used
+    await database.run('UPDATE invite_codes SET isUsed = 1 WHERE id = ?', [invite.id]);
+
+    console.log(`✅ New user account created: ${invite.email} (${invite.firstName} ${invite.lastName})`);
+
+    res.json({ 
+      message: 'Account created successfully',
+      user: {
+        id: userId,
+        email: invite.email,
+        firstName: invite.firstName,
+        lastName: invite.lastName,
+        role: invite.role
+      }
+    });
+  } catch (error) {
+    console.error('Error completing signup:', error);
+    res.status(500).json({ error: 'Failed to create account' });
+  }
+});
+
 export default router;

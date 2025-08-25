@@ -111,6 +111,10 @@ app.use('/api/inventory', inventory_1.default);
 app.use('/api/company', company_1.default);
 app.use('/api/locations', locations_1.default);
 app.use('/api/storage', storage_1.default);
+// Signup page route
+app.get('/signup/:code', (req, res) => {
+    res.sendFile(path_1.default.join(PUBLIC_DIR, 'signup.html'));
+});
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     // Test database connection

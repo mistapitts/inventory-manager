@@ -10,6 +10,7 @@ const multer_1 = __importDefault(require("multer"));
 const qrcode_1 = __importDefault(require("qrcode"));
 const config_1 = __importDefault(require("../config"));
 const auth_1 = require("../middleware/auth");
+const permissions_1 = require("../middleware/permissions");
 const database_1 = require("../models/database");
 const router = (0, express_1.Router)();
 // Upload directories are now handled by config.ensureBootPaths()
@@ -237,36 +238,99 @@ router.post('/lists/migrate-to-field', auth_1.authenticateToken, async (req, res
         res.status(500).json({ error: 'Failed to migrate items' });
     }
 });
-// Get all inventory items for the user's company
-router.get('/', auth_1.authenticateToken, async (req, res) => {
+// Get all inventory items for the user's accessible locations
+router.get('/', auth_1.authenticateToken, (0, permissions_1.enforceLocationAccess)(), (0, permissions_1.requirePermission)('canViewInventory'), async (req, res) => {
     try {
         const userId = req.user.id;
-        const { listId, includeOOS } = req.query;
+        const { listId, includeOOS, locationId } = req.query;
         // Get user's company info
-        const user = await database_1.database.get('SELECT companyId FROM users WHERE id = ?', [userId]);
+        const user = await database_1.database.get('SELECT companyId, role FROM users WHERE id = ?', [userId]);
         if (!user || !user.companyId) {
             return res.status(400).json({ error: 'User not associated with a company' });
         }
-        // Build WHERE clause based on parameters
+        const permissions = req.userPermissions;
+        const locationFilter = req.locationFilter;
+        // Determine which location to show
+        let targetLocationId = locationId;
+        if (!targetLocationId) {
+            // Default to current location or first accessible location
+            targetLocationId = await (0, permissions_1.getCurrentLocation)(userId) || undefined;
+        }
+        // Verify user can access the requested location
+        if (targetLocationId && !locationFilter.accessibleLocationIds.includes(targetLocationId)) {
+            return res.status(403).json({ error: 'Access denied to this location' });
+        }
+        // Build WHERE clause based on permissions and parameters
         const params = [user.companyId];
         let where = 'companyId = ?';
+        // Location-based filtering (critical for security)
+        if (locationFilter.accessibleLocationIds.length === 0) {
+            // User has no location access - return empty result
+            return res.json({ items: [], location: null, accessibleLocations: [] });
+        }
+        if (targetLocationId) {
+            // Filter by specific location
+            where += ' AND locationId = ?';
+            params.push(targetLocationId);
+        }
+        else {
+            // Filter by all accessible locations
+            const locationPlaceholders = locationFilter.accessibleLocationIds.map(() => '?').join(',');
+            where += ` AND locationId IN (${locationPlaceholders})`;
+            params.push(...locationFilter.accessibleLocationIds);
+        }
+        // List-based filtering (if user has restricted list access)
+        if (locationFilter.accessibleListIds.length > 0 && !['company_owner', 'company_admin'].includes(user.role)) {
+            const listPlaceholders = locationFilter.accessibleListIds.map(() => '?').join(',');
+            where += ` AND (listId IN (${listPlaceholders}) OR listId IS NULL)`;
+            params.push(...locationFilter.accessibleListIds);
+        }
         // Handle includeOOS parameter
         if (includeOOS === 'false') {
             where += ' AND isOutOfService = 0';
         }
-        // If includeOOS is omitted or 'true', return all items (including OOS)
-        // Handle listId filter
+        // Handle specific listId filter
         if (listId && listId !== 'all') {
+            // Verify user can access this list
+            if (locationFilter.accessibleListIds.length > 0 &&
+                !locationFilter.accessibleListIds.includes(listId) &&
+                !['company_owner', 'company_admin'].includes(user.role)) {
+                return res.status(403).json({ error: 'Access denied to this list' });
+            }
             where += ' AND listId = ?';
             params.push(listId);
         }
+        console.log(`🔍 Inventory query for user ${userId} (${user.role}):`, {
+            targetLocationId,
+            accessibleLocations: locationFilter.accessibleLocationIds.length,
+            accessibleLists: locationFilter.accessibleListIds.length,
+            whereClause: where
+        });
         const items = await database_1.database.all(`
-            SELECT *
-            FROM inventory_items
-            WHERE ${where}
-            ORDER BY itemType, nickname, labId
-        `, params);
-        res.json({ items });
+        SELECT *
+        FROM inventory_items
+        WHERE ${where}
+        ORDER BY itemType, nickname, labId
+      `, params);
+        // Get current location info if specified
+        let currentLocation = null;
+        if (targetLocationId) {
+            currentLocation = await database_1.database.get('SELECT id, name, address FROM locations WHERE id = ? AND companyId = ?', [targetLocationId, user.companyId]);
+        }
+        // Get accessible locations for frontend
+        const accessibleLocations = await database_1.database.all(`SELECT id, name, address FROM locations 
+       WHERE companyId = ? AND id IN (${locationFilter.accessibleLocationIds.map(() => '?').join(',')})
+       ORDER BY name`, [user.companyId, ...locationFilter.accessibleLocationIds]);
+        res.json({
+            items,
+            currentLocation,
+            accessibleLocations,
+            permissions: {
+                canEdit: permissions.canEditInventory,
+                canDelete: permissions.canDeleteInventory,
+                canManageLocations: permissions.canManageLocations
+            }
+        });
     }
     catch (error) {
         console.error('Error fetching inventory:', error);
@@ -358,7 +422,7 @@ router.post('/', upload.fields([
     { name: 'calibrationInstructions', maxCount: 1 },
     { name: 'maintenanceTemplate', maxCount: 1 },
     { name: 'maintenanceInstructions', maxCount: 1 },
-]), auth_1.authenticateToken, async (req, res) => {
+]), auth_1.authenticateToken, (0, permissions_1.enforceLocationAccess)(), (0, permissions_1.requirePermission)('canEditInventory'), async (req, res) => {
     try {
         const userId = req.user.id;
         console.log('🔍 Creating item for user:', userId);
@@ -419,6 +483,25 @@ router.post('/', upload.fields([
             return res.status(400).json({ error: 'User not associated with a company' });
         }
         console.log('🏢 User company ID:', user.companyId);
+        const permissions = req.userPermissions;
+        const locationFilter = req.locationFilter;
+        // Validate location access - item must be created in a location user can access
+        let targetLocationId = req.body.locationId || (await (0, permissions_1.getCurrentLocation)(userId) || undefined);
+        if (!targetLocationId) {
+            return res.status(400).json({ error: 'No location specified and user has no accessible locations' });
+        }
+        if (!locationFilter.accessibleLocationIds.includes(targetLocationId)) {
+            return res.status(403).json({ error: 'Access denied to this location' });
+        }
+        // Validate list access if listId is specified
+        if (normalized.listId) {
+            if (locationFilter.accessibleListIds.length > 0 &&
+                !locationFilter.accessibleListIds.includes(normalized.listId) &&
+                !['company_owner', 'company_admin'].includes(user.role)) {
+                return res.status(403).json({ error: 'Access denied to this list' });
+            }
+        }
+        console.log(`🔐 Creating item in location ${targetLocationId} for user ${userId} (${user.role})`);
         // Generate unique ID
         const itemId = generateId();
         console.log('🆔 Generated item ID:', itemId);
@@ -444,6 +527,7 @@ router.post('/', upload.fields([
         const columns = [
             'id',
             'companyId',
+            'locationId',
             'itemType',
             'nickname',
             'labId',
@@ -479,6 +563,7 @@ router.post('/', upload.fields([
         const values = [
             itemId,
             user.companyId,
+            targetLocationId,
             normalized.itemType,
             normalized.nickname,
             normalized.labId,
@@ -1201,7 +1286,7 @@ async function resolveItemIdColumn(tableName) {
     }
 }
 // Delete inventory item (and associated records/files)
-router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
+router.delete('/:id', auth_1.authenticateToken, (0, permissions_1.enforceLocationAccess)(), (0, permissions_1.requirePermission)('canDeleteInventory'), async (req, res) => {
     try {
         const itemId = req.params.id;
         const userId = req.user.id;
