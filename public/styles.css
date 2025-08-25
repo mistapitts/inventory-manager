@@ -4512,3 +4512,234 @@ td.actions {
   border-radius: 0;
   top: 60px;
 }
+
+/* User Management Styles */
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.user-item:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.user-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.user-role-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-owner { background: #dc2626; color: white; }
+.role-admin { background: #ea580c; color: white; }
+.role-manager { background: #0ea5e9; color: white; }
+.role-user { background: #10b981; color: white; }
+.role-viewer { background: #6b7280; color: white; }
+
+.employee-id-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.user-email {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+}
+
+.user-locations {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.company-owner-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* Location Assignment Styles */
+.location-assignments {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  margin-bottom: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.location-assignment {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.location-assignment:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.location-assignment-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.location-assignment-checkbox:hover {
+  background: var(--bg-card);
+}
+
+.location-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.location-address {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-left: auto;
+}
+
+.location-lists {
+  margin-left: 24px;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.location-lists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.location-lists-header .form-label {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.btn-link:hover {
+  color: var(--accent-primary-dark);
+}
+
+.location-lists-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.list-permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.list-permission-checkbox:hover {
+  background: var(--bg-input);
+}
+
+.list-name {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Responsive user management */
+@media (max-width: 768px) {
+  .user-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .user-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .user-actions {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+
+  .location-lists-content {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4734,25 +4734,339 @@ function populateCompanyUsers(users) {
       (user) => `
     <div class="user-item">
       <div class="user-info">
-        <div class="user-name">${user.firstName} ${user.lastName}</div>
+        <div class="user-header">
+          <div class="user-name">${user.firstName} ${user.lastName}</div>
+          <div class="user-badges">
+            <span class="user-role-badge ${getRoleBadgeClass(user.role)}">${formatUserRole(user.role)}</span>
+            ${user.employeeId ? `<span class="employee-id-badge">ID: ${user.employeeId}</span>` : ''}
+          </div>
+        </div>
         <div class="user-email">${user.email}</div>
+        <div class="user-locations">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>${user.locations && user.locations.length > 0 ? user.locations.map(loc => loc.name).join(', ') : 'No locations assigned'}</span>
+        </div>
       </div>
       <div class="user-actions">
-        <span class="user-role">${user.role.replace('_', ' ')}</span>
         ${
-          user.role !== 'company_owner'
+          user.role !== 'company_owner' && canManageUser(user.role)
             ? `
-          <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')">
+          <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')" title="Edit User">
             <i class="fas fa-edit"></i>
           </button>
+          <button class="btn btn-warning btn-sm" onclick="resetUserPassword('${user.id}')" title="Reset Password">
+            <i class="fas fa-key"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="removeUser('${user.id}')" title="Remove User">
+            <i class="fas fa-user-times"></i>
+          </button>
         `
-            : ''
+            : user.role !== 'company_owner' ? `
+          <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')" title="Edit User">
+            <i class="fas fa-edit"></i>
+          </button>
+        ` : '<span class="company-owner-label">Company Owner</span>'
         }
       </div>
     </div>
   `,
     )
     .join('');
+}
+
+function formatUserRole(role) {
+  const roleMap = {
+    'company_owner': 'Company Owner',
+    'company_admin': 'Company Admin', 
+    'manager': 'Manager',
+    'user': 'User',
+    'viewer': 'Viewer'
+  };
+  return roleMap[role] || role.replace('_', ' ');
+}
+
+function getRoleBadgeClass(role) {
+  const classMap = {
+    'company_owner': 'role-owner',
+    'company_admin': 'role-admin',
+    'manager': 'role-manager', 
+    'user': 'role-user',
+    'viewer': 'role-viewer'
+  };
+  return classMap[role] || 'role-default';
+}
+
+function canManageUser(userRole) {
+  // Company admins and owners can manage all users except other owners
+  return currentUser && (currentUser.role === 'company_owner' || currentUser.role === 'company_admin');
+}
+
+// User management functions
+async function editUser(userId) {
+  try {
+    // Get user details with location assignments
+    const response = await fetch(`/api/company/users/${userId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      showEditUserModal(userData.user);
+    } else {
+      showToast('Failed to load user details', 'error');
+    }
+  } catch (error) {
+    console.error('Error loading user details:', error);
+    showToast('Failed to load user details', 'error');
+  }
+}
+
+async function resetUserPassword(userId) {
+  const confirmed = confirm('Are you sure you want to reset this user\'s password? They will receive an email with a new password reset link.');
+  
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/company/users/${userId}/reset-password`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      showToast('Password reset email sent successfully', 'success');
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to reset password', 'error');
+    }
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    showToast('Failed to reset password', 'error');
+  }
+}
+
+async function removeUser(userId) {
+  const confirmed = confirm('Are you sure you want to remove this user from the company? This action cannot be undone.');
+  
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/company/users/${userId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      showToast('User removed successfully', 'success');
+      // Reload the company page to refresh user list
+      loadCompanyPage();
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to remove user', 'error');
+    }
+  } catch (error) {
+    console.error('Error removing user:', error);
+    showToast('Failed to remove user', 'error');
+  }
+}
+
+function showEditUserModal(user) {
+  // Populate form fields
+  document.getElementById('edit-user-id').value = user.id;
+  document.getElementById('edit-user-first-name').value = user.firstName || '';
+  document.getElementById('edit-user-last-name').value = user.lastName || '';
+  document.getElementById('edit-user-email').value = user.email || '';
+  document.getElementById('edit-user-employee-id').value = user.employeeId || '';
+  document.getElementById('edit-user-role').value = user.role || '';
+
+  // Load and populate location assignments
+  loadUserLocationAssignments(user);
+
+  // Show modal
+  openModal('modal-edit-user');
+}
+
+function hideEditUserModal() {
+  closeModal('modal-edit-user');
+}
+
+async function loadUserLocationAssignments(user) {
+  const container = document.getElementById('userLocationAssignments');
+  
+  try {
+    // Get all company locations
+    const response = await fetch('/api/locations', {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const allLocations = data.locations || [];
+      const userLocationIds = user.locations ? user.locations.map(loc => loc.id) : [];
+
+      if (allLocations.length === 0) {
+        container.innerHTML = '<p class="text-secondary">No locations available</p>';
+        return;
+      }
+
+      container.innerHTML = allLocations
+        .map(
+          (location) => `
+        <div class="location-assignment">
+          <label class="location-assignment-checkbox">
+            <input type="checkbox" 
+                   name="userLocations" 
+                   value="${location.id}"
+                   ${userLocationIds.includes(location.id) ? 'checked' : ''}
+                   onchange="toggleLocationAssignment('${location.id}')">
+            <span class="location-name">${location.name}</span>
+            <span class="location-address">${location.address || 'No address'}</span>
+          </label>
+          <div class="location-lists" id="locationLists-${location.id}" style="display: ${userLocationIds.includes(location.id) ? 'block' : 'none'}">
+            <!-- Lists for this location will be loaded here -->
+          </div>
+        </div>
+      `
+        )
+        .join('');
+
+      // Load lists for initially checked locations
+      for (const locationId of userLocationIds) {
+        await loadLocationLists(locationId, user);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading location assignments:', error);
+    container.innerHTML = '<p class="text-error">Failed to load locations</p>';
+  }
+}
+
+async function toggleLocationAssignment(locationId) {
+  const checkbox = document.querySelector(`input[value="${locationId}"]`);
+  const listsContainer = document.getElementById(`locationLists-${locationId}`);
+
+  if (checkbox.checked) {
+    listsContainer.style.display = 'block';
+    await loadLocationLists(locationId);
+  } else {
+    listsContainer.style.display = 'none';
+  }
+}
+
+async function loadLocationLists(locationId, user = null) {
+  const container = document.getElementById(`locationLists-${locationId}`);
+  
+  try {
+    // Get lists for this location (this endpoint needs to be created)
+    const response = await fetch(`/api/locations/${locationId}/lists`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const lists = data.lists || [];
+      const userListIds = user && user.listPermissions ? user.listPermissions : [];
+
+      if (lists.length === 0) {
+        container.innerHTML = '<p class="text-secondary ml-4">No lists in this location</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="location-lists-header">
+          <label class="form-label">Accessible Lists:</label>
+          <button type="button" class="btn-link" onclick="selectAllLists('${locationId}', true)">Select All</button>
+          <button type="button" class="btn-link" onclick="selectAllLists('${locationId}', false)">None</button>
+        </div>
+        <div class="location-lists-content">
+          ${lists
+            .map(
+              (list) => `
+            <label class="list-permission-checkbox">
+              <input type="checkbox" 
+                     name="userLists-${locationId}" 
+                     value="${list.id}"
+                     ${userListIds.includes(list.id) ? 'checked' : ''}>
+              <span class="list-name" style="color: ${list.textColor}; background: ${list.color};">${list.name}</span>
+            </label>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading location lists:', error);
+    container.innerHTML = '<p class="text-error ml-4">Failed to load lists</p>';
+  }
+}
+
+function selectAllLists(locationId, selectAll) {
+  const checkboxes = document.querySelectorAll(`input[name="userLists-${locationId}"]`);
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll;
+  });
+}
+
+async function handleEditUserSubmit(e) {
+  e.preventDefault();
+
+  const userId = document.getElementById('edit-user-id').value;
+  const firstName = document.getElementById('edit-user-first-name').value.trim();
+  const lastName = document.getElementById('edit-user-last-name').value.trim();
+  const employeeId = document.getElementById('edit-user-employee-id').value.trim();
+  const role = document.getElementById('edit-user-role').value;
+
+  if (!firstName || !lastName || !role) {
+    showToast('All required fields must be filled', 'error');
+    return;
+  }
+
+  // Collect location assignments
+  const locationCheckboxes = document.querySelectorAll('input[name="userLocations"]:checked');
+  const locationAssignments = [];
+
+  for (const checkbox of locationCheckboxes) {
+    const locationId = checkbox.value;
+    const listCheckboxes = document.querySelectorAll(`input[name="userLists-${locationId}"]:checked`);
+    const listIds = Array.from(listCheckboxes).map(cb => cb.value);
+
+    locationAssignments.push({
+      locationId: locationId,
+      listPermissions: listIds
+    });
+  }
+
+  const formData = {
+    firstName,
+    lastName,
+    employeeId: employeeId || null,
+    role,
+    locationAssignments
+  };
+
+  try {
+    const response = await fetch(`/api/company/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (response.ok) {
+      showToast('User updated successfully', 'success');
+      hideEditUserModal();
+      // Reload the company page to refresh user list
+      loadCompanyPage();
+    } else {
+      const error = await response.json();
+      showToast(error.error || 'Failed to update user', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating user:', error);
+    showToast('Failed to update user', 'error');
+  }
 }
 
 function setupCompanyEventListeners() {
@@ -4812,6 +5126,12 @@ function setupCompanyEventListeners() {
       hideSelectLocationModal();
       showSetupFirstLocationModal();
     });
+  }
+
+  // Edit user form
+  const editUserForm = document.getElementById('form-edit-user');
+  if (editUserForm) {
+    editUserForm.addEventListener('submit', handleEditUserSubmit);
   }
 }
 

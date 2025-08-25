@@ -238,4 +238,39 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
   }
 });
 
+// Get lists for a specific location
+router.get('/:locationId/lists', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { locationId } = req.params;
+    const user = req.user!;
+
+    // Verify the location belongs to the user's company
+    const location = await database.get(
+      'SELECT id, name FROM locations WHERE id = ? AND companyId = ?',
+      [locationId, user.companyId]
+    );
+
+    if (!location) {
+      return res.status(404).json({ error: 'Location not found' });
+    }
+
+    // Get all lists for this location
+    const lists = await database.all(
+      `SELECT id, name, color, textColor, createdAt 
+       FROM lists 
+       WHERE locationId = ? 
+       ORDER BY name`,
+      [locationId]
+    );
+
+    res.json({
+      location,
+      lists
+    });
+  } catch (error) {
+    console.error('Error getting location lists:', error);
+    res.status(500).json({ error: 'Failed to get location lists' });
+  }
+});
+
 export default router;

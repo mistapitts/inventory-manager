@@ -87,11 +87,29 @@ router.get('/info', authenticateToken, async (req: Request, res: Response) => {
     // Get company info
     const company = await database.get(`SELECT * FROM companies WHERE id = ?`, [user.companyId]);
 
-    // Get company users (for user management)
+    // Get company users with location assignments (for user management)
     const users = await database.all(
-      `SELECT id, email, firstName, lastName, role, isActive, createdAt FROM users WHERE companyId = ? ORDER BY role, firstName`,
+      `SELECT id, email, firstName, lastName, role, employeeId, isActive, createdAt FROM users WHERE companyId = ? ORDER BY role, firstName`,
       [user.companyId],
     );
+
+    // Get location assignments for each user
+    for (const userItem of users) {
+      const locations = await database.all(
+        `SELECT ul.locationId, ul.listPermissions, l.name, l.address
+         FROM user_locations ul
+         JOIN locations l ON ul.locationId = l.id
+         WHERE ul.userId = ?`,
+        [userItem.id]
+      );
+
+      userItem.locations = locations.map(loc => ({
+        id: loc.locationId,
+        name: loc.name,
+        address: loc.address,
+        listPermissions: loc.listPermissions ? JSON.parse(loc.listPermissions) : []
+      }));
+    }
 
     res.json({
       user: {
@@ -360,6 +378,267 @@ router.delete('/remove-logo', authenticateToken, async (req: Request, res: Respo
   } catch (error) {
     console.error('Error removing logo:', error);
     res.status(500).json({ error: 'Failed to remove logo' });
+  }
+});
+
+// Get user details with location assignments
+router.get('/users/:userId', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const user = req.user!;
+
+    // Only company admins and owners can view user details
+    if (!user.role || !['company_owner', 'company_admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions to view user details' });
+    }
+
+    // Get user basic info
+    const userDetails = await database.get(
+      `SELECT id, email, firstName, lastName, role, employeeId, companyId, createdAt 
+       FROM users WHERE id = ? AND companyId = ?`,
+      [userId, user.companyId]
+    );
+
+    if (!userDetails) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get user's location assignments
+    const locationAssignments = await database.all(
+      `SELECT ul.locationId, ul.listPermissions, l.name, l.address
+       FROM user_locations ul
+       JOIN locations l ON ul.locationId = l.id
+       WHERE ul.userId = ?`,
+      [userId]
+    );
+
+    // Parse list permissions
+    const locations = locationAssignments.map(loc => ({
+      id: loc.locationId,
+      name: loc.name,
+      address: loc.address,
+      listPermissions: loc.listPermissions ? JSON.parse(loc.listPermissions) : []
+    }));
+
+    res.json({
+      user: {
+        ...userDetails,
+        locations
+      }
+    });
+  } catch (error) {
+    console.error('Error getting user details:', error);
+    res.status(500).json({ error: 'Failed to get user details' });
+  }
+});
+
+// Update user details and location assignments
+router.put('/users/:userId', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { firstName, lastName, employeeId, role, locationAssignments } = req.body;
+    const user = req.user!;
+
+    // Only company admins and owners can edit users
+    if (!user.role || !['company_owner', 'company_admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions to edit users' });
+    }
+
+    // Validate required fields
+    if (!firstName || !lastName || !role) {
+      return res.status(400).json({ error: 'First name, last name, and role are required' });
+    }
+
+    // Validate role
+    const validRoles = ['company_owner', 'company_admin', 'manager', 'user', 'viewer'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    // Check if user exists and belongs to the same company
+    const targetUser = await database.get(
+      `SELECT id, role FROM users WHERE id = ? AND companyId = ?`,
+      [userId, user.companyId]
+    );
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent non-owners from editing owners
+    if (targetUser.role === 'company_owner' && user.role !== 'company_owner') {
+      return res.status(403).json({ error: 'Only company owners can edit other owners' });
+    }
+
+    // Update user basic info
+    await database.run(
+      `UPDATE users SET 
+        firstName = ?, lastName = ?, employeeId = ?, role = ?, updatedAt = datetime('now')
+       WHERE id = ?`,
+      [firstName, lastName, employeeId || null, role, userId]
+    );
+
+    // Update location assignments
+    if (locationAssignments && Array.isArray(locationAssignments)) {
+      // Remove existing location assignments
+      await database.run('DELETE FROM user_locations WHERE userId = ?', [userId]);
+
+      // Add new location assignments
+      for (const assignment of locationAssignments) {
+        const { locationId, listPermissions } = assignment;
+        
+        // Verify location belongs to the company
+        const location = await database.get(
+          'SELECT id FROM locations WHERE id = ? AND companyId = ?',
+          [locationId, user.companyId]
+        );
+
+        if (location) {
+          await database.run(
+            `INSERT INTO user_locations (id, userId, locationId, listPermissions, createdAt, updatedAt)
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+            [
+              generateId(),
+              userId,
+              locationId,
+              JSON.stringify(listPermissions || [])
+            ]
+          );
+        }
+      }
+    }
+
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Reset user password
+router.post('/users/:userId/reset-password', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const user = req.user!;
+
+    // Only company admins and owners can reset passwords
+    if (!user.role || !['company_owner', 'company_admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions to reset passwords' });
+    }
+
+    // Check if user exists and belongs to the same company
+    const targetUser = await database.get(
+      `SELECT id, email, firstName, lastName FROM users WHERE id = ? AND companyId = ?`,
+      [userId, user.companyId]
+    );
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate password reset code
+    const resetCode = generateId();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Store reset code (reusing invite_codes table structure)
+    await database.run(
+      `INSERT INTO invite_codes (id, companyId, code, role, email, firstName, lastName, expiresAt, isUsed, createdAt)
+       VALUES (?, ?, ?, 'password_reset', ?, ?, ?, ?, 0, datetime('now'))`,
+      [
+        generateId(),
+        user.companyId,
+        resetCode,
+        targetUser.email,
+        targetUser.firstName,
+        targetUser.lastName,
+        expiresAt.toISOString()
+      ]
+    );
+
+    // Send password reset email
+    const resetLink = `${config.env.baseUrl}/signup/${resetCode}`;
+    await emailService.sendPasswordResetEmail({
+      to: targetUser.email,
+      firstName: targetUser.firstName,
+      resetLink
+    });
+
+    res.json({ message: 'Password reset email sent successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// Delete user completely (secure deletion)
+router.delete('/users/:userId', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const user = req.user!;
+
+    // Only company admins and owners can delete users
+    if (!user.role || !['company_owner', 'company_admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions to delete users' });
+    }
+
+    // Check if user exists and belongs to the same company
+    const targetUser = await database.get(
+      `SELECT id, email, role FROM users WHERE id = ? AND companyId = ?`,
+      [userId, user.companyId]
+    );
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent deletion of company owners by non-owners
+    if (targetUser.role === 'company_owner' && user.role !== 'company_owner') {
+      return res.status(403).json({ error: 'Only company owners can delete other owners' });
+    }
+
+    // Prevent self-deletion
+    if (userId === user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+
+    console.log(`🗑️ Starting secure deletion of user ${targetUser.email} (${userId})`);
+
+    // Delete user data in the correct order (foreign key constraints)
+    
+    // 1. Delete user-specific records
+    await database.run('DELETE FROM notifications WHERE userId = ?', [userId]);
+    console.log('✅ Deleted notifications');
+    
+    await database.run('DELETE FROM user_locations WHERE userId = ?', [userId]);
+    console.log('✅ Deleted location assignments');
+
+    // 2. Delete records created by the user (these contain historical data)
+    await database.run('DELETE FROM calibration_records WHERE userId = ?', [userId]);
+    console.log('✅ Deleted calibration records');
+    
+    await database.run('DELETE FROM maintenance_records WHERE userId = ?', [userId]);
+    console.log('✅ Deleted maintenance records');
+
+    await database.run('DELETE FROM changelog WHERE userId = ?', [userId]);
+    console.log('✅ Deleted changelog entries');
+
+    // 3. Clean up any unused invite codes for this user
+    await database.run('DELETE FROM invite_codes WHERE email = ? AND companyId = ?', [targetUser.email, user.companyId]);
+    console.log('✅ Cleaned up invite codes');
+
+    // 4. Finally, delete the user account
+    await database.run('DELETE FROM users WHERE id = ?', [userId]);
+    console.log('✅ Deleted user account');
+
+    console.log(`🎯 User ${targetUser.email} completely removed from system`);
+
+    res.json({ 
+      message: 'User and all associated data deleted successfully',
+      deletedEmail: targetUser.email 
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 

@@ -1055,6 +1055,68 @@
       </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div id="modal-edit-user" class="modal hidden">
+      <div class="modal-card" style="max-width: 700px">
+        <h3><i class="fas fa-user-edit"></i> Edit User</h3>
+        <form id="form-edit-user">
+          <input type="hidden" id="edit-user-id" />
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name <span class="text-red-400">*</span></label>
+              <input type="text" id="edit-user-first-name" class="input" required />
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="text-red-400">*</span></label>
+              <input type="text" id="edit-user-last-name" class="input" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="edit-user-email" class="input" readonly />
+              <small class="form-help">Email cannot be changed</small>
+            </div>
+            <div class="form-group">
+              <label>Employee ID</label>
+              <input type="text" id="edit-user-employee-id" class="input" placeholder="Optional employee/badge number" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Role <span class="text-red-400">*</span></label>
+            <select id="edit-user-role" class="input" required>
+              <option value="">Select a role...</option>
+              <option value="company_owner">Company Owner</option>
+              <option value="company_admin">Company Admin</option>
+              <option value="manager">Manager</option>
+              <option value="user">User</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Location Assignments</label>
+            <div class="location-assignments" id="userLocationAssignments">
+              <!-- Location assignments will be populated here -->
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="addLocationAssignmentBtn">
+              <i class="fas fa-plus"></i> Add Location
+            </button>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="hideEditUserModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Invite User Modal -->
     <div id="modal-invite-user" class="modal hidden">
       <div class="modal-card">

@@ -204,6 +204,86 @@ class EmailService {
 
     return this.sendEmail({ to, subject, html, text });
   }
+
+  // Template for password reset emails
+  async sendPasswordResetEmail(options: {
+    to: string;
+    firstName: string;
+    resetLink: string;
+  }): Promise<boolean> {
+    const { to, firstName, resetLink } = options;
+
+    const subject = `Password Reset - Inventory Manager`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .warning { background: #fef3c7; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+          .button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔒 Password Reset</h1>
+            <p>Your administrator has reset your password</p>
+          </div>
+          <div class="content">
+            <p>Hi ${firstName},</p>
+            
+            <p>Your company administrator has initiated a password reset for your Inventory Manager account.</p>
+            
+            <div class="warning">
+              <p><strong>⚠️ Security Notice:</strong></p>
+              <p>If you did not request this password reset, please contact your administrator immediately.</p>
+            </div>
+            
+            <p>To set your new password:</p>
+            <ol>
+              <li>Click the button below within the next 24 hours</li>
+              <li>Choose a strong, secure password</li>
+              <li>Log in with your new credentials</li>
+            </ol>
+            
+            <div style="text-align: center;">
+              <a href="${resetLink}" class="button">Reset My Password</a>
+            </div>
+            
+            <p><strong>Important:</strong> This link will expire in 24 hours for security purposes.</p>
+            
+            <p>If you have any questions or concerns, please contact your system administrator.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from Inventory Manager</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Password Reset - Inventory Manager
+      
+      Hi ${firstName},
+      
+      Your company administrator has initiated a password reset for your account.
+      
+      To set your new password, visit: ${resetLink}
+      
+      This link expires in 24 hours.
+      
+      If you did not request this reset, contact your administrator immediately.
+    `;
+
+    return this.sendEmail({ to, subject, html, text });
+  }
 }
 
 // Export singleton instance
