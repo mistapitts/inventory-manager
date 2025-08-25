@@ -134,12 +134,12 @@ router.patch('/update', auth_1.authenticateToken, async (req, res) => {
 router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { email, firstName, lastName, role } = req.body;
+        const { email, firstName, lastName, employeeId, role } = req.body;
         if (!email || !firstName || !lastName || !role) {
             return res.status(400).json({ error: 'All fields are required' });
         }
         // Validate role
-        const validRoles = ['company_manager', 'region_manager', 'lab_manager', 'user', 'viewer'];
+        const validRoles = ['company_owner', 'company_admin', 'manager', 'user', 'viewer'];
         if (!validRoles.includes(role)) {
             return res.status(400).json({ error: 'Invalid role specified' });
         }
@@ -162,8 +162,8 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
         // Create invite code record
-        await database_1.database.run(`INSERT INTO invite_codes (id, companyId, code, role, email, firstName, lastName, expiresAt, isUsed, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`, [
+        await database_1.database.run(`INSERT INTO invite_codes (id, companyId, code, role, email, firstName, lastName, employeeId, expiresAt, isUsed, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`, [
             generateId(),
             user.companyId,
             inviteCode,
@@ -171,6 +171,7 @@ router.post('/invite-user', auth_1.authenticateToken, async (req, res) => {
             email,
             firstName,
             lastName,
+            employeeId || null,
             expiresAt.toISOString(),
         ]);
         // Send invitation email

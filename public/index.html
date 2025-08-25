@@ -1043,12 +1043,17 @@
           </div>
 
           <div class="form-group">
+            <label>Employee ID</label>
+            <input type="text" id="invite-user-employee-id" class="input" placeholder="Optional employee/badge number" />
+          </div>
+
+          <div class="form-group">
             <label>Role <span class="text-red-400">*</span></label>
             <select id="invite-user-role" class="input" required>
               <option value="">Select a role...</option>
-              <option value="company_manager">Company Manager</option>
-              <option value="region_manager">Region Manager</option>
-              <option value="lab_manager">Lab Manager</option>
+              <option value="company_owner">Company Owner</option>
+              <option value="company_admin">Company Admin</option>
+              <option value="manager">Manager</option>
               <option value="user">User</option>
               <option value="viewer">Viewer</option>
             </select>

@@ -4955,6 +4955,7 @@ async function handleInviteUserSubmit(e) {
     email: document.getElementById('invite-user-email').value.trim(),
     firstName: document.getElementById('invite-user-first-name').value.trim(),
     lastName: document.getElementById('invite-user-last-name').value.trim(),
+    employeeId: document.getElementById('invite-user-employee-id').value.trim(),
     role: document.getElementById('invite-user-role').value,
   };
 
