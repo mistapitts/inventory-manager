@@ -505,6 +505,9 @@ async function loadDashboardData() {
     // Load lists first (needed for inventory filtering)
     await loadListsIntoSelectors();
 
+    // Initialize location system
+    await initializeLocationSystem();
+
     // Load inventory statistics
     await loadInventoryStats();
 
@@ -4796,6 +4799,20 @@ function setupCompanyEventListeners() {
   if (setupFirstLocationForm) {
     setupFirstLocationForm.addEventListener('submit', handleSetupFirstLocation);
   }
+
+  // Location switching buttons
+  const changeLocationBtn = document.getElementById('changeLocationBtn');
+  if (changeLocationBtn) {
+    changeLocationBtn.addEventListener('click', showSelectLocationModal);
+  }
+
+  const addNewLocationBtn = document.getElementById('addNewLocationBtn');
+  if (addNewLocationBtn) {
+    addNewLocationBtn.addEventListener('click', () => {
+      hideSelectLocationModal();
+      showSetupFirstLocationModal();
+    });
+  }
 }
 
 async function showEditCompanyModal() {
@@ -4839,6 +4856,157 @@ function showSetupFirstLocationModal() {
 
 function hideSetupFirstLocationModal() {
   closeModal('modal-setup-first-location');
+}
+
+// Location switching functionality
+let currentLocation = null;
+
+function showSelectLocationModal() {
+  loadLocationList();
+  openModal('modal-select-location');
+}
+
+function hideSelectLocationModal() {
+  closeModal('modal-select-location');
+}
+
+async function loadLocationList() {
+  try {
+    const response = await fetch('/api/locations', {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      populateLocationList(data.locations);
+    } else {
+      showToast('Failed to load locations', 'error');
+    }
+  } catch (error) {
+    console.error('Error loading locations:', error);
+    showToast('Failed to load locations', 'error');
+  }
+}
+
+function populateLocationList(locations) {
+  const locationList = document.getElementById('locationList');
+  if (!locations || locations.length === 0) {
+    locationList.innerHTML = `
+      <div class="location-option">
+        <div class="location-option-info">
+          <h4>No locations found</h4>
+          <p>Create your first location to get started</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  locationList.innerHTML = locations
+    .map(
+      (location) => `
+    <div class="location-option${currentLocation && currentLocation.id === location.id ? ' selected' : ''}" 
+         onclick="selectLocation('${location.id}')">
+      <div class="location-option-info">
+        <h4>${location.name}</h4>
+        <p>${location.address ? `${location.address}${location.city ? `, ${location.city}` : ''}` : 'No address specified'}</p>
+      </div>
+    </div>
+  `
+    )
+    .join('');
+}
+
+async function selectLocation(locationId) {
+  try {
+    const response = await fetch('/api/locations', {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const location = data.locations.find(l => l.id === locationId);
+      
+      if (location) {
+        currentLocation = location;
+        updateLocationHeader(location);
+        hideSelectLocationModal();
+        
+        // Store selected location in localStorage
+        localStorage.setItem('selectedLocation', JSON.stringify(location));
+        
+        // Reload inventory for this location
+        await loadLocationInventory(locationId);
+        
+        showToast(`Switched to ${location.name}`, 'success');
+      }
+    }
+  } catch (error) {
+    console.error('Error selecting location:', error);
+    showToast('Failed to switch location', 'error');
+  }
+}
+
+function updateLocationHeader(location) {
+  const locationHeader = document.getElementById('locationHeader');
+  const locationName = document.getElementById('currentLocationName');
+  
+  if (location) {
+    locationName.textContent = location.name;
+    locationHeader.style.display = 'block';
+  } else {
+    locationHeader.style.display = 'none';
+  }
+}
+
+async function loadLocationInventory(locationId) {
+  try {
+    // This will be implemented when we update the inventory API to filter by location
+    console.log('Loading inventory for location:', locationId);
+    // For now, just reload the regular inventory
+    await displayInventoryItems();
+  } catch (error) {
+    console.error('Error loading location inventory:', error);
+    showToast('Failed to load inventory for this location', 'error');
+  }
+}
+
+async function initializeLocationSystem() {
+  try {
+    // Check if user has saved location preference
+    const savedLocation = localStorage.getItem('selectedLocation');
+    if (savedLocation) {
+      try {
+        currentLocation = JSON.parse(savedLocation);
+        updateLocationHeader(currentLocation);
+      } catch (e) {
+        localStorage.removeItem('selectedLocation');
+      }
+    }
+
+    // Load available locations
+    const response = await fetch('/api/locations', {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      // If no saved location but locations exist, auto-select the first one
+      if (!currentLocation && data.locations && data.locations.length > 0) {
+        currentLocation = data.locations[0];
+        updateLocationHeader(currentLocation);
+        localStorage.setItem('selectedLocation', JSON.stringify(currentLocation));
+      }
+      
+      // Show location header if we have a current location
+      if (currentLocation) {
+        document.getElementById('locationHeader').style.display = 'block';
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing location system:', error);
+  }
 }
 
 async function handleSetupFirstLocation(e) {

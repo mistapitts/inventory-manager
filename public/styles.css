@@ -4440,3 +4440,75 @@ td.actions {
   vertical-align: middle;
   min-height: 44px; /* Match status-chips min-height */
 }
+
+/* Location Header Styles */
+.location-header {
+  background: var(--bg-primary);
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 12px 12px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 110;
+  flex-shrink: 0;
+}
+
+.location-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.location-name {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Location Selection Modal */
+.location-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.location-option {
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.location-option:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+}
+
+.location-option.selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-light);
+}
+
+.location-option-info h4 {
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.location-option-info p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Adjust inventory header when location header is present */
+.location-header + .inventory-table-header {
+  border-radius: 0;
+  top: 60px;
+}

@@ -599,6 +599,16 @@
 
               <div class="inventory-main-content">
                 <div class="inventory-table-container">
+                  <!-- Location Header -->
+                  <div class="location-header" id="locationHeader" style="display: none;">
+                    <div class="location-info">
+                      <h2 class="location-name" id="currentLocationName">Main Office</h2>
+                      <button class="btn btn-secondary btn-sm" id="changeLocationBtn" title="Switch Location">
+                        <i class="fas fa-exchange-alt"></i> Change Location
+                      </button>
+                    </div>
+                  </div>
+
                   <!-- Fixed toolbar (never scrolls) -->
                   <div class="inventory-table-header">
                     <h3 class="inventory-table-title">Inventory</h3>
@@ -1018,6 +1028,30 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Location Selection Modal -->
+    <div id="modal-select-location" class="modal hidden">
+      <div class="modal-card" style="max-width: 500px">
+        <h3><i class="fas fa-map-marker-alt"></i> Select Location</h3>
+        <p class="modal-description">Choose which location's inventory to view and manage.</p>
+        
+        <div class="location-list" id="locationList">
+          <!-- Locations will be populated here -->
+          <div class="location-option">
+            <div class="location-option-info">
+              <h4>Loading locations...</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="hideSelectLocationModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" id="addNewLocationBtn">
+            <i class="fas fa-plus"></i> Add New Location
+          </button>
+        </div>
       </div>
     </div>
 
