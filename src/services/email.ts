@@ -99,11 +99,18 @@ class EmailService {
       }
 
       const mailOptions = {
-        from: process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.SMTP_USER,
+        from: `"Inventory Manager" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.SMTP_USER}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
+        replyTo: process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.SMTP_USER,
+        headers: {
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High',
+          'X-Mailer': 'Inventory Manager v1.0',
+          'X-Auto-Response-Suppress': 'OOF, DR, RN, NRN',
+        },
       };
 
       const result = await this.transporter.sendMail(mailOptions);
@@ -155,11 +162,6 @@ class EmailService {
             
             <p><strong>${inviterName}</strong> has invited you to join <strong>${companyName}</strong> on our Inventory Management System.</p>
             
-            <div class="invite-code">
-              <p><strong>Your Invite Code:</strong></p>
-              <div class="code">${inviteCode}</div>
-            </div>
-            
             <p>To get started:</p>
             <ol>
               <li>Click the button below to accept your invitation</li>
@@ -179,6 +181,7 @@ class EmailService {
           </div>
           <div class="footer">
             <p>This is an automated message from Inventory Manager</p>
+            <p><small>This invitation was sent by ${inviterName} from ${companyName}. If you believe this was sent in error, please contact your system administrator.</small></p>
           </div>
         </div>
       </body>
